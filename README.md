@@ -58,6 +58,18 @@ ArcadeIQ/
 - [Migration Plan](docs/migration-plan.md)
 - [Legacy SQL Migrations](migrations/README.md)
 
+## Local Demo
+
+ArcadeIQ includes a lightweight browser demo that runs without SQL Server:
+
+```powershell
+.\scripts\start-demo.ps1
+```
+
+Then open `http://localhost:4173`.
+
+The demo shows the intended product direction: natural-language game search, AI-style review intelligence, and developer-facing insights. It is a front-end prototype while the personal SQL Server deployment is being stabilized.
+
 ## Database Overview
 
 The database models the core entities of a game marketplace:

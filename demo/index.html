@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ArcadeIQ Demo</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2317202a'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-size='22' font-family='Arial' font-weight='700' fill='white'%3EAI%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand-block">
+          <div class="brand-mark">AI</div>
+          <div>
+            <h1>ArcadeIQ</h1>
+            <p>Game intelligence demo</p>
+          </div>
+        </div>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Natural Search</h2>
+            <span>AI parser</span>
+          </div>
+          <textarea id="nl-search" spellcheck="false">Find cheap multiplayer survival games with good reviews</textarea>
+          <div class="scenario-grid">
+            <button class="scenario-button" type="button" data-query="Find cheap multiplayer survival games with good reviews">Survival deal</button>
+            <button class="scenario-button" type="button" data-query="Show highly rated story rich games under 25 dollars">Story picks</button>
+            <button class="scenario-button" type="button" data-query="Find premium exploration games for developer catalog analysis">Dev lens</button>
+          </div>
+          <button id="parse-search" class="primary-button">Run Search</button>
+          <div id="parsed-query" class="query-output"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Filters</h2>
+            <span>Live</span>
+          </div>
+          <label>
+            Max Price
+            <input id="max-price" type="range" min="0" max="70" value="35" />
+            <strong id="price-label">$35</strong>
+          </label>
+          <label>
+            Tag Focus
+            <select id="tag-filter">
+              <option value="">Any tag</option>
+            </select>
+          </label>
+          <label class="check-row">
+            <input id="review-filter" type="checkbox" checked />
+            Has player reviews
+          </label>
+        </section>
+
+        <section class="panel compact">
+          <div class="metric">
+            <span>Catalog</span>
+            <strong id="catalog-count">0</strong>
+          </div>
+          <div class="metric">
+            <span>Avg Price</span>
+            <strong id="avg-price">$0</strong>
+          </div>
+          <div class="metric">
+            <span>Avg Rating</span>
+            <strong id="avg-rating">0.0</strong>
+          </div>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Personal deployment prototype</p>
+            <h2>AI-assisted game discovery and developer analytics</h2>
+          </div>
+          <div class="status-pill">Local demo mode</div>
+        </header>
+
+        <section class="hero-band">
+          <div class="hero-copy">
+            <h2 id="selected-title">Select a game</h2>
+            <p id="selected-summary">Run a search or pick a title to see review intelligence, purchase signals, and developer guidance.</p>
+          </div>
+          <div class="hero-stats">
+            <div>
+              <span>Rating</span>
+              <strong id="selected-rating">--</strong>
+            </div>
+            <div>
+              <span>Price</span>
+              <strong id="selected-price">--</strong>
+            </div>
+            <div>
+              <span>Signal</span>
+              <strong id="selected-signal">--</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="content-grid">
+          <div class="results-panel">
+            <div class="section-title">
+              <h3>Matching Games</h3>
+              <span id="result-count">0 results</span>
+            </div>
+            <div id="game-list" class="game-list"></div>
+          </div>
+
+          <div class="insight-stack">
+            <section class="insight-panel">
+              <div class="section-title">
+                <h3>Review Intelligence</h3>
+                <span>Generated preview</span>
+              </div>
+              <div id="review-insight" class="insight-body muted">Choose a game to generate a review summary.</div>
+            </section>
+
+            <section class="insight-panel">
+              <div class="section-title">
+                <h3>Developer Copilot</h3>
+                <span>Revenue lens</span>
+              </div>
+              <div id="developer-insight" class="insight-body muted">Developer guidance will appear after selecting a game.</div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
