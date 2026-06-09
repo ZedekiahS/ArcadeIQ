@@ -17,13 +17,26 @@ services:
       retries: 10
       start_period: 10s
 
+  backend:
+    build:
+      context: ./backend
+    container_name: arcadeiq-backend
+    environment:
+      ARCADEIQ_DATABASE_URL: postgresql+psycopg://${ARCADEIQ_POSTGRES_USER:-arcadeiq}:${ARCADEIQ_POSTGRES_PASSWORD:-arcadeiq_dev_password}@postgres:5432/${ARCADEIQ_POSTGRES_DB:-arcadeiq}
+      ARCADEIQ_CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: arcadeiq-sqlserver
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_PID: Developer
-      SA_PASSWORD: ${ARCADEIQ_SA_PASSWORD}
+      SA_PASSWORD: ${ARCADEIQ_SA_PASSWORD:-LocalOnly_Password123!}
     ports:
       - "1433:1433"
     volumes:
@@ -32,7 +45,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"${ARCADEIQ_SA_PASSWORD}\" -C -Q \"SELECT 1\" || exit 1"
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"${ARCADEIQ_SA_PASSWORD:-LocalOnly_Password123!}\" -C -Q \"SELECT 1\" || exit 1"
         ]
       interval: 10s
       timeout: 5s

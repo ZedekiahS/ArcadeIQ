@@ -4,6 +4,24 @@ FastAPI backend for the modern ArcadeIQ web app.
 
 ## Run Locally
 
+### Docker
+
+From the repository root:
+
+```powershell
+docker compose up -d postgres backend
+docker compose exec backend alembic upgrade head
+docker compose exec backend python -m app.scripts.seed
+```
+
+Open:
+
+```text
+http://localhost:8000/docs
+```
+
+### Python virtual environment
+
 Create a virtual environment and install dependencies:
 
 ```powershell

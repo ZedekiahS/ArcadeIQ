@@ -17,7 +17,7 @@ try {
         npm install
     }
 
-    npm run dev -- --host 127.0.0.1 --port $Port
+    npm run dev -- --host=127.0.0.1 --port=$Port
 } finally {
     Pop-Location
 }

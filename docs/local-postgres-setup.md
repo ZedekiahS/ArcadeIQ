@@ -36,6 +36,16 @@ This uses the `pgvector/pgvector:pg16` image so the local database is ready for 
 
 ## 3. Install Backend Dependencies
 
+The recommended path is Docker:
+
+```powershell
+docker compose --env-file .env up -d postgres backend
+docker compose exec backend alembic upgrade head
+docker compose exec backend python -m app.scripts.seed
+```
+
+If you want to run the backend directly on Windows instead, use a Python virtual environment:
+
 ```powershell
 cd backend
 python -m venv .venv
