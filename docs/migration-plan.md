@@ -25,6 +25,10 @@ Goal: run the existing application without the school server.
 - Create a sanitized replacement for `data/userdata.csv`.
 - Document local setup steps.
 
+Setup entry point:
+
+- [Local SQL Server Setup](local-sqlserver-setup.md)
+
 Recommended local options:
 
 - SQL Server Developer Edition

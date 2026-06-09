@@ -16,6 +16,7 @@ const connectionDetails = {
   user: process.env.ARCADEIQ_DB_USER ?? "ArcadeIQApp",
   password: getRequiredEnv("ARCADEIQ_DB_PASSWORD"),
   server: process.env.ARCADEIQ_DB_SERVER ?? "localhost",
+  port: Number.parseInt(process.env.ARCADEIQ_DB_PORT ?? "1433", 10),
   database: process.env.ARCADEIQ_DB_NAME ?? "ArcadeIQ",
   options: {
     encrypt: process.env.ARCADEIQ_DB_ENCRYPT === "true",

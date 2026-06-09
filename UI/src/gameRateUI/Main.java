@@ -14,12 +14,13 @@ import java.awt.event.WindowListener;
 
 public class Main extends JFrame {
     private static final String DB_SERVER = getEnvOrDefault("ARCADEIQ_DB_SERVER", "localhost");
+    private static final String DB_PORT = getEnvOrDefault("ARCADEIQ_DB_PORT", "1433");
     private static final String DB_NAME = getEnvOrDefault("ARCADEIQ_DB_NAME", "ArcadeIQ");
     private static final String DB_USER = getEnvOrDefault("ARCADEIQ_DB_USER", "ArcadeIQApp");
     private static final String DB_PASSWORD = System.getenv("ARCADEIQ_DB_PASSWORD");
     private static final String DB_URL = String.format(
-            "jdbc:sqlserver://%s;databaseName=%s;encrypt=false;",
-            DB_SERVER, DB_NAME);
+            "jdbc:sqlserver://%s:%s;databaseName=%s;encrypt=false;",
+            DB_SERVER, DB_PORT, DB_NAME);
 
     private static WindowListener wcl = null;
 

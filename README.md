@@ -54,6 +54,7 @@ ArcadeIQ/
 ## Documentation
 
 - [Architecture](docs/architecture.md)
+- [Local SQL Server Setup](docs/local-sqlserver-setup.md)
 - [Migration Plan](docs/migration-plan.md)
 - [Legacy SQL Migrations](migrations/README.md)
 
