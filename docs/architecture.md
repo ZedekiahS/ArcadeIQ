@@ -43,15 +43,15 @@ The legacy system keeps most business behavior in SQL Server stored procedures. 
 ## Target Architecture
 
 ```text
-React or Next.js frontend
+React + TypeScript frontend
     |
     | HTTP API
     v
-Backend API
+FastAPI backend API
     |
     | typed service layer
     v
-Database
+PostgreSQL database
     |
     | normalized schema, migrations, seed data
     v
@@ -75,10 +75,11 @@ Short term:
 - Keep SQL Server as the legacy database target.
 - Run it locally or in a personally controlled cloud environment.
 - Keep migrations as historical database documentation.
+- Build new product features against PostgreSQL.
 
 Long term:
 
-- Consider PostgreSQL if AI features require vector search, embedding storage, or deeper analytics.
+- Use PostgreSQL with pgvector for vector search, embedding storage, and deeper analytics.
 - Avoid an immediate MySQL migration because it would require rewriting much of the T-SQL surface without adding much AI/product value.
 
 ## AI Integration Points

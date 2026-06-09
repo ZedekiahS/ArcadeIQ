@@ -11,8 +11,17 @@ out/
 target/
 build/
 
+# Python build output and virtual environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+backend/.venv/
+
 # Node dependencies and generated JavaScript
 node_modules/
+frontend/dist/
+frontend/node_modules/
 PopulationScripts/**/*.js
 WebScrape/**/*.js
 

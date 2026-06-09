@@ -25,8 +25,9 @@ Goal: run the existing application without the school server.
 - Create a sanitized replacement for `data/userdata.csv`.
 - Document local setup steps.
 
-Setup entry point:
+Setup entry points:
 
+- [Local PostgreSQL Setup](local-postgres-setup.md)
 - [Local SQL Server Setup](local-sqlserver-setup.md)
 
 Recommended local options:
@@ -50,16 +51,16 @@ Goal: make the current Java and SQL system easier to reason about.
 
 Goal: stop having the UI call stored procedures directly.
 
-- Introduce a backend API using Spring Boot, FastAPI, or Node.js.
+- Introduce a backend API using FastAPI.
 - Move database access into service/repository modules.
 - Expose stable endpoints for games, users, reviews, purchases, bundles, and developer analytics.
 - Keep the Java Swing UI as legacy, or replace it with a web frontend.
 
 Recommended direction for portfolio value:
 
-- FastAPI or Spring Boot backend
-- React or Next.js frontend
-- SQL Server first, PostgreSQL later if AI features need it
+- FastAPI backend
+- React + TypeScript frontend
+- PostgreSQL for the new product database
 
 ## Phase 5: AI Feature MVP
 

@@ -30,7 +30,10 @@ The project no longer depends on the original school-hosted database server. The
 ## Tech Stack
 
 - **Database:** Microsoft SQL Server
+- **Modern product database:** PostgreSQL with pgvector-ready local development
 - **Database logic:** SQL migrations, stored procedures, views, table-valued parameters, transactions
+- **Web frontend:** React, TypeScript, Vite
+- **Backend API:** FastAPI, SQLAlchemy, Alembic
 - **Desktop UI:** Java Swing
 - **Authentication:** bcrypt password hashing
 - **Data ingestion:** TypeScript, Node.js, `mssql`, PapaParse
@@ -42,7 +45,10 @@ The project no longer depends on the original school-hosted database server. The
 ```text
 ArcadeIQ/
   data/                 CSV seed data for users, games, and reviews
+  demo/                 Static browser demo that runs without dependencies
   docs/                 Architecture notes and modernization plan
+  backend/              FastAPI backend for the modern web app
+  frontend/             React + TypeScript web app prototype
   migrations/           SQL Server schema, stored procedures, views, and grants
   PopulationScripts/    TypeScript scripts for loading CSV data into SQL Server
   UI/                   Java Swing desktop application
@@ -54,6 +60,7 @@ ArcadeIQ/
 ## Documentation
 
 - [Architecture](docs/architecture.md)
+- [Local PostgreSQL Setup](docs/local-postgres-setup.md)
 - [Local SQL Server Setup](docs/local-sqlserver-setup.md)
 - [Migration Plan](docs/migration-plan.md)
 - [Legacy SQL Migrations](migrations/README.md)
@@ -69,6 +76,36 @@ ArcadeIQ includes a lightweight browser demo that runs without SQL Server:
 Then open `http://localhost:4173`.
 
 The demo shows the intended product direction: natural-language game search, AI-style review intelligence, and developer-facing insights. It is a front-end prototype while the personal SQL Server deployment is being stabilized.
+
+## Web Frontend
+
+The future ArcadeIQ product surface lives in `frontend/`:
+
+```powershell
+.\scripts\start-frontend.ps1
+```
+
+Then open `http://localhost:5173`.
+
+The frontend is a React + TypeScript app with mock catalog data for now. It is structured so the same screens can later connect to the backend API, personal SQL Server deployment, and AI services.
+
+## Backend API
+
+The modern backend lives in `backend/` and exposes the first API surface for the web app:
+
+```powershell
+.\scripts\start-backend.ps1
+```
+
+After PostgreSQL is running, apply migrations and seed demo data:
+
+```powershell
+.\scripts\seed-backend.ps1
+```
+
+Then open `http://localhost:8000/docs`.
+
+The frontend reads `VITE_API_BASE_URL` and falls back to local mock catalog data if the backend is unavailable.
 
 ## Database Overview
 

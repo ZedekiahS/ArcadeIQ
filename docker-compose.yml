@@ -1,4 +1,22 @@
 services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: arcadeiq-postgres
+    environment:
+      POSTGRES_DB: ${ARCADEIQ_POSTGRES_DB:-arcadeiq}
+      POSTGRES_USER: ${ARCADEIQ_POSTGRES_USER:-arcadeiq}
+      POSTGRES_PASSWORD: ${ARCADEIQ_POSTGRES_PASSWORD:-arcadeiq_dev_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - arcadeiq-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ARCADEIQ_POSTGRES_USER:-arcadeiq} -d ${ARCADEIQ_POSTGRES_DB:-arcadeiq}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: arcadeiq-sqlserver
@@ -22,4 +40,5 @@ services:
       start_period: 20s
 
 volumes:
+  arcadeiq-postgres-data:
   arcadeiq-sqlserver-data:
