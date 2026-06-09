@@ -1,8 +1,8 @@
 # ArcadeIQ
 
-ArcadeIQ is a database-backed game intelligence platform built around game discovery, player reviews, purchases, developer tools, and analytics. The project started as a SQL Server database application and is being refactored into a portfolio-ready AI/data product.
+ArcadeIQ is a database-backed game intelligence platform built around game discovery, player reviews, purchases, developer tools, and analytics. The project started as a SQL Server database application and is now being rebuilt as a personally deployed AI/data product.
 
-The long-term direction is to turn ArcadeIQ into an AI-assisted game commerce and analytics system: natural-language game search, review summarization, player preference insights, and developer-facing recommendations.
+The project no longer depends on the original school-hosted database server. The current refactor is moving ArcadeIQ toward self-managed local and cloud deployments, with AI-assisted search, review summarization, player preference insights, and developer-facing recommendations.
 
 ## Project Goals
 
@@ -11,6 +11,7 @@ The long-term direction is to turn ArcadeIQ into an AI-assisted game commerce an
 - Provide a desktop UI for player and developer workflows.
 - Use scraped and seeded data to populate the database.
 - Evolve the project toward AI-powered discovery and analytics.
+- Replace course-project infrastructure with personally controlled deployment infrastructure.
 
 ## Current Features
 
@@ -41,6 +42,7 @@ The long-term direction is to turn ArcadeIQ into an AI-assisted game commerce an
 ```text
 ArcadeIQ/
   data/                 CSV seed data for users, games, and reviews
+  docs/                 Architecture notes and modernization plan
   migrations/           SQL Server schema, stored procedures, views, and grants
   PopulationScripts/    TypeScript scripts for loading CSV data into SQL Server
   UI/                   Java Swing desktop application
@@ -48,6 +50,12 @@ ArcadeIQ/
   WebScrape/            Playwright scraper for Steam game data
   ER.vsdx               Entity relationship diagram
 ```
+
+## Documentation
+
+- [Architecture](docs/architecture.md)
+- [Migration Plan](docs/migration-plan.md)
+- [Legacy SQL Migrations](migrations/README.md)
 
 ## Database Overview
 
@@ -84,6 +92,7 @@ ArcadeIQ is being repositioned as an AI-enhanced game intelligence platform. Pla
 - Add screenshots and architecture diagrams.
 - Introduce a backend API layer to separate UI concerns from database calls.
 - Add AI-powered search and review intelligence as the first production-style AI features.
+- Move from the legacy school-hosted SQL Server environment to personal local and cloud deployments.
 
 ## Security Notes
 
@@ -93,4 +102,4 @@ The Java UI and TypeScript population scripts now use the `ARCADEIQ_DB_*` enviro
 
 ## Status
 
-ArcadeIQ is currently in refactor mode. The existing codebase demonstrates the database model and application workflows, while the next phase focuses on documentation, configuration cleanup, AI feature design, and a more modern application architecture.
+ArcadeIQ is currently in refactor mode. The existing codebase demonstrates the database model and application workflows, while the next phase focuses on personal deployment, documentation, configuration cleanup, AI feature design, and a more modern application architecture.
