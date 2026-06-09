@@ -1,0 +1,8 @@
+CREATE OR ALTER PROCEDURE dbo.GetAllTags
+AS
+BEGIN
+	SET NOCOUNT ON;
+    SELECT TagName
+    FROM Tag;
+END;
+GO

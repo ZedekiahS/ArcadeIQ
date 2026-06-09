@@ -1,0 +1,31 @@
+CREATE OR ALTER Procedure RegisterUser(
+@Username varchar(30),
+@Email varchar(30) NULL, 
+@Password varchar(60),
+@DOB date NULL,
+@CardNumber int NULL,
+@ExpirationDate date NULL,
+@CVV smallint NULL,
+@NameOnCard varchar(50) NULL
+)
+AS
+BEGIN
+IF @Username IS NULL 
+THROW 52001, 'User cannot be null', 1;
+IF @Password IS NULL
+THROW 52002, 'Password cannot be null', 1;
+
+IF EXISTS(SELECT 1 FROM [User] WHERE [User].Username = @Username)
+THROW 52004, 'Username already exists, use login instead.', 1;
+
+IF @Password NOT LIKE '$2b%' AND @Password NOT LIKE '$2a%'
+THROW 52005, 'PasswordHash is not correct', 1;
+
+INSERT INTO [User](Username, Email, [Password], RegistrationDate, CardNumber, ExpirationDate, CVV, NameOnCard)
+VALUES(@Username, @Email, @Password, GETDATE(), @CardNumber, @ExpirationDate, @CVV, @NameOnCard)
+
+RETURN 0;
+END
+GO
+
+GRANT EXECUTE ON RegisterUser to ArcadeIQApp;

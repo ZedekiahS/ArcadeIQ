@@ -1,0 +1,8 @@
+CREATE TABLE [User] (
+	ID int IDENTITY(0, 1) PRIMARY KEY,
+	Username VARCHAR(30) NOT NULL UNIQUE,
+	Email VARCHAR(30) NOT NULL UNIQUE,
+	[Password] VARCHAR(50) NOT NULL,
+	RegistrationDate date NOT NULL,
+	DOB date
+)

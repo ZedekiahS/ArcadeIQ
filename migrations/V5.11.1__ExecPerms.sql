@@ -1,0 +1,1 @@
+GRANT EXEC ON PurchaseGamebyName TO ArcadeIQApp

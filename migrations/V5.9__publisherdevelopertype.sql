@@ -1,0 +1,5 @@
+CREATE TYPE ProducerInputT AS TABLE(Producer NVARCHAR(100));
+GO
+
+GRANT EXECUTE ON TYPE ::ProducerInputT   TO ArcadeIQApp;
+GO

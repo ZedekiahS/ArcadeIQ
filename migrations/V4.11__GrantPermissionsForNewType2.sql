@@ -1,0 +1,1 @@
+GRANT EXECUTE ON TYPE::DeveloperInputType TO ArcadeIQApp;

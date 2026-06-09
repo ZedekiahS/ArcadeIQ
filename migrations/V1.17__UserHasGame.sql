@@ -1,0 +1,9 @@
+CREATE TABLE UserHasGame (
+    GameID int REFERENCES Game(ID)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    UserID int REFERENCES [User](ID)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    PRIMARY KEY(GameID, UserID)
+)

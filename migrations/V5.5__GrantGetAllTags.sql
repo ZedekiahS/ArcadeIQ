@@ -1,0 +1,1 @@
+GRANT EXECUTE ON GetAllTags TO ArcadeIQApp

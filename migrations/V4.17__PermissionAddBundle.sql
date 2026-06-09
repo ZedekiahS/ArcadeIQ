@@ -1,0 +1,1 @@
+GRANT EXECUTE ON OBJECT::dbo.AddBundle TO [ArcadeIQApp];

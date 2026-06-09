@@ -1,0 +1,1 @@
+GRANT EXEC ON AddReview TO ArcadeIQApp

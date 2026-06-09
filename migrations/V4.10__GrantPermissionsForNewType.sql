@@ -1,0 +1,1 @@
+GRANT REFERENCES ON TYPE::DeveloperInputType TO ArcadeIQApp;

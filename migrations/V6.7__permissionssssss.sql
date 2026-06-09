@@ -1,0 +1,4 @@
+GRANT EXECUTE ON DeleteAllTags TO ArcadeIQApp
+GRANT EXECUTE ON DeleteAllDevs TO ArcadeIQApp
+GRANT EXECUTE ON DeleteAllProds TO ArcadeIQApp
+GRANT EXECUTE ON DeleteGame TO ArcadeIQApp

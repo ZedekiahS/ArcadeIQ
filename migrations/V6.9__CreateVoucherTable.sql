@@ -1,0 +1,8 @@
+CREATE TABLE Voucher(
+	ID int IDENTITY(0,1) PRIMARY KEY, 
+	ActivationCode int, 
+	used bit, 
+	GameID int REFERENCES Game(ID)
+	ON DELETE CASCADE
+	ON UPDATE CASCADE
+)

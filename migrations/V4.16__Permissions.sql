@@ -1,0 +1,1 @@
+GRANT EXECUTE ON OBJECT::dbo.GetBundlesView TO [ArcadeIQApp];

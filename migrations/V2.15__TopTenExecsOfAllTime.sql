@@ -1,0 +1,1 @@
+GRANT EXEC ON RegisterDeveloperUser TO ArcadeIQApp

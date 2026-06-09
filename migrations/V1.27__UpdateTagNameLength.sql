@@ -1,0 +1,2 @@
+ALTER TABLE Tag
+ALTER COLUMN TagName nvarchar(100)

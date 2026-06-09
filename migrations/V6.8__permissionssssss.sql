@@ -1,0 +1,1 @@
+GRANT EXECUTE ON UpdateGame TO ArcadeIQApp

@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "chalk": "^5.4.1",
+    "mssql": "^11.0.1",
+    "papaparse": "^5.5.2",
+    "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/mssql": "^9.1.7",
+    "@types/node": "^22.14.1",
+    "@types/papaparse": "^5.3.15"
+  },
+  "type": "module"
+}

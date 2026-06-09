@@ -1,0 +1,35 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+PopulationScripts/Encryption/config.json
+PopulationScripts/Encryption/
+
+# Java build output
+*.class
+out/
+target/
+build/
+
+# Node dependencies and generated JavaScript
+node_modules/
+PopulationScripts/**/*.js
+WebScrape/**/*.js
+
+# Logs and local runtime files
+*.log
+*.tmp
+
+# IDE/editor files
+.idea/
+.vscode/
+*.iml
+
+# OS and Office temporary files
+.DS_Store
+Thumbs.db
+~$*
+~$$*
+
+# Seed data that contains personal-looking sample user/card records
+data/userdata.csv

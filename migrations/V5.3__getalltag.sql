@@ -1,0 +1,7 @@
+CREATE OR ALTER PROCEDURE dbo.GetAllTags
+AS
+BEGIN
+    SELECT TagName
+    FROM Tag;
+END;
+GO
