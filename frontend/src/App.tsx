@@ -11,9 +11,9 @@ import {
   Tags,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { getCatalog } from "./services/catalog";
+import { getCatalog, searchCatalog } from "./services/catalog";
 import type { Game, SearchIntent } from "./types";
-import { filterGames, getSignal, parseSearchIntent } from "./lib/search";
+import { filterGames, getSignal } from "./lib/search";
 
 const exampleQueries = [
   "Find cheap multiplayer survival games with good reviews",
@@ -43,6 +43,7 @@ export default function App() {
   const [intent, setIntent] = useState<SearchIntent>(initialIntent);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [view, setView] = useState<"player" | "developer">("player");
+  const [searchResults, setSearchResults] = useState<Game[] | null>(null);
 
   useEffect(() => {
     getCatalog().then((items) => {
@@ -52,7 +53,7 @@ export default function App() {
   }, []);
 
   const tags = useMemo(() => [...new Set(catalog.flatMap((game) => game.tags))].sort(), [catalog]);
-  const filteredGames = useMemo(() => filterGames(catalog, intent), [catalog, intent]);
+  const filteredGames = useMemo(() => searchResults ?? filterGames(catalog, intent), [catalog, intent, searchResults]);
   const selectedGame = useMemo(() => {
     return filteredGames.find((game) => game.id === selectedId) ?? filteredGames[0] ?? catalog[0];
   }, [catalog, filteredGames, selectedId]);
@@ -67,14 +68,17 @@ export default function App() {
     };
   }, [filteredGames]);
 
-  function runSearch(nextQuery = query) {
-    const parsed = parseSearchIntent(nextQuery, tags);
-    setIntent(parsed);
-    setView(parsed.mode);
+  async function runSearch(nextQuery = query) {
+    const response = await searchCatalog(nextQuery, tags, catalog);
+    setIntent(response.intent);
+    setView(response.intent.mode);
+    setSearchResults(response.games);
+    setSelectedId(response.games[0]?.id ?? null);
   }
 
   function updateIntent(partial: Partial<SearchIntent>) {
     setIntent((current) => ({ ...current, ...partial }));
+    setSearchResults(null);
   }
 
   const signal = selectedGame ? getSignal(selectedGame) : "Watch";
@@ -111,14 +115,14 @@ export default function App() {
                 title={example}
                 onClick={() => {
                   setQuery(example);
-                  runSearch(example);
+                  void runSearch(example);
                 }}
               >
                 {example.includes("story") ? "Story picks" : example.includes("developer") ? "Dev lens" : "Survival deal"}
               </button>
             ))}
           </div>
-          <button className="primary-button" type="button" onClick={() => runSearch()} title="Parse query and update results">
+          <button className="primary-button" type="button" onClick={() => void runSearch()} title="Parse query and update results">
             <Sparkles size={16} aria-hidden="true" />
             Run Search
           </button>

@@ -22,3 +22,9 @@ export interface SearchIntent {
   tags: string[];
   mode: "player" | "developer";
 }
+
+export interface SearchResponse {
+  intent: SearchIntent;
+  games: Game[];
+  source: "rules" | "mock";
+}

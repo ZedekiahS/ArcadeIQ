@@ -20,6 +20,26 @@ Open:
 http://localhost:8000/docs
 ```
 
+## API Preview
+
+List seeded games:
+
+```text
+GET /api/games
+```
+
+Run the AI-ready search flow:
+
+```powershell
+Invoke-RestMethod `
+  -Uri "http://localhost:8000/api/search" `
+  -Method Post `
+  -ContentType "application/json" `
+  -Body '{"query":"Show highly rated story rich games under 25 dollars"}'
+```
+
+The search endpoint currently uses a rules-based intent parser and returns the same response shape planned for a future LLM-backed parser.
+
 ### Python virtual environment
 
 Create a virtual environment and install dependencies:

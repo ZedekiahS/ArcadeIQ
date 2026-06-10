@@ -18,3 +18,23 @@ class GameOut(BaseModel):
     summary: str
     revenue: int
     ownership: int
+
+
+class SearchIntentOut(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    max_price: float = Field(alias="maxPrice")
+    min_rating: float = Field(alias="minRating")
+    has_reviews: bool = Field(alias="hasReviews")
+    tags: list[str]
+    mode: str
+
+
+class SearchRequest(BaseModel):
+    query: str
+
+
+class SearchResponse(BaseModel):
+    intent: SearchIntentOut
+    games: list[GameOut]
+    source: str = "rules"
