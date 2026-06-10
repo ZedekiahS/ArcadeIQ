@@ -29,6 +29,7 @@ GET /api/games
 GET /api/games/{id}
 GET /api/games/{id}/insights
 GET /api/saved-games
+GET /api/saved-games/insights
 POST /api/saved-games
 DELETE /api/saved-games/{gameId}
 ```

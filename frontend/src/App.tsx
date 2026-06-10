@@ -13,8 +13,17 @@ import {
   Tags,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { getCatalog, getGameDetail, getGameInsights, getSavedGames, removeSavedGame, saveGame, searchCatalog } from "./services/catalog";
-import type { Game, GameInsights, SavedGame, SearchIntent } from "./types";
+import {
+  getCatalog,
+  getGameDetail,
+  getGameInsights,
+  getSavedGames,
+  getShortlistInsights,
+  removeSavedGame,
+  saveGame,
+  searchCatalog,
+} from "./services/catalog";
+import type { Game, GameInsights, SavedGame, SearchIntent, ShortlistInsights } from "./types";
 import { filterGames, getSignal } from "./lib/search";
 
 const exampleQueries = [
@@ -50,6 +59,7 @@ export default function App() {
   const [selectedDetail, setSelectedDetail] = useState<Game | null>(null);
   const [insights, setInsights] = useState<GameInsights | null>(null);
   const [savedGames, setSavedGames] = useState<SavedGame[]>([]);
+  const [shortlistInsights, setShortlistInsights] = useState<ShortlistInsights | null>(null);
 
   useEffect(() => {
     getCatalog().then(async (items) => {
@@ -58,6 +68,17 @@ export default function App() {
       setSavedGames(await getSavedGames(items));
     });
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    getShortlistInsights(savedGames).then((nextInsights) => {
+      if (!cancelled) setShortlistInsights(nextInsights);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [savedGames]);
 
   const tags = useMemo(() => [...new Set(catalog.flatMap((game) => game.tags))].sort(), [catalog]);
   const filteredGames = useMemo(() => searchResults ?? filterGames(catalog, intent), [catalog, intent, searchResults]);
@@ -256,6 +277,31 @@ export default function App() {
             {savedGames.length === 0 && <div className="empty-state compact">No saved games yet.</div>}
           </div>
         </section>
+
+        {shortlistInsights && (
+          <section className="tool-panel shortlist-insight-panel">
+            <div className="section-heading">
+              <h2>
+                <LineChart size={16} aria-hidden="true" />
+                Shortlist Intelligence
+              </h2>
+              <span>{shortlistInsights.source === "mock" ? "Mock fallback" : "Rules preview"}</span>
+            </div>
+            <div className="shortlist-insight-metrics">
+              <Metric label="Avg Price" value={formatMoney(shortlistInsights.averagePrice)} />
+              <Metric label="Avg Rating" value={shortlistInsights.averageRating.toFixed(1)} />
+              <Metric label="Revenue" value={`$${formatCompact(shortlistInsights.totalVisibleRevenue)}`} />
+            </div>
+            <p className="shortlist-summary">{shortlistInsights.strategy.body}</p>
+            {shortlistInsights.topTags.length > 0 && (
+              <div className="tag-row shortlist-tags">
+                {shortlistInsights.topTags.map((tag) => (
+                  <span key={tag}>{tag}</span>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
       </aside>
 
       <main className="workspace">

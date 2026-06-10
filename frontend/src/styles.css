@@ -415,6 +415,26 @@ select {
   font-size: 12px;
 }
 
+.shortlist-insight-metrics {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 12px;
+}
+
+.shortlist-insight-metrics .metric-row strong {
+  font-size: 15px;
+}
+
+.shortlist-summary {
+  color: #263445;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.shortlist-tags {
+  margin-top: 10px;
+}
+
 .game-card {
   display: grid;
   grid-template-columns: 1fr auto;

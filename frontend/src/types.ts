@@ -52,3 +52,14 @@ export interface SavedGame {
   createdAt: string;
   game: Game;
 }
+
+export interface ShortlistInsights {
+  userId: string;
+  savedCount: number;
+  averagePrice: number;
+  averageRating: number;
+  totalVisibleRevenue: number;
+  topTags: string[];
+  strategy: InsightPanelContent;
+  source: "rules" | "deepseek" | "mock";
+}

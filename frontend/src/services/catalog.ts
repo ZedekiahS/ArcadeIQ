@@ -1,6 +1,6 @@
 import { games } from "../data/games";
 import { filterGames, getSignal, parseSearchIntent } from "../lib/search";
-import type { Game, GameInsights, SavedGame, SearchResponse } from "../types";
+import type { Game, GameInsights, SavedGame, SearchResponse, ShortlistInsights } from "../types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
 const DEMO_USER_ID = "demo-user";
@@ -33,6 +33,19 @@ export async function getSavedGames(catalog: Game[]): Promise<SavedGame[]> {
   } catch (error) {
     console.warn("Using local mock saved games because the backend API is unavailable.", error);
     return getLocalSavedGames(catalog);
+  }
+}
+
+export async function getShortlistInsights(savedGames: SavedGame[]): Promise<ShortlistInsights> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/saved-games/insights?userId=${encodeURIComponent(DEMO_USER_ID)}`);
+    if (!response.ok) {
+      throw new Error(`Shortlist insights API returned ${response.status}`);
+    }
+    return (await response.json()) as ShortlistInsights;
+  } catch (error) {
+    console.warn("Using local mock shortlist insights because the backend API is unavailable.", error);
+    return buildMockShortlistInsights(savedGames);
   }
 }
 
@@ -205,4 +218,71 @@ function readLocalSavedIds(): number[] {
 
 function writeLocalSavedIds(gameIds: number[]) {
   window.localStorage.setItem(SAVED_STORAGE_KEY, JSON.stringify([...new Set(gameIds)]));
+}
+
+function buildMockShortlistInsights(savedGames: SavedGame[]): ShortlistInsights {
+  const savedCount = savedGames.length;
+  if (savedCount === 0) {
+    return {
+      userId: DEMO_USER_ID,
+      savedCount: 0,
+      averagePrice: 0,
+      averageRating: 0,
+      totalVisibleRevenue: 0,
+      topTags: [],
+      strategy: {
+        title: "Shortlist Intelligence",
+        caption: "Mock fallback",
+        body: "Save games to build a market shortlist and compare pricing, sentiment, and genre concentration.",
+        bullets: [
+          "Start with two or three games from different tags.",
+          "Use the shortlist to compare player fit and developer opportunity.",
+          "Future AI summaries can use this endpoint as their context source.",
+        ],
+      },
+      source: "mock",
+    };
+  }
+
+  const selectedGames = savedGames.map((savedGame) => savedGame.game);
+  const averagePrice = selectedGames.reduce((sum, game) => sum + game.price, 0) / savedCount;
+  const averageRating = selectedGames.reduce((sum, game) => sum + game.rating, 0) / savedCount;
+  const totalVisibleRevenue = selectedGames.reduce((sum, game) => sum + game.revenue, 0);
+  const tagCounts = new Map<string, number>();
+  for (const game of selectedGames) {
+    for (const tag of game.tags) {
+      tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+    }
+  }
+  const topTags = [...tagCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([tag]) => tag);
+  const strongestGame = selectedGames.reduce((best, game) => (game.rating > best.rating ? game : best), selectedGames[0]);
+  const tagPhrase = topTags.slice(0, 3).join(", ") || "mixed genres";
+
+  return {
+    userId: DEMO_USER_ID,
+    savedCount,
+    averagePrice: Number(averagePrice.toFixed(2)),
+    averageRating: Number(averageRating.toFixed(2)),
+    totalVisibleRevenue,
+    topTags,
+    strategy: {
+      title: "Shortlist Intelligence",
+      caption: "Mock fallback",
+      body: `This shortlist leans ${averagePrice <= 25 ? "accessible" : "premium"} with ${tagPhrase} demand. ${strongestGame.name} is the strongest sentiment anchor at ${strongestGame.rating.toFixed(1)} rating.`,
+      bullets: [
+        `Saved games: ${savedCount}.`,
+        `Average price: ${formatAveragePrice(averagePrice)}.`,
+        `Visible revenue represented: $${formatCompact(totalVisibleRevenue)}.`,
+        `Top tags: ${tagPhrase}.`,
+      ],
+    },
+    source: "mock",
+  };
+}
+
+function formatAveragePrice(value: number) {
+  return value === 0 ? "Free" : `$${value.toFixed(2)}`;
 }

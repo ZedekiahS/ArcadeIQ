@@ -75,3 +75,16 @@ class SavedGameOut(BaseModel):
     game_id: int = Field(alias="gameId")
     created_at: datetime = Field(alias="createdAt")
     game: GameOut
+
+
+class ShortlistInsightsOut(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    user_id: str = Field(alias="userId")
+    saved_count: int = Field(alias="savedCount")
+    average_price: float = Field(alias="averagePrice")
+    average_rating: float = Field(alias="averageRating")
+    total_visible_revenue: int = Field(alias="totalVisibleRevenue")
+    top_tags: list[str] = Field(alias="topTags")
+    strategy: InsightPanelOut
+    source: str = "rules"
