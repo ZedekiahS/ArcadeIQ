@@ -75,3 +75,11 @@ Open:
 ```text
 http://localhost:8000/docs
 ```
+
+## Test
+
+Run backend tests from the repository root:
+
+```powershell
+python -m unittest discover -s backend/tests -t backend
+```
