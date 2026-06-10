@@ -118,6 +118,36 @@ p {
   font-size: 15px;
 }
 
+.section-actions {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  background: var(--soft);
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  border-color: #9bbff2;
+  color: #124888;
+  background: #eaf3ff;
+}
+
+.icon-button.danger:hover {
+  border-color: #f0b4b4;
+  color: var(--red);
+  background: #fff1f1;
+}
+
 textarea {
   width: 100%;
   min-height: 96px;

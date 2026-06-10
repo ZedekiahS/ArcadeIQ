@@ -92,6 +92,21 @@ export async function removeSavedGame(gameId: number): Promise<void> {
   }
 }
 
+export async function clearSavedGames(): Promise<void> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/saved-games?userId=${encodeURIComponent(DEMO_USER_ID)}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Clear saved games API returned ${response.status}`);
+    }
+  } catch (error) {
+    console.warn("Using local mock clear shortlist because the backend API is unavailable.", error);
+    writeLocalSavedIds([]);
+  }
+}
+
 export async function getGameDetail(gameId: number, catalog: Game[]): Promise<Game | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/games/${gameId}`);

@@ -11,9 +11,11 @@ import {
   Sparkles,
   Star,
   Tags,
+  Trash2,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
+  clearSavedGames,
   getCatalog,
   getGameDetail,
   getGameInsights,
@@ -154,6 +156,11 @@ export default function App() {
     });
   }
 
+  async function clearShortlist() {
+    await clearSavedGames();
+    setSavedGames([]);
+  }
+
   const signal = insights?.signal ?? (selectedGame ? getSignal(selectedGame) : "Watch");
   const signalClass = `signal ${signal.toLowerCase()}`;
   const reviewInsight = insights?.reviewIntelligence;
@@ -260,7 +267,20 @@ export default function App() {
               <BookmarkCheck size={16} aria-hidden="true" />
               Saved Shortlist
             </h2>
-            <span>{savedGames.length} saved</span>
+            <div className="section-actions">
+              <span>{savedGames.length} saved</span>
+              {savedGames.length > 0 && (
+                <button
+                  className="icon-button danger"
+                  type="button"
+                  onClick={() => void clearShortlist()}
+                  title="Clear shortlist"
+                  aria-label="Clear shortlist"
+                >
+                  <Trash2 size={15} aria-hidden="true" />
+                </button>
+              )}
+            </div>
           </div>
           <div className="shortlist-list">
             {savedGames.map((savedGame) => (

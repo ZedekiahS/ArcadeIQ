@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.db.database import get_db
@@ -59,6 +59,16 @@ def save_game(request: SavedGameRequest, db: Session = Depends(get_db)) -> Saved
     if created is None:
         raise HTTPException(status_code=500, detail="Saved game was not persisted")
     return created
+
+
+@router.delete("/saved-games", status_code=204, response_class=Response)
+def clear_saved_games(
+    user_id: str = Query(default=DEFAULT_USER_ID, alias="userId"),
+    db: Session = Depends(get_db),
+) -> Response:
+    db.execute(delete(SavedGame).where(SavedGame.user_id == user_id))
+    db.commit()
+    return Response(status_code=204)
 
 
 @router.delete("/saved-games/{game_id}", status_code=204, response_class=Response)
