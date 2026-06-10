@@ -343,6 +343,25 @@ select {
   font-size: 20px;
 }
 
+.save-button {
+  display: inline-flex;
+  justify-content: center;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.save-button:hover,
+.save-button.active {
+  background: rgba(255, 255, 255, 0.24);
+}
+
 .content-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.9fr);
@@ -358,6 +377,42 @@ select {
 .game-list {
   display: grid;
   gap: 10px;
+}
+
+.shortlist-list {
+  display: grid;
+  gap: 8px;
+}
+
+.shortlist-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 38px;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 9px;
+  text-align: left;
+  background: var(--soft);
+  cursor: pointer;
+}
+
+.shortlist-item:hover,
+.shortlist-item.active {
+  border-color: #91bcf7;
+  background: #edf6ff;
+}
+
+.shortlist-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shortlist-item strong {
+  font-size: 12px;
 }
 
 .game-card {
@@ -432,6 +487,11 @@ select {
   padding: 18px;
   color: var(--muted);
   background: #fbfcfe;
+}
+
+.empty-state.compact {
+  padding: 12px;
+  font-size: 12px;
 }
 
 .signal.strong {

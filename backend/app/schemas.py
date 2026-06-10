@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -56,3 +58,20 @@ class GameInsightsOut(BaseModel):
     developer_opportunity: InsightPanelOut = Field(alias="developerOpportunity")
     player_recommendation: InsightPanelOut = Field(alias="playerRecommendation")
     source: str = "rules"
+
+
+class SavedGameRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    game_id: int = Field(alias="gameId")
+    user_id: str = Field(default="demo-user", alias="userId")
+
+
+class SavedGameOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: int
+    user_id: str = Field(alias="userId")
+    game_id: int = Field(alias="gameId")
+    created_at: datetime = Field(alias="createdAt")
+    game: GameOut

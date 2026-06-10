@@ -1,5 +1,7 @@
 import {
   BarChart3,
+  Bookmark,
+  BookmarkCheck,
   Brain,
   CircleDollarSign,
   Gamepad2,
@@ -11,8 +13,8 @@ import {
   Tags,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { getCatalog, getGameDetail, getGameInsights, searchCatalog } from "./services/catalog";
-import type { Game, GameInsights, SearchIntent } from "./types";
+import { getCatalog, getGameDetail, getGameInsights, getSavedGames, removeSavedGame, saveGame, searchCatalog } from "./services/catalog";
+import type { Game, GameInsights, SavedGame, SearchIntent } from "./types";
 import { filterGames, getSignal } from "./lib/search";
 
 const exampleQueries = [
@@ -47,11 +49,13 @@ export default function App() {
   const [searchSource, setSearchSource] = useState<"rules" | "deepseek" | "mock">("rules");
   const [selectedDetail, setSelectedDetail] = useState<Game | null>(null);
   const [insights, setInsights] = useState<GameInsights | null>(null);
+  const [savedGames, setSavedGames] = useState<SavedGame[]>([]);
 
   useEffect(() => {
-    getCatalog().then((items) => {
+    getCatalog().then(async (items) => {
       setCatalog(items);
       setSelectedId(items[0]?.id ?? null);
+      setSavedGames(await getSavedGames(items));
     });
   }, []);
 
@@ -61,6 +65,8 @@ export default function App() {
     return filteredGames.find((game) => game.id === selectedId) ?? filteredGames[0] ?? catalog[0];
   }, [catalog, filteredGames, selectedId]);
   const selectedGame = selectedDetail?.id === selectedId ? selectedDetail : selectedPreview;
+  const savedGameIds = useMemo(() => new Set(savedGames.map((savedGame) => savedGame.gameId)), [savedGames]);
+  const selectedIsSaved = selectedGame ? savedGameIds.has(selectedGame.id) : false;
 
   useEffect(() => {
     if (selectedId === null) {
@@ -111,6 +117,20 @@ export default function App() {
     setIntent((current) => ({ ...current, ...partial }));
     setSearchResults(null);
     setSearchSource("rules");
+  }
+
+  async function toggleSavedGame(game: Game) {
+    if (savedGameIds.has(game.id)) {
+      await removeSavedGame(game.id);
+      setSavedGames((current) => current.filter((savedGame) => savedGame.gameId !== game.id));
+      return;
+    }
+
+    const savedGame = await saveGame(game, catalog);
+    setSavedGames((current) => {
+      if (current.some((item) => item.gameId === savedGame.gameId)) return current;
+      return [savedGame, ...current];
+    });
   }
 
   const signal = insights?.signal ?? (selectedGame ? getSignal(selectedGame) : "Watch");
@@ -208,8 +228,33 @@ export default function App() {
 
         <section className="metric-panel">
           <Metric label="Catalog" value={catalog.length.toString()} />
+          <Metric label="Shortlist" value={savedGames.length.toString()} />
           <Metric label="Visible Revenue" value={`$${formatCompact(metrics.revenue)}`} />
           <Metric label="Avg Rating" value={metrics.avgRating.toFixed(1)} />
+        </section>
+
+        <section className="tool-panel shortlist-panel">
+          <div className="section-heading">
+            <h2>
+              <BookmarkCheck size={16} aria-hidden="true" />
+              Saved Shortlist
+            </h2>
+            <span>{savedGames.length} saved</span>
+          </div>
+          <div className="shortlist-list">
+            {savedGames.map((savedGame) => (
+              <button
+                key={savedGame.gameId}
+                className={`shortlist-item ${selectedId === savedGame.gameId ? "active" : ""}`}
+                type="button"
+                onClick={() => setSelectedId(savedGame.gameId)}
+              >
+                <span>{savedGame.game.name}</span>
+                <strong>{formatMoney(savedGame.game.price)}</strong>
+              </button>
+            ))}
+            {savedGames.length === 0 && <div className="empty-state compact">No saved games yet.</div>}
+          </div>
         </section>
       </aside>
 
@@ -240,6 +285,15 @@ export default function App() {
               <Stat icon={<Star size={16} />} label="Rating" value={selectedGame.rating.toFixed(1)} />
               <Stat icon={<CircleDollarSign size={16} />} label="Price" value={formatMoney(selectedGame.price)} />
               <Stat icon={<LineChart size={16} />} label="Signal" value={signal} className={signalClass} />
+              <button
+                className={`save-button ${selectedIsSaved ? "active" : ""}`}
+                type="button"
+                onClick={() => void toggleSavedGame(selectedGame)}
+                title={selectedIsSaved ? "Remove from shortlist" : "Save to shortlist"}
+              >
+                {selectedIsSaved ? <BookmarkCheck size={16} aria-hidden="true" /> : <Bookmark size={16} aria-hidden="true" />}
+                {selectedIsSaved ? "Saved" : "Save"}
+              </button>
             </div>
           </section>
         )}

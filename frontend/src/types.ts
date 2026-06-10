@@ -44,3 +44,11 @@ export interface GameInsights {
   playerRecommendation: InsightPanelContent;
   source: "rules" | "deepseek" | "mock";
 }
+
+export interface SavedGame {
+  id: number;
+  userId: string;
+  gameId: number;
+  createdAt: string;
+  game: Game;
+}

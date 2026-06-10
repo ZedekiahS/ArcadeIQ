@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from sqlalchemy import Float, Integer, String
+from datetime import datetime
+
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
 
@@ -22,3 +24,15 @@ class Game(Base):
     summary: Mapped[str] = mapped_column(String(500), nullable=False)
     revenue: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     ownership: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+
+class SavedGame(Base):
+    __tablename__ = "saved_games"
+    __table_args__ = (UniqueConstraint("user_id", "game_id", name="uq_saved_games_user_game"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
+    game_id: Mapped[int] = mapped_column(ForeignKey("games.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    game: Mapped[Game] = relationship()

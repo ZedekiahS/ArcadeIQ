@@ -1,8 +1,10 @@
 import { games } from "../data/games";
 import { filterGames, getSignal, parseSearchIntent } from "../lib/search";
-import type { Game, GameInsights, SearchResponse } from "../types";
+import type { Game, GameInsights, SavedGame, SearchResponse } from "../types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
+const DEMO_USER_ID = "demo-user";
+const SAVED_STORAGE_KEY = "arcadeiq.savedGameIds";
 
 export async function getCatalog(): Promise<Game[]> {
   try {
@@ -19,6 +21,58 @@ export async function getCatalog(): Promise<Game[]> {
 
 export function getMockCatalog(): Game[] {
   return games;
+}
+
+export async function getSavedGames(catalog: Game[]): Promise<SavedGame[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/saved-games?userId=${encodeURIComponent(DEMO_USER_ID)}`);
+    if (!response.ok) {
+      throw new Error(`Saved games API returned ${response.status}`);
+    }
+    return (await response.json()) as SavedGame[];
+  } catch (error) {
+    console.warn("Using local mock saved games because the backend API is unavailable.", error);
+    return getLocalSavedGames(catalog);
+  }
+}
+
+export async function saveGame(game: Game, catalog: Game[]): Promise<SavedGame> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/saved-games`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ gameId: game.id, userId: DEMO_USER_ID }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Save game API returned ${response.status}`);
+    }
+
+    return (await response.json()) as SavedGame;
+  } catch (error) {
+    console.warn("Using local mock save because the backend API is unavailable.", error);
+    const savedIds = new Set(readLocalSavedIds());
+    savedIds.add(game.id);
+    writeLocalSavedIds([...savedIds]);
+    return buildMockSavedGame(game, catalog);
+  }
+}
+
+export async function removeSavedGame(gameId: number): Promise<void> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/saved-games/${gameId}?userId=${encodeURIComponent(DEMO_USER_ID)}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Remove saved game API returned ${response.status}`);
+    }
+  } catch (error) {
+    console.warn("Using local mock unsave because the backend API is unavailable.", error);
+    writeLocalSavedIds(readLocalSavedIds().filter((id) => id !== gameId));
+  }
 }
 
 export async function getGameDetail(gameId: number, catalog: Game[]): Promise<Game | null> {
@@ -118,4 +172,37 @@ function buildMockInsights(game: Game): GameInsights {
 
 function formatCompact(value: number) {
   return Intl.NumberFormat("en", { notation: "compact" }).format(value);
+}
+
+function getLocalSavedGames(catalog: Game[]): SavedGame[] {
+  return readLocalSavedIds()
+    .map((gameId) => catalog.find((game) => game.id === gameId) ?? games.find((game) => game.id === gameId))
+    .filter((game): game is Game => Boolean(game))
+    .map((game) => buildMockSavedGame(game, catalog));
+}
+
+function buildMockSavedGame(game: Game, catalog: Game[]): SavedGame {
+  const existingIndex = catalog.findIndex((candidate) => candidate.id === game.id);
+  return {
+    id: existingIndex >= 0 ? existingIndex + 1 : game.id,
+    userId: DEMO_USER_ID,
+    gameId: game.id,
+    createdAt: new Date().toISOString(),
+    game,
+  };
+}
+
+function readLocalSavedIds(): number[] {
+  try {
+    const rawValue = window.localStorage.getItem(SAVED_STORAGE_KEY);
+    if (!rawValue) return [];
+    const parsed = JSON.parse(rawValue);
+    return Array.isArray(parsed) ? parsed.filter((value): value is number => Number.isInteger(value)) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalSavedIds(gameIds: number[]) {
+  window.localStorage.setItem(SAVED_STORAGE_KEY, JSON.stringify([...new Set(gameIds)]));
 }
