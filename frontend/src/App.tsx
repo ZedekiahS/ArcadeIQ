@@ -255,10 +255,10 @@ export default function App() {
         </section>
 
         <section className="metric-panel">
-          <Metric label="Catalog" value={catalog.length.toString()} />
-          <Metric label="Shortlist" value={savedGames.length.toString()} />
+          <Metric label="Visible Games" value={filteredGames.length.toString()} />
+          <Metric label="Saved" value={savedGames.length.toString()} />
           <Metric label="Visible Revenue" value={`$${formatCompact(metrics.revenue)}`} />
-          <Metric label="Avg Rating" value={metrics.avgRating.toFixed(1)} />
+          <Metric label="Visible Avg Rating" value={metrics.avgRating.toFixed(1)} />
         </section>
 
         <section className="tool-panel shortlist-panel">
