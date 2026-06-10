@@ -11,8 +11,8 @@ import {
   Tags,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { getCatalog, searchCatalog } from "./services/catalog";
-import type { Game, SearchIntent } from "./types";
+import { getCatalog, getGameDetail, getGameInsights, searchCatalog } from "./services/catalog";
+import type { Game, GameInsights, SearchIntent } from "./types";
 import { filterGames, getSignal } from "./lib/search";
 
 const exampleQueries = [
@@ -45,6 +45,8 @@ export default function App() {
   const [view, setView] = useState<"player" | "developer">("player");
   const [searchResults, setSearchResults] = useState<Game[] | null>(null);
   const [searchSource, setSearchSource] = useState<"rules" | "deepseek" | "mock">("rules");
+  const [selectedDetail, setSelectedDetail] = useState<Game | null>(null);
+  const [insights, setInsights] = useState<GameInsights | null>(null);
 
   useEffect(() => {
     getCatalog().then((items) => {
@@ -55,9 +57,36 @@ export default function App() {
 
   const tags = useMemo(() => [...new Set(catalog.flatMap((game) => game.tags))].sort(), [catalog]);
   const filteredGames = useMemo(() => searchResults ?? filterGames(catalog, intent), [catalog, intent, searchResults]);
-  const selectedGame = useMemo(() => {
+  const selectedPreview = useMemo(() => {
     return filteredGames.find((game) => game.id === selectedId) ?? filteredGames[0] ?? catalog[0];
   }, [catalog, filteredGames, selectedId]);
+  const selectedGame = selectedDetail?.id === selectedId ? selectedDetail : selectedPreview;
+
+  useEffect(() => {
+    if (selectedId === null) {
+      setSelectedDetail(null);
+      setInsights(null);
+      return;
+    }
+
+    let cancelled = false;
+    setSelectedDetail(null);
+    setInsights(null);
+
+    getGameDetail(selectedId, catalog).then((game) => {
+      if (cancelled) return;
+      setSelectedDetail(game);
+      if (!game) return;
+
+      getGameInsights(game).then((nextInsights) => {
+        if (!cancelled) setInsights(nextInsights);
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [catalog, selectedId]);
 
   const metrics = useMemo(() => {
     const visible = filteredGames.length || 1;
@@ -84,8 +113,10 @@ export default function App() {
     setSearchSource("rules");
   }
 
-  const signal = selectedGame ? getSignal(selectedGame) : "Watch";
+  const signal = insights?.signal ?? (selectedGame ? getSignal(selectedGame) : "Watch");
   const signalClass = `signal ${signal.toLowerCase()}`;
+  const reviewInsight = insights?.reviewIntelligence;
+  const selectedRecommendation = view === "developer" ? insights?.developerOpportunity : insights?.playerRecommendation;
 
   return (
     <div className="app-shell">
@@ -252,44 +283,18 @@ export default function App() {
 
           <div className="insight-stack">
             <InsightPanel
-              title="Review Intelligence"
-              caption="Generated preview"
+              title={reviewInsight?.title ?? "Review Intelligence"}
+              caption={reviewInsight?.caption ?? "Loading"}
               icon={<Brain size={16} />}
-              body={
-                selectedGame
-                  ? `${selectedGame.name} is showing ${selectedGame.rating >= 4.5 ? "very strong" : "steady"} review sentiment. The strongest positioning comes from ${selectedGame.tags.slice(0, 2).join(" and ")} demand.`
-                  : "Select a game to inspect review intelligence."
-              }
-              bullets={
-                selectedGame
-                  ? [
-                      `Common praise: ${selectedGame.tags[0]} identity and clear audience fit.`,
-                      `Review volume: ${selectedGame.reviewCount} player reviews available for summarization.`,
-                      `Recommendation: surface to players who prefer ${selectedGame.tags.slice(1, 3).join(" and ")}.`,
-                    ]
-                  : []
-              }
+              body={reviewInsight?.body ?? "Select a game to inspect review intelligence."}
+              bullets={reviewInsight?.bullets ?? []}
             />
             <InsightPanel
-              title={view === "developer" ? "Developer Copilot" : "Player Recommendation"}
-              caption={view === "developer" ? "Revenue lens" : "Discovery lens"}
+              title={selectedRecommendation?.title ?? (view === "developer" ? "Developer Copilot" : "Player Recommendation")}
+              caption={selectedRecommendation?.caption ?? (view === "developer" ? "Revenue lens" : "Discovery lens")}
               icon={<BarChart3 size={16} />}
-              body={
-                selectedGame && view === "developer"
-                  ? `${selectedGame.developer} can use this title as a ${getSignal(selectedGame).toLowerCase()} catalog signal with ${formatCompact(selectedGame.ownership)} owners and $${formatCompact(selectedGame.revenue)} visible revenue.`
-                  : selectedGame
-                    ? `This is a good match for players who want ${selectedGame.tags.slice(0, 2).join(" and ")} with a ${selectedGame.price <= 25 ? "friendly" : "premium"} price point.`
-                    : "Select a game to inspect recommendation signals."
-              }
-              bullets={
-                selectedGame
-                  ? [
-                      `Price signal: ${selectedGame.price <= 25 ? "accessible" : "premium"} price positioning.`,
-                      `Bundle opportunity: pair with adjacent ${selectedGame.tags[0].toLowerCase()} games.`,
-                      "Next step: connect this panel to real ownership, purchase, and review tables.",
-                    ]
-                  : []
-              }
+              body={selectedRecommendation?.body ?? "Select a game to inspect recommendation signals."}
+              bullets={selectedRecommendation?.bullets ?? []}
             />
           </div>
         </section>

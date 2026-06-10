@@ -7,8 +7,9 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.db.database import get_db
 from app.db.models import Game
-from app.schemas import GameOut, SearchRequest, SearchResponse
+from app.schemas import GameInsightsOut, GameOut, SearchRequest, SearchResponse
 from app.services.ai_search import AIProviderError, resolve_search_intent
+from app.services.game_insights import build_game_insights
 from app.services.search_intent import SearchIntent
 
 router = APIRouter(tags=["games"])
@@ -33,6 +34,17 @@ def list_games(
     return list(db.scalars(stmt).all())
 
 
+@router.get("/games/{game_id}", response_model=GameOut)
+def get_game(game_id: int, db: Session = Depends(get_db)) -> Game:
+    return get_game_or_404(game_id, db)
+
+
+@router.get("/games/{game_id}/insights", response_model=GameInsightsOut)
+def get_game_insights(game_id: int, db: Session = Depends(get_db)) -> dict[str, object]:
+    game = get_game_or_404(game_id, db)
+    return build_game_insights(game)
+
+
 @router.post("/search", response_model=SearchResponse)
 def search_games(request: SearchRequest, db: Session = Depends(get_db)) -> dict[str, object]:
     available_tags = sorted({tag for game_tags in db.scalars(select(Game.tags)).all() for tag in game_tags})
@@ -49,6 +61,13 @@ def search_games(request: SearchRequest, db: Session = Depends(get_db)) -> dict[
         "games": list(db.scalars(stmt).all()),
         "source": result.source,
     }
+
+
+def get_game_or_404(game_id: int, db: Session) -> Game:
+    game = db.get(Game, game_id)
+    if game is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return game
 
 
 def apply_intent_filters(stmt: Select[tuple[Game]], intent: SearchIntent) -> Select[tuple[Game]]:

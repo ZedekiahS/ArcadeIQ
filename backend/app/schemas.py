@@ -38,3 +38,21 @@ class SearchResponse(BaseModel):
     intent: SearchIntentOut
     games: list[GameOut]
     source: str = "rules"
+
+
+class InsightPanelOut(BaseModel):
+    title: str
+    caption: str
+    body: str
+    bullets: list[str]
+
+
+class GameInsightsOut(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    game_id: int = Field(alias="gameId")
+    signal: str
+    review_intelligence: InsightPanelOut = Field(alias="reviewIntelligence")
+    developer_opportunity: InsightPanelOut = Field(alias="developerOpportunity")
+    player_recommendation: InsightPanelOut = Field(alias="playerRecommendation")
+    source: str = "rules"

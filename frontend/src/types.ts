@@ -28,3 +28,19 @@ export interface SearchResponse {
   games: Game[];
   source: "rules" | "deepseek" | "mock";
 }
+
+export interface InsightPanelContent {
+  title: string;
+  caption: string;
+  body: string;
+  bullets: string[];
+}
+
+export interface GameInsights {
+  gameId: number;
+  signal: GameSignal;
+  reviewIntelligence: InsightPanelContent;
+  developerOpportunity: InsightPanelContent;
+  playerRecommendation: InsightPanelContent;
+  source: "rules" | "deepseek" | "mock";
+}

@@ -26,6 +26,8 @@ List seeded games:
 
 ```text
 GET /api/games
+GET /api/games/{id}
+GET /api/games/{id}/insights
 ```
 
 Run the AI-ready search flow:
