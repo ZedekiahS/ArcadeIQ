@@ -40,6 +40,21 @@ Invoke-RestMethod `
 
 The search endpoint currently uses a rules-based intent parser and returns the same response shape planned for a future LLM-backed parser.
 
+### Optional AI Provider
+
+ArcadeIQ defaults to the free local rules parser. To prepare a DeepSeek-backed parser later, configure these values in your local `.env` or deployment secrets:
+
+```env
+ARCADEIQ_AI_ENABLED=true
+ARCADEIQ_AI_PROVIDER=deepseek
+ARCADEIQ_AI_FALLBACK_TO_RULES=true
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-v4-flash
+DEEPSEEK_API_KEY=your-local-key
+```
+
+If the provider is disabled, missing a key, or returns an invalid payload, `/api/search` falls back to the local rules parser when `ARCADEIQ_AI_FALLBACK_TO_RULES=true`.
+
 ### Python virtual environment
 
 Create a virtual environment and install dependencies:

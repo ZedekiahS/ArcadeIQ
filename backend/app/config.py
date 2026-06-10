@@ -13,6 +13,20 @@ class Settings:
             for origin in os.getenv("ARCADEIQ_CORS_ORIGINS", "http://localhost:5173").split(",")
             if origin.strip()
         ]
+        self.ai_enabled = env_bool("ARCADEIQ_AI_ENABLED", default=False)
+        self.ai_provider = os.getenv("ARCADEIQ_AI_PROVIDER", "rules").strip().lower()
+        self.ai_fallback_to_rules = env_bool("ARCADEIQ_AI_FALLBACK_TO_RULES", default=True)
+        self.ai_timeout_seconds = float(os.getenv("ARCADEIQ_AI_TIMEOUT_SECONDS", "8"))
+        self.deepseek_api_key = os.getenv("DEEPSEEK_API_KEY", "")
+        self.deepseek_base_url = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+        self.deepseek_model = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash")
+
+
+def env_bool(name: str, *, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 @lru_cache

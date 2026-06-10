@@ -44,6 +44,7 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [view, setView] = useState<"player" | "developer">("player");
   const [searchResults, setSearchResults] = useState<Game[] | null>(null);
+  const [searchSource, setSearchSource] = useState<"rules" | "deepseek" | "mock">("rules");
 
   useEffect(() => {
     getCatalog().then((items) => {
@@ -73,12 +74,14 @@ export default function App() {
     setIntent(response.intent);
     setView(response.intent.mode);
     setSearchResults(response.games);
+    setSearchSource(response.source);
     setSelectedId(response.games[0]?.id ?? null);
   }
 
   function updateIntent(partial: Partial<SearchIntent>) {
     setIntent((current) => ({ ...current, ...partial }));
     setSearchResults(null);
+    setSearchSource("rules");
   }
 
   const signal = selectedGame ? getSignal(selectedGame) : "Watch";
@@ -103,7 +106,7 @@ export default function App() {
               <Search size={16} aria-hidden="true" />
               Natural Search
             </h2>
-            <span>Intent parser</span>
+            <span>{searchSource === "deepseek" ? "DeepSeek parser" : searchSource === "mock" ? "Mock fallback" : "Rules parser"}</span>
           </div>
           <textarea value={query} onChange={(event) => setQuery(event.target.value)} spellCheck={false} />
           <div className="scenario-grid">

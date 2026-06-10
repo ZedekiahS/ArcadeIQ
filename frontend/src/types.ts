@@ -26,5 +26,5 @@ export interface SearchIntent {
 export interface SearchResponse {
   intent: SearchIntent;
   games: Game[];
-  source: "rules" | "mock";
+  source: "rules" | "deepseek" | "mock";
 }

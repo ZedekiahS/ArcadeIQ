@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-import re
-
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import Select, select
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.db.database import get_db
 from app.db.models import Game
 from app.schemas import GameOut, SearchRequest, SearchResponse
+from app.services.ai_search import AIProviderError, resolve_search_intent
+from app.services.search_intent import SearchIntent
 
 router = APIRouter(tags=["games"])
 
@@ -35,19 +36,22 @@ def list_games(
 @router.post("/search", response_model=SearchResponse)
 def search_games(request: SearchRequest, db: Session = Depends(get_db)) -> dict[str, object]:
     available_tags = sorted({tag for game_tags in db.scalars(select(Game.tags)).all() for tag in game_tags})
-    intent = parse_search_intent(request.query, available_tags)
+    try:
+        result = resolve_search_intent(request.query, available_tags, get_settings())
+    except AIProviderError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     stmt: Select[tuple[Game]] = select(Game).order_by(Game.name)
-    stmt = apply_intent_filters(stmt, intent)
+    stmt = apply_intent_filters(stmt, result.intent)
 
     return {
-        "intent": intent,
+        "intent": result.intent,
         "games": list(db.scalars(stmt).all()),
-        "source": "rules",
+        "source": result.source,
     }
 
 
-def apply_intent_filters(stmt: Select[tuple[Game]], intent: dict[str, object]) -> Select[tuple[Game]]:
+def apply_intent_filters(stmt: Select[tuple[Game]], intent: SearchIntent) -> Select[tuple[Game]]:
     stmt = stmt.where(Game.price <= float(intent["max_price"]))
     stmt = stmt.where(Game.rating >= float(intent["min_rating"]))
 
@@ -58,72 +62,3 @@ def apply_intent_filters(stmt: Select[tuple[Game]], intent: dict[str, object]) -
         stmt = stmt.where(Game.tags.contains([tag]))
 
     return stmt
-
-
-def parse_search_intent(query: str, available_tags: list[str]) -> dict[str, object]:
-    text = query.lower()
-    intent: dict[str, object] = {
-        "max_price": 70,
-        "min_rating": 0,
-        "has_reviews": False,
-        "tags": [],
-        "mode": "player",
-    }
-
-    explicit_price = re.search(r"(?:under|below|less than)\s+\$?(\d+)", text)
-    if explicit_price:
-        intent["max_price"] = int(explicit_price.group(1))
-    elif "cheap" in text or "deal" in text:
-        intent["max_price"] = 35
-
-    if "highly rated" in text or "top rated" in text:
-        intent["min_rating"] = 4.4
-        intent["has_reviews"] = True
-    elif "good reviews" in text:
-        intent["has_reviews"] = True
-    elif "review" in text or "rated" in text:
-        intent["has_reviews"] = True
-
-    if "developer" in text or "catalog" in text or "revenue" in text:
-        intent["mode"] = "developer"
-
-    matched_tags: set[str] = set()
-    for tag in available_tags:
-        normalized = tag.lower()
-        single_word = " " not in normalized
-        if normalized in text or (single_word and normalized.split(" ")[0] in text):
-            matched_tags.add(tag)
-
-    if "story" in text:
-        matched_tags.add("Story Rich")
-    if "horror" in text:
-        matched_tags.add("Survival Horror")
-    if "multiplayer" in text:
-        matched_tags.add("Multiplayer")
-
-    intent["tags"] = prioritize_tags(sorted(matched_tags), text)
-    return intent
-
-
-def prioritize_tags(tags: list[str], text: str) -> list[str]:
-    priority: list[str] = []
-
-    def push(tag: str) -> None:
-        if tag in tags and tag not in priority:
-            priority.append(tag)
-
-    if "multiplayer" in text:
-        push("Multiplayer")
-    if "survival" in text:
-        push("Survival")
-    if "story" in text:
-        push("Story Rich")
-    if "exploration" in text:
-        push("Exploration")
-    if "puzzle" in text:
-        push("Puzzle")
-
-    for tag in tags:
-        push(tag)
-
-    return priority[:3]

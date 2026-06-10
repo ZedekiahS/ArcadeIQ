@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from app.api.games import parse_search_intent
+from app.services.search_intent import normalize_search_intent, parse_search_intent
 
 AVAILABLE_TAGS = [
     "Adventure",
@@ -46,4 +46,22 @@ class SearchIntentTests(unittest.TestCase):
         self.assertEqual(intent["max_price"], 70)
         self.assertIs(intent["has_reviews"], False)
         self.assertEqual(intent["tags"], ["Exploration"])
+        self.assertEqual(intent["mode"], "developer")
+
+    def test_normalize_intent_filters_unknown_tags(self) -> None:
+        intent = normalize_search_intent(
+            {
+                "maxPrice": "25",
+                "minRating": "4.5",
+                "hasReviews": "true",
+                "tags": ["Story Rich", "Unknown Tag"],
+                "mode": "developer",
+            },
+            AVAILABLE_TAGS,
+        )
+
+        self.assertEqual(intent["max_price"], 25)
+        self.assertEqual(intent["min_rating"], 4.5)
+        self.assertIs(intent["has_reviews"], True)
+        self.assertEqual(intent["tags"], ["Story Rich"])
         self.assertEqual(intent["mode"], "developer")
