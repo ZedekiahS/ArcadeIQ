@@ -37,6 +37,10 @@ export async function getSavedGames(catalog: Game[]): Promise<SavedGame[]> {
 }
 
 export async function getShortlistInsights(savedGames: SavedGame[]): Promise<ShortlistInsights> {
+  if (savedGames.length === 0) {
+    return buildMockShortlistInsights(savedGames, "rules");
+  }
+
   try {
     const response = await fetch(`${API_BASE_URL}/saved-games/insights?userId=${encodeURIComponent(DEMO_USER_ID)}`);
     if (!response.ok) {
@@ -45,7 +49,7 @@ export async function getShortlistInsights(savedGames: SavedGame[]): Promise<Sho
     return (await response.json()) as ShortlistInsights;
   } catch (error) {
     console.warn("Using local mock shortlist insights because the backend API is unavailable.", error);
-    return buildMockShortlistInsights(savedGames);
+    return buildMockShortlistInsights(savedGames, "mock");
   }
 }
 
@@ -220,7 +224,7 @@ function writeLocalSavedIds(gameIds: number[]) {
   window.localStorage.setItem(SAVED_STORAGE_KEY, JSON.stringify([...new Set(gameIds)]));
 }
 
-function buildMockShortlistInsights(savedGames: SavedGame[]): ShortlistInsights {
+function buildMockShortlistInsights(savedGames: SavedGame[], source: "rules" | "mock"): ShortlistInsights {
   const savedCount = savedGames.length;
   if (savedCount === 0) {
     return {
@@ -240,7 +244,7 @@ function buildMockShortlistInsights(savedGames: SavedGame[]): ShortlistInsights 
           "Future AI summaries can use this endpoint as their context source.",
         ],
       },
-      source: "mock",
+      source,
     };
   }
 
@@ -279,7 +283,7 @@ function buildMockShortlistInsights(savedGames: SavedGame[]): ShortlistInsights 
         `Top tags: ${tagPhrase}.`,
       ],
     },
-    source: "mock",
+    source,
   };
 }
 

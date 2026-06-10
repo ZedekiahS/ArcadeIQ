@@ -61,10 +61,9 @@ def save_game(request: SavedGameRequest, db: Session = Depends(get_db)) -> Saved
     return created
 
 
-@router.delete("/saved-games/{game_id}", status_code=204)
+@router.delete("/saved-games/{game_id}", status_code=204, response_class=Response)
 def delete_saved_game(
     game_id: int,
-    response: Response,
     user_id: str = Query(default=DEFAULT_USER_ID, alias="userId"),
     db: Session = Depends(get_db),
 ) -> Response:
@@ -72,7 +71,7 @@ def delete_saved_game(
     if saved is not None:
         db.delete(saved)
         db.commit()
-    return response
+    return Response(status_code=204)
 
 
 def get_saved_game(db: Session, user_id: str, game_id: int) -> SavedGame | None:

@@ -288,7 +288,7 @@ export default function App() {
               <span>{shortlistInsights.source === "mock" ? "Mock fallback" : "Rules preview"}</span>
             </div>
             <div className="shortlist-insight-metrics">
-              <Metric label="Avg Price" value={formatMoney(shortlistInsights.averagePrice)} />
+              <Metric label="Avg Price" value={`$${shortlistInsights.averagePrice.toFixed(2)}`} />
               <Metric label="Avg Rating" value={shortlistInsights.averageRating.toFixed(1)} />
               <Metric label="Revenue" value={`$${formatCompact(shortlistInsights.totalVisibleRevenue)}`} />
             </div>
