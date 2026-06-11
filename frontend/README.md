@@ -22,6 +22,7 @@ This is the future web surface for ArcadeIQ. It currently uses mock catalog data
 - natural-language game search
 - AI review summaries
 - developer analytics
+- local guest sessions
 - collection-based saved games
 - collection intelligence summaries
 - catalog and purchase data

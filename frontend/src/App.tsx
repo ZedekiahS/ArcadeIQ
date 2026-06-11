@@ -8,12 +8,14 @@ import {
   Gamepad2,
   LineChart,
   Plus,
+  RefreshCcw,
   Search,
   SlidersHorizontal,
   Sparkles,
   Star,
   Tags,
   Trash2,
+  UserRound,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -29,6 +31,7 @@ import {
   saveGame,
   searchCatalog,
 } from "./services/catalog";
+import { createSessionUserId, getActiveSessionUserId, getKnownSessionUserIds, setActiveSessionUserId as persistSessionUserId } from "./services/session";
 import type { Game, GameCollection, GameInsights, SavedGame, SearchIntent, ShortlistInsights } from "./types";
 import { filterGames, getSignal } from "./lib/search";
 
@@ -54,7 +57,13 @@ function formatCompact(value: number) {
   return Intl.NumberFormat("en", { notation: "compact" }).format(value);
 }
 
+function formatSessionLabel(userId: string) {
+  return userId.length > 18 ? `${userId.slice(0, 18)}...` : userId;
+}
+
 export default function App() {
+  const [sessionUserId, setSessionUserId] = useState(getActiveSessionUserId);
+  const [knownSessionUserIds, setKnownSessionUserIds] = useState(getKnownSessionUserIds);
   const [catalog, setCatalog] = useState<Game[]>([]);
   const [query, setQuery] = useState(exampleQueries[0]);
   const [intent, setIntent] = useState<SearchIntent>(initialIntent);
@@ -76,12 +85,25 @@ export default function App() {
       setCatalog(items);
       setSelectedId(items[0]?.id ?? null);
     });
+  }, []);
 
-    getCollections().then((items) => {
+  useEffect(() => {
+    let cancelled = false;
+    setCollections([]);
+    setActiveCollectionId(null);
+    setSavedGames([]);
+    setShortlistInsights(null);
+
+    getCollections(sessionUserId).then((items) => {
+      if (cancelled) return;
       setCollections(items);
       setActiveCollectionId(items[0]?.id ?? null);
     });
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionUserId]);
 
   useEffect(() => {
     if (catalog.length === 0 || activeCollectionId === null) {
@@ -91,25 +113,25 @@ export default function App() {
 
     let cancelled = false;
     setSavedGames([]);
-    getSavedGames(catalog, activeCollectionId).then((items) => {
+    getSavedGames(catalog, sessionUserId, activeCollectionId).then((items) => {
       if (!cancelled) setSavedGames(items);
     });
 
     return () => {
       cancelled = true;
     };
-  }, [activeCollectionId, catalog]);
+  }, [activeCollectionId, catalog, sessionUserId]);
 
   useEffect(() => {
     let cancelled = false;
-    getShortlistInsights(savedGames, activeCollectionId ?? undefined).then((nextInsights) => {
+    getShortlistInsights(savedGames, sessionUserId, activeCollectionId ?? undefined).then((nextInsights) => {
       if (!cancelled) setShortlistInsights(nextInsights);
     });
 
     return () => {
       cancelled = true;
     };
-  }, [activeCollectionId, savedGames]);
+  }, [activeCollectionId, savedGames, sessionUserId]);
 
   const tags = useMemo(() => [...new Set(catalog.flatMap((game) => game.tags))].sort(), [catalog]);
   const filteredGames = useMemo(() => searchResults ?? filterGames(catalog, intent), [catalog, intent, searchResults]);
@@ -177,12 +199,12 @@ export default function App() {
   async function toggleSavedGame(game: Game) {
     const collectionId = selectedCollection?.id ?? activeCollectionId ?? undefined;
     if (savedGameIds.has(game.id)) {
-      await removeSavedGame(game.id, collectionId);
+      await removeSavedGame(game.id, sessionUserId, collectionId);
       setSavedGames((current) => current.filter((savedGame) => savedGame.gameId !== game.id));
       return;
     }
 
-    const savedGame = await saveGame(game, catalog, collectionId);
+    const savedGame = await saveGame(game, catalog, sessionUserId, collectionId);
     setSavedGames((current) => {
       if (current.some((item) => item.gameId === savedGame.gameId)) return current;
       return [savedGame, ...current];
@@ -190,7 +212,7 @@ export default function App() {
   }
 
   async function clearShortlist() {
-    await clearSavedGames(selectedCollection?.id ?? activeCollectionId ?? undefined);
+    await clearSavedGames(sessionUserId, selectedCollection?.id ?? activeCollectionId ?? undefined);
     setSavedGames([]);
   }
 
@@ -199,7 +221,7 @@ export default function App() {
     const name = newCollectionName.trim();
     if (!name) return;
 
-    const collection = await createCollection(name);
+    const collection = await createCollection(name, sessionUserId);
     setCollections((current) => {
       if (current.some((item) => item.id === collection.id)) return current;
       return [...current, collection];
@@ -207,6 +229,16 @@ export default function App() {
     setActiveCollectionId(collection.id);
     setNewCollectionName("");
     setIsCreatingCollection(false);
+  }
+
+  function activateSession(userId: string) {
+    persistSessionUserId(userId);
+    setSessionUserId(userId);
+    setKnownSessionUserIds(getKnownSessionUserIds());
+  }
+
+  function startNewSession() {
+    activateSession(createSessionUserId());
   }
 
   const signal = insights?.signal ?? (selectedGame ? getSignal(selectedGame) : "Watch");
@@ -226,6 +258,29 @@ export default function App() {
             <p>AI game intelligence</p>
           </div>
         </div>
+
+        <section className="tool-panel session-panel">
+          <div className="section-heading">
+            <h2>
+              <UserRound size={16} aria-hidden="true" />
+              Session
+            </h2>
+            <span>Local user</span>
+          </div>
+          <div className="session-controls">
+            <select value={sessionUserId} onChange={(event) => activateSession(event.target.value)} aria-label="Session user">
+              {knownSessionUserIds.map((userId) => (
+                <option key={userId} value={userId}>
+                  {formatSessionLabel(userId)}
+                </option>
+              ))}
+            </select>
+            <button className="icon-button" type="button" onClick={startNewSession} title="New session" aria-label="New session">
+              <RefreshCcw size={15} aria-hidden="true" />
+            </button>
+          </div>
+          <p className="session-id">{sessionUserId}</p>
+        </section>
 
         <section className="tool-panel">
           <div className="section-heading">

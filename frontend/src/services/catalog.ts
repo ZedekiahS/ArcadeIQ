@@ -3,19 +3,11 @@ import { filterGames, getSignal, parseSearchIntent } from "../lib/search";
 import type { Game, GameCollection, GameInsights, SavedGame, SearchResponse, ShortlistInsights } from "../types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
-const DEMO_USER_ID = "demo-user";
 const DEFAULT_COLLECTION_ID = 1;
 const DEFAULT_COLLECTION_NAME = "Default Shortlist";
 const COLLECTION_STORAGE_KEY = "arcadeiq.collections";
 const SAVED_COLLECTION_STORAGE_KEY = "arcadeiq.savedCollectionGameIds";
 const LEGACY_SAVED_STORAGE_KEY = "arcadeiq.savedGameIds";
-const DEFAULT_COLLECTION: GameCollection = {
-  id: DEFAULT_COLLECTION_ID,
-  userId: DEMO_USER_ID,
-  name: DEFAULT_COLLECTION_NAME,
-  description: "Games saved for quick comparison.",
-  createdAt: "2026-06-11T00:00:00.000Z",
-};
 
 export async function getCatalog(): Promise<Game[]> {
   try {
@@ -34,27 +26,27 @@ export function getMockCatalog(): Game[] {
   return games;
 }
 
-export async function getCollections(): Promise<GameCollection[]> {
+export async function getCollections(userId: string): Promise<GameCollection[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/collections?userId=${encodeURIComponent(DEMO_USER_ID)}`);
+    const response = await fetch(`${API_BASE_URL}/collections?userId=${encodeURIComponent(userId)}`);
     if (!response.ok) {
       throw new Error(`Collections API returned ${response.status}`);
     }
     return (await response.json()) as GameCollection[];
   } catch (error) {
     console.warn("Using local mock collections because the backend API is unavailable.", error);
-    return getLocalCollections();
+    return getLocalCollections(userId);
   }
 }
 
-export async function createCollection(name: string): Promise<GameCollection> {
+export async function createCollection(name: string, userId: string): Promise<GameCollection> {
   try {
     const response = await fetch(`${API_BASE_URL}/collections`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name, userId: DEMO_USER_ID }),
+      body: JSON.stringify({ name, userId }),
     });
 
     if (!response.ok) {
@@ -64,48 +56,48 @@ export async function createCollection(name: string): Promise<GameCollection> {
     return (await response.json()) as GameCollection;
   } catch (error) {
     console.warn("Using local mock collection create because the backend API is unavailable.", error);
-    return createLocalCollection(name);
+    return createLocalCollection(name, userId);
   }
 }
 
-export async function getSavedGames(catalog: Game[], collectionId?: number): Promise<SavedGame[]> {
+export async function getSavedGames(catalog: Game[], userId: string, collectionId?: number): Promise<SavedGame[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/saved-games?${buildCollectionParams(collectionId)}`);
+    const response = await fetch(`${API_BASE_URL}/saved-games?${buildCollectionParams(userId, collectionId)}`);
     if (!response.ok) {
       throw new Error(`Saved games API returned ${response.status}`);
     }
     return (await response.json()) as SavedGame[];
   } catch (error) {
     console.warn("Using local mock saved games because the backend API is unavailable.", error);
-    return getLocalSavedGames(catalog, collectionId);
+    return getLocalSavedGames(catalog, userId, collectionId);
   }
 }
 
-export async function getShortlistInsights(savedGames: SavedGame[], collectionId?: number): Promise<ShortlistInsights> {
+export async function getShortlistInsights(savedGames: SavedGame[], userId: string, collectionId?: number): Promise<ShortlistInsights> {
   if (savedGames.length === 0) {
-    return buildMockShortlistInsights(savedGames, "rules");
+    return buildMockShortlistInsights(savedGames, userId, "rules");
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/saved-games/insights?${buildCollectionParams(collectionId)}`);
+    const response = await fetch(`${API_BASE_URL}/saved-games/insights?${buildCollectionParams(userId, collectionId)}`);
     if (!response.ok) {
       throw new Error(`Shortlist insights API returned ${response.status}`);
     }
     return (await response.json()) as ShortlistInsights;
   } catch (error) {
     console.warn("Using local mock shortlist insights because the backend API is unavailable.", error);
-    return buildMockShortlistInsights(savedGames, "mock");
+    return buildMockShortlistInsights(savedGames, userId, "mock");
   }
 }
 
-export async function saveGame(game: Game, catalog: Game[], collectionId?: number): Promise<SavedGame> {
+export async function saveGame(game: Game, catalog: Game[], userId: string, collectionId?: number): Promise<SavedGame> {
   try {
     const response = await fetch(`${API_BASE_URL}/saved-games`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ gameId: game.id, userId: DEMO_USER_ID, collectionId }),
+      body: JSON.stringify({ gameId: game.id, userId, collectionId }),
     });
 
     if (!response.ok) {
@@ -115,16 +107,16 @@ export async function saveGame(game: Game, catalog: Game[], collectionId?: numbe
     return (await response.json()) as SavedGame;
   } catch (error) {
     console.warn("Using local mock save because the backend API is unavailable.", error);
-    const savedIds = new Set(readLocalSavedIds(collectionId));
+    const savedIds = new Set(readLocalSavedIds(userId, collectionId));
     savedIds.add(game.id);
-    writeLocalSavedIds(collectionId, [...savedIds]);
-    return buildMockSavedGame(game, catalog, getCollectionId(collectionId));
+    writeLocalSavedIds(userId, collectionId, [...savedIds]);
+    return buildMockSavedGame(game, catalog, userId, getCollectionId(collectionId));
   }
 }
 
-export async function removeSavedGame(gameId: number, collectionId?: number): Promise<void> {
+export async function removeSavedGame(gameId: number, userId: string, collectionId?: number): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE_URL}/saved-games/${gameId}?${buildCollectionParams(collectionId)}`, {
+    const response = await fetch(`${API_BASE_URL}/saved-games/${gameId}?${buildCollectionParams(userId, collectionId)}`, {
       method: "DELETE",
     });
 
@@ -134,15 +126,16 @@ export async function removeSavedGame(gameId: number, collectionId?: number): Pr
   } catch (error) {
     console.warn("Using local mock unsave because the backend API is unavailable.", error);
     writeLocalSavedIds(
+      userId,
       collectionId,
-      readLocalSavedIds(collectionId).filter((id) => id !== gameId),
+      readLocalSavedIds(userId, collectionId).filter((id) => id !== gameId),
     );
   }
 }
 
-export async function clearSavedGames(collectionId?: number): Promise<void> {
+export async function clearSavedGames(userId: string, collectionId?: number): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE_URL}/saved-games?${buildCollectionParams(collectionId)}`, {
+    const response = await fetch(`${API_BASE_URL}/saved-games?${buildCollectionParams(userId, collectionId)}`, {
       method: "DELETE",
     });
 
@@ -151,7 +144,7 @@ export async function clearSavedGames(collectionId?: number): Promise<void> {
     }
   } catch (error) {
     console.warn("Using local mock clear shortlist because the backend API is unavailable.", error);
-    writeLocalSavedIds(collectionId, []);
+    writeLocalSavedIds(userId, collectionId, []);
   }
 }
 
@@ -254,8 +247,8 @@ function formatCompact(value: number) {
   return Intl.NumberFormat("en", { notation: "compact" }).format(value);
 }
 
-function buildCollectionParams(collectionId?: number) {
-  const params = new URLSearchParams({ userId: DEMO_USER_ID });
+function buildCollectionParams(userId: string, collectionId?: number) {
+  const params = new URLSearchParams({ userId });
   if (collectionId !== undefined) {
     params.set("collectionId", collectionId.toString());
   }
@@ -266,18 +259,18 @@ function getCollectionId(collectionId?: number) {
   return collectionId ?? DEFAULT_COLLECTION_ID;
 }
 
-function getLocalSavedGames(catalog: Game[], collectionId?: number): SavedGame[] {
-  return readLocalSavedIds(collectionId)
+function getLocalSavedGames(catalog: Game[], userId: string, collectionId?: number): SavedGame[] {
+  return readLocalSavedIds(userId, collectionId)
     .map((gameId) => catalog.find((game) => game.id === gameId) ?? games.find((game) => game.id === gameId))
     .filter((game): game is Game => Boolean(game))
-    .map((game) => buildMockSavedGame(game, catalog, getCollectionId(collectionId)));
+    .map((game) => buildMockSavedGame(game, catalog, userId, getCollectionId(collectionId)));
 }
 
-function buildMockSavedGame(game: Game, catalog: Game[], collectionId: number): SavedGame {
+function buildMockSavedGame(game: Game, catalog: Game[], userId: string, collectionId: number): SavedGame {
   const existingIndex = catalog.findIndex((candidate) => candidate.id === game.id);
   return {
     id: collectionId * 1000 + (existingIndex >= 0 ? existingIndex + 1 : game.id),
-    userId: DEMO_USER_ID,
+    userId,
     collectionId,
     gameId: game.id,
     createdAt: new Date().toISOString(),
@@ -285,35 +278,46 @@ function buildMockSavedGame(game: Game, catalog: Game[], collectionId: number): 
   };
 }
 
-function getLocalCollections(): GameCollection[] {
+function buildDefaultCollection(userId: string): GameCollection {
+  return {
+    id: DEFAULT_COLLECTION_ID,
+    userId,
+    name: DEFAULT_COLLECTION_NAME,
+    description: "Games saved for quick comparison.",
+    createdAt: "2026-06-11T00:00:00.000Z",
+  };
+}
+
+function getLocalCollections(userId: string): GameCollection[] {
+  const defaultCollection = buildDefaultCollection(userId);
   try {
-    const rawValue = window.localStorage.getItem(COLLECTION_STORAGE_KEY);
-    if (!rawValue) return [DEFAULT_COLLECTION];
+    const rawValue = window.localStorage.getItem(getUserStorageKey(COLLECTION_STORAGE_KEY, userId));
+    if (!rawValue) return [defaultCollection];
     const parsed = JSON.parse(rawValue);
-    if (!Array.isArray(parsed)) return [DEFAULT_COLLECTION];
+    if (!Array.isArray(parsed)) return [defaultCollection];
     const collections = parsed.filter(isGameCollection);
     if (collections.some((collection) => collection.id === DEFAULT_COLLECTION_ID)) {
       return collections;
     }
-    return [DEFAULT_COLLECTION, ...collections];
+    return [defaultCollection, ...collections];
   } catch {
-    return [DEFAULT_COLLECTION];
+    return [defaultCollection];
   }
 }
 
-function createLocalCollection(name: string): GameCollection {
-  const collections = getLocalCollections();
+function createLocalCollection(name: string, userId: string): GameCollection {
+  const collections = getLocalCollections(userId);
   const existing = collections.find((collection) => collection.name.toLowerCase() === name.toLowerCase());
   if (existing) return existing;
 
   const collection: GameCollection = {
     id: Math.max(...collections.map((item) => item.id), DEFAULT_COLLECTION_ID) + 1,
-    userId: DEMO_USER_ID,
+    userId,
     name,
     description: "",
     createdAt: new Date().toISOString(),
   };
-  window.localStorage.setItem(COLLECTION_STORAGE_KEY, JSON.stringify([...collections, collection]));
+  window.localStorage.setItem(getUserStorageKey(COLLECTION_STORAGE_KEY, userId), JSON.stringify([...collections, collection]));
   return collection;
 }
 
@@ -329,11 +333,11 @@ function isGameCollection(value: unknown): value is GameCollection {
   );
 }
 
-function readLocalSavedIds(collectionId?: number): number[] {
+function readLocalSavedIds(userId: string, collectionId?: number): number[] {
   try {
-    const rawValue = window.localStorage.getItem(SAVED_COLLECTION_STORAGE_KEY);
+    const rawValue = window.localStorage.getItem(getUserStorageKey(SAVED_COLLECTION_STORAGE_KEY, userId));
     if (!rawValue) {
-      return collectionId === undefined || collectionId === DEFAULT_COLLECTION_ID ? readLegacySavedIds() : [];
+      return collectionId === undefined || collectionId === DEFAULT_COLLECTION_ID ? readLegacySavedIds(userId) : [];
     }
     const parsed = JSON.parse(rawValue);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return [];
@@ -344,8 +348,9 @@ function readLocalSavedIds(collectionId?: number): number[] {
   }
 }
 
-function readLegacySavedIds(): number[] {
+function readLegacySavedIds(userId: string): number[] {
   try {
+    if (userId !== "demo-user") return [];
     const rawValue = window.localStorage.getItem(LEGACY_SAVED_STORAGE_KEY);
     if (!rawValue) return [];
     const parsed = JSON.parse(rawValue);
@@ -355,18 +360,18 @@ function readLegacySavedIds(): number[] {
   }
 }
 
-function writeLocalSavedIds(collectionId: number | undefined, gameIds: number[]) {
-  const savedMap = readLocalSavedMap();
+function writeLocalSavedIds(userId: string, collectionId: number | undefined, gameIds: number[]) {
+  const savedMap = readLocalSavedMap(userId);
   savedMap[getCollectionId(collectionId).toString()] = [...new Set(gameIds)];
-  window.localStorage.setItem(SAVED_COLLECTION_STORAGE_KEY, JSON.stringify(savedMap));
+  window.localStorage.setItem(getUserStorageKey(SAVED_COLLECTION_STORAGE_KEY, userId), JSON.stringify(savedMap));
   window.localStorage.removeItem(LEGACY_SAVED_STORAGE_KEY);
 }
 
-function readLocalSavedMap(): Record<string, number[]> {
+function readLocalSavedMap(userId: string): Record<string, number[]> {
   try {
-    const rawValue = window.localStorage.getItem(SAVED_COLLECTION_STORAGE_KEY);
+    const rawValue = window.localStorage.getItem(getUserStorageKey(SAVED_COLLECTION_STORAGE_KEY, userId));
     if (!rawValue) {
-      const legacyIds = readLegacySavedIds();
+      const legacyIds = readLegacySavedIds(userId);
       return legacyIds.length > 0 ? { [DEFAULT_COLLECTION_ID.toString()]: legacyIds } : {};
     }
     const parsed = JSON.parse(rawValue);
@@ -381,11 +386,15 @@ function readLocalSavedMap(): Record<string, number[]> {
   }
 }
 
-function buildMockShortlistInsights(savedGames: SavedGame[], source: "rules" | "mock"): ShortlistInsights {
+function getUserStorageKey(baseKey: string, userId: string) {
+  return `${baseKey}.${userId}`;
+}
+
+function buildMockShortlistInsights(savedGames: SavedGame[], userId: string, source: "rules" | "mock"): ShortlistInsights {
   const savedCount = savedGames.length;
   if (savedCount === 0) {
     return {
-      userId: DEMO_USER_ID,
+      userId,
       savedCount: 0,
       averagePrice: 0,
       averageRating: 0,
@@ -423,7 +432,7 @@ function buildMockShortlistInsights(savedGames: SavedGame[], source: "rules" | "
   const tagPhrase = topTags.slice(0, 3).join(", ") || "mixed genres";
 
   return {
-    userId: DEMO_USER_ID,
+    userId,
     savedCount,
     averagePrice: Number(averagePrice.toFixed(2)),
     averageRating: Number(averageRating.toFixed(2)),

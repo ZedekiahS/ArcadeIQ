@@ -259,6 +259,26 @@ select {
   gap: 10px;
 }
 
+.session-panel {
+  padding-bottom: 12px;
+}
+
+.session-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 30px;
+  gap: 8px;
+  align-items: center;
+}
+
+.session-id {
+  margin-top: 8px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .metric-row {
   display: flex;
   justify-content: space-between;

@@ -19,6 +19,7 @@ Modern web prototype:
 
 - Natural-language game search backed by a FastAPI rules parser with an AI-provider fallback shape.
 - Game detail intelligence panels for review signals, player recommendations, and developer opportunity.
+- Local guest sessions that isolate collections and saved games before full authentication is added.
 - User collections for saving games into separate lists such as a default shortlist, wishlists, or research folders.
 - Collection intelligence summaries for saved games, including average price, rating, visible revenue, and top tags.
 
