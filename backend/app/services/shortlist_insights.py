@@ -47,12 +47,12 @@ def build_shortlist_insights(saved_games: list[SavedGameLike], user_id: str) -> 
             "total_visible_revenue": 0,
             "top_tags": [],
             "strategy": {
-                "title": "Shortlist Intelligence",
+                "title": "Collection Intelligence",
                 "caption": "Rules preview",
-                "body": "Save games to build a market shortlist and compare pricing, sentiment, and genre concentration.",
+                "body": "Save games to this collection to compare pricing, sentiment, and genre concentration.",
                 "bullets": [
                     "Start with two or three games from different tags.",
-                    "Use the shortlist to compare player fit and developer opportunity.",
+                    "Use collections to separate player wishlists from developer research.",
                     "Future AI summaries can use this endpoint as their context source.",
                 ],
             },
@@ -75,10 +75,10 @@ def build_shortlist_insights(saved_games: list[SavedGameLike], user_id: str) -> 
         "total_visible_revenue": total_visible_revenue,
         "top_tags": top_tags,
         "strategy": {
-            "title": "Shortlist Intelligence",
+            "title": "Collection Intelligence",
             "caption": "Rules preview",
             "body": (
-                f"This shortlist leans {price_position} with {tag_phrase} demand. "
+                f"This collection leans {price_position} with {tag_phrase} demand. "
                 f"{strongest_game.name} is the strongest sentiment anchor at {strongest_game.rating:.1f} rating."
             ),
             "bullets": [

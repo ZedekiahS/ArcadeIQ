@@ -15,6 +15,15 @@ The project no longer depends on the original school-hosted database server. The
 
 ## Current Features
 
+Modern web prototype:
+
+- Natural-language game search backed by a FastAPI rules parser with an AI-provider fallback shape.
+- Game detail intelligence panels for review signals, player recommendations, and developer opportunity.
+- User collections for saving games into separate lists such as a default shortlist, wishlists, or research folders.
+- Collection intelligence summaries for saved games, including average price, rating, visible revenue, and top tags.
+
+Legacy database application:
+
 - Player and developer registration/login with bcrypt password hashing.
 - Game browsing with filters for name, reviews, tags, developers, publishers, price, and release date.
 - Game detail views with developers, publishers, tags, pricing, release date, and reviews.
@@ -87,7 +96,7 @@ The future ArcadeIQ product surface lives in `frontend/`:
 
 Then open `http://localhost:5173`.
 
-The frontend is a React + TypeScript app with mock catalog data for now. It is structured so the same screens can later connect to the backend API, personal SQL Server deployment, and AI services.
+The frontend is a React + TypeScript app that can use the FastAPI/PostgreSQL backend and falls back to local mock data when the backend is unavailable. It supports natural search, game insights, collection-based saved games, and collection intelligence panels.
 
 ## Backend API
 

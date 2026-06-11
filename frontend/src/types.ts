@@ -45,9 +45,18 @@ export interface GameInsights {
   source: "rules" | "deepseek" | "mock";
 }
 
+export interface GameCollection {
+  id: number;
+  userId: string;
+  name: string;
+  description: string;
+  createdAt: string;
+}
+
 export interface SavedGame {
   id: number;
   userId: string;
+  collectionId: number;
   gameId: number;
   createdAt: string;
   game: Game;

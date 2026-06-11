@@ -60,11 +60,30 @@ class GameInsightsOut(BaseModel):
     source: str = "rules"
 
 
+class CollectionCreateRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    user_id: str = Field(default="demo-user", alias="userId")
+    name: str
+    description: str = ""
+
+
+class CollectionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: int
+    user_id: str = Field(alias="userId")
+    name: str
+    description: str
+    created_at: datetime = Field(alias="createdAt")
+
+
 class SavedGameRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     game_id: int = Field(alias="gameId")
     user_id: str = Field(default="demo-user", alias="userId")
+    collection_id: int | None = Field(default=None, alias="collectionId")
 
 
 class SavedGameOut(BaseModel):
@@ -72,6 +91,7 @@ class SavedGameOut(BaseModel):
 
     id: int
     user_id: str = Field(alias="userId")
+    collection_id: int = Field(alias="collectionId")
     game_id: int = Field(alias="gameId")
     created_at: datetime = Field(alias="createdAt")
     game: GameOut

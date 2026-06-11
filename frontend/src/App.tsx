@@ -4,8 +4,10 @@ import {
   BookmarkCheck,
   Brain,
   CircleDollarSign,
+  Folder,
   Gamepad2,
   LineChart,
+  Plus,
   Search,
   SlidersHorizontal,
   Sparkles,
@@ -16,7 +18,9 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import {
   clearSavedGames,
+  createCollection,
   getCatalog,
+  getCollections,
   getGameDetail,
   getGameInsights,
   getSavedGames,
@@ -25,7 +29,7 @@ import {
   saveGame,
   searchCatalog,
 } from "./services/catalog";
-import type { Game, GameInsights, SavedGame, SearchIntent, ShortlistInsights } from "./types";
+import type { Game, GameCollection, GameInsights, SavedGame, SearchIntent, ShortlistInsights } from "./types";
 import { filterGames, getSignal } from "./lib/search";
 
 const exampleQueries = [
@@ -60,30 +64,58 @@ export default function App() {
   const [searchSource, setSearchSource] = useState<"rules" | "deepseek" | "mock">("rules");
   const [selectedDetail, setSelectedDetail] = useState<Game | null>(null);
   const [insights, setInsights] = useState<GameInsights | null>(null);
+  const [collections, setCollections] = useState<GameCollection[]>([]);
+  const [activeCollectionId, setActiveCollectionId] = useState<number | null>(null);
+  const [isCreatingCollection, setIsCreatingCollection] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState("");
   const [savedGames, setSavedGames] = useState<SavedGame[]>([]);
   const [shortlistInsights, setShortlistInsights] = useState<ShortlistInsights | null>(null);
 
   useEffect(() => {
-    getCatalog().then(async (items) => {
+    getCatalog().then((items) => {
       setCatalog(items);
       setSelectedId(items[0]?.id ?? null);
-      setSavedGames(await getSavedGames(items));
+    });
+
+    getCollections().then((items) => {
+      setCollections(items);
+      setActiveCollectionId(items[0]?.id ?? null);
     });
   }, []);
 
   useEffect(() => {
+    if (catalog.length === 0 || activeCollectionId === null) {
+      setSavedGames([]);
+      return;
+    }
+
     let cancelled = false;
-    getShortlistInsights(savedGames).then((nextInsights) => {
+    setSavedGames([]);
+    getSavedGames(catalog, activeCollectionId).then((items) => {
+      if (!cancelled) setSavedGames(items);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeCollectionId, catalog]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getShortlistInsights(savedGames, activeCollectionId ?? undefined).then((nextInsights) => {
       if (!cancelled) setShortlistInsights(nextInsights);
     });
 
     return () => {
       cancelled = true;
     };
-  }, [savedGames]);
+  }, [activeCollectionId, savedGames]);
 
   const tags = useMemo(() => [...new Set(catalog.flatMap((game) => game.tags))].sort(), [catalog]);
   const filteredGames = useMemo(() => searchResults ?? filterGames(catalog, intent), [catalog, intent, searchResults]);
+  const selectedCollection = useMemo(() => {
+    return collections.find((collection) => collection.id === activeCollectionId) ?? collections[0] ?? null;
+  }, [activeCollectionId, collections]);
   const selectedPreview = useMemo(() => {
     return filteredGames.find((game) => game.id === selectedId) ?? filteredGames[0] ?? catalog[0];
   }, [catalog, filteredGames, selectedId]);
@@ -143,13 +175,14 @@ export default function App() {
   }
 
   async function toggleSavedGame(game: Game) {
+    const collectionId = selectedCollection?.id ?? activeCollectionId ?? undefined;
     if (savedGameIds.has(game.id)) {
-      await removeSavedGame(game.id);
+      await removeSavedGame(game.id, collectionId);
       setSavedGames((current) => current.filter((savedGame) => savedGame.gameId !== game.id));
       return;
     }
 
-    const savedGame = await saveGame(game, catalog);
+    const savedGame = await saveGame(game, catalog, collectionId);
     setSavedGames((current) => {
       if (current.some((item) => item.gameId === savedGame.gameId)) return current;
       return [savedGame, ...current];
@@ -157,8 +190,23 @@ export default function App() {
   }
 
   async function clearShortlist() {
-    await clearSavedGames();
+    await clearSavedGames(selectedCollection?.id ?? activeCollectionId ?? undefined);
     setSavedGames([]);
+  }
+
+  async function addCollection(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const name = newCollectionName.trim();
+    if (!name) return;
+
+    const collection = await createCollection(name);
+    setCollections((current) => {
+      if (current.some((item) => item.id === collection.id)) return current;
+      return [...current, collection];
+    });
+    setActiveCollectionId(collection.id);
+    setNewCollectionName("");
+    setIsCreatingCollection(false);
   }
 
   const signal = insights?.signal ?? (selectedGame ? getSignal(selectedGame) : "Watch");
@@ -264,8 +312,8 @@ export default function App() {
         <section className="tool-panel shortlist-panel">
           <div className="section-heading">
             <h2>
-              <BookmarkCheck size={16} aria-hidden="true" />
-              Saved Shortlist
+              <Folder size={16} aria-hidden="true" />
+              Collections
             </h2>
             <div className="section-actions">
               <span>{savedGames.length} saved</span>
@@ -282,10 +330,48 @@ export default function App() {
               )}
             </div>
           </div>
+          <div className="collection-controls">
+            <label className="field compact">
+              <span>Collection</span>
+              <select
+                value={activeCollectionId ?? ""}
+                onChange={(event) => setActiveCollectionId(Number(event.target.value))}
+              >
+                {collections.map((collection) => (
+                  <option key={collection.id} value={collection.id}>
+                    {collection.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              className="icon-button"
+              type="button"
+              onClick={() => setIsCreatingCollection((current) => !current)}
+              title="New collection"
+              aria-label="New collection"
+            >
+              <Plus size={15} aria-hidden="true" />
+            </button>
+          </div>
+          {isCreatingCollection && (
+            <form className="collection-create" onSubmit={(event) => void addCollection(event)}>
+              <input
+                className="text-input"
+                aria-label="Collection name"
+                placeholder="Wishlist"
+                value={newCollectionName}
+                onChange={(event) => setNewCollectionName(event.target.value)}
+              />
+              <button className="small-button" type="submit">
+                Create
+              </button>
+            </form>
+          )}
           <div className="shortlist-list">
             {savedGames.map((savedGame) => (
               <button
-                key={savedGame.gameId}
+                key={`${savedGame.collectionId}-${savedGame.gameId}`}
                 className={`shortlist-item ${selectedId === savedGame.gameId ? "active" : ""}`}
                 type="button"
                 onClick={() => setSelectedId(savedGame.gameId)}
@@ -294,7 +380,7 @@ export default function App() {
                 <strong>{formatMoney(savedGame.game.price)}</strong>
               </button>
             ))}
-            {savedGames.length === 0 && <div className="empty-state compact">No saved games yet.</div>}
+            {savedGames.length === 0 && <div className="empty-state compact">No saved games in this collection.</div>}
           </div>
         </section>
 
@@ -303,9 +389,9 @@ export default function App() {
             <div className="section-heading">
               <h2>
                 <LineChart size={16} aria-hidden="true" />
-                Shortlist Intelligence
+                Collection Intelligence
               </h2>
-              <span>{shortlistInsights.source === "mock" ? "Mock fallback" : "Rules preview"}</span>
+              <span>{shortlistInsights.source === "mock" ? "Mock fallback" : selectedCollection?.name ?? "Rules preview"}</span>
             </div>
             <div className="shortlist-insight-metrics">
               <Metric label="Avg Price" value={`$${shortlistInsights.averagePrice.toFixed(2)}`} />
@@ -355,7 +441,7 @@ export default function App() {
                 className={`save-button ${selectedIsSaved ? "active" : ""}`}
                 type="button"
                 onClick={() => void toggleSavedGame(selectedGame)}
-                title={selectedIsSaved ? "Remove from shortlist" : "Save to shortlist"}
+                title={selectedIsSaved ? `Remove from ${selectedCollection?.name ?? "collection"}` : `Save to ${selectedCollection?.name ?? "collection"}`}
               >
                 {selectedIsSaved ? <BookmarkCheck size={16} aria-hidden="true" /> : <Bookmark size={16} aria-hidden="true" />}
                 {selectedIsSaved ? "Saved" : "Save"}

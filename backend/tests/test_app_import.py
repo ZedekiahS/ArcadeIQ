@@ -18,3 +18,14 @@ class AppImportTests(unittest.TestCase):
                 methods.update(getattr(route, "methods", set()))
 
         self.assertIn("DELETE", methods)
+
+    def test_collections_routes_are_registered(self) -> None:
+        from app.main import app
+
+        methods = set()
+        for route in app.routes:
+            if getattr(route, "path", None) == "/api/collections":
+                methods.update(getattr(route, "methods", set()))
+
+        self.assertIn("GET", methods)
+        self.assertIn("POST", methods)

@@ -26,13 +26,35 @@ class Game(Base):
     ownership: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
 
-class SavedGame(Base):
-    __tablename__ = "saved_games"
-    __table_args__ = (UniqueConstraint("user_id", "game_id", name="uq_saved_games_user_game"),)
+class Collection(Base):
+    __tablename__ = "collections"
+    __table_args__ = (UniqueConstraint("user_id", "name", name="uq_collections_user_name"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    description: Mapped[str] = mapped_column(String(500), nullable=False, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    saved_games: Mapped[list["SavedGame"]] = relationship(
+        back_populates="collection",
+        cascade="all, delete-orphan",
+    )
+
+
+class SavedGame(Base):
+    __tablename__ = "saved_games"
+    __table_args__ = (UniqueConstraint("collection_id", "game_id", name="uq_saved_games_collection_game"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
+    collection_id: Mapped[int] = mapped_column(
+        ForeignKey("collections.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     game_id: Mapped[int] = mapped_column(ForeignKey("games.id", ondelete="CASCADE"), nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     game: Mapped[Game] = relationship()
+    collection: Mapped[Collection] = relationship(back_populates="saved_games")

@@ -28,12 +28,16 @@ List seeded games:
 GET /api/games
 GET /api/games/{id}
 GET /api/games/{id}/insights
+GET /api/collections
+POST /api/collections
 GET /api/saved-games
 GET /api/saved-games/insights
 POST /api/saved-games
 DELETE /api/saved-games
 DELETE /api/saved-games/{gameId}
 ```
+
+Saved-game endpoints accept an optional `collectionId` query/body field. When omitted, the API uses the user's `Default Shortlist` collection.
 
 Run the AI-ready search flow:
 
