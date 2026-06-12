@@ -29,3 +29,14 @@ class AppImportTests(unittest.TestCase):
 
         self.assertIn("GET", methods)
         self.assertIn("POST", methods)
+
+    def test_collection_detail_routes_are_registered(self) -> None:
+        from app.main import app
+
+        methods = set()
+        for route in app.routes:
+            if getattr(route, "path", None) == "/api/collections/{collection_id}":
+                methods.update(getattr(route, "methods", set()))
+
+        self.assertIn("PATCH", methods)
+        self.assertIn("DELETE", methods)

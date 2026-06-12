@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from app.schemas import CollectionCreateRequest, SavedGameRequest
+from app.schemas import CollectionCreateRequest, CollectionUpdateRequest, SavedGameRequest
 
 
 class SavedGamesSchemaTests(unittest.TestCase):
@@ -19,3 +19,10 @@ class SavedGamesSchemaTests(unittest.TestCase):
         self.assertEqual(request.user_id, "demo-user")
         self.assertEqual(request.name, "Wishlist")
         self.assertEqual(request.description, "")
+
+    def test_collection_update_request_accepts_frontend_aliases(self) -> None:
+        request = CollectionUpdateRequest.model_validate({"userId": "demo-user", "name": "Research"})
+
+        self.assertEqual(request.user_id, "demo-user")
+        self.assertEqual(request.name, "Research")
+        self.assertIsNone(request.description)

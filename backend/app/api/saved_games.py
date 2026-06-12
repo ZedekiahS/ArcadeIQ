@@ -6,7 +6,14 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.db.database import get_db
 from app.db.models import Collection, Game, SavedGame
-from app.schemas import CollectionCreateRequest, CollectionOut, SavedGameOut, SavedGameRequest, ShortlistInsightsOut
+from app.schemas import (
+    CollectionCreateRequest,
+    CollectionOut,
+    CollectionUpdateRequest,
+    SavedGameOut,
+    SavedGameRequest,
+    ShortlistInsightsOut,
+)
 from app.services.shortlist_insights import build_shortlist_insights
 
 router = APIRouter(tags=["saved-games"])
@@ -40,6 +47,53 @@ def create_collection(request: CollectionCreateRequest, db: Session = Depends(ge
     db.commit()
     db.refresh(collection)
     return collection
+
+
+@router.patch("/collections/{collection_id}", response_model=CollectionOut)
+def update_collection(
+    collection_id: int,
+    request: CollectionUpdateRequest,
+    db: Session = Depends(get_db),
+) -> Collection:
+    collection = get_collection_for_request(db, request.user_id, collection_id)
+    if collection.name == DEFAULT_COLLECTION_NAME:
+        raise HTTPException(status_code=400, detail="Default collection cannot be renamed")
+
+    name = request.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Collection name is required")
+
+    existing = db.scalar(
+        select(Collection).where(
+            Collection.user_id == request.user_id,
+            Collection.name == name,
+            Collection.id != collection.id,
+        )
+    )
+    if existing is not None:
+        raise HTTPException(status_code=409, detail="Collection name already exists")
+
+    collection.name = name
+    if request.description is not None:
+        collection.description = request.description.strip()
+    db.commit()
+    db.refresh(collection)
+    return collection
+
+
+@router.delete("/collections/{collection_id}", status_code=204, response_class=Response)
+def delete_collection(
+    collection_id: int,
+    user_id: str = Query(default=DEFAULT_USER_ID, alias="userId"),
+    db: Session = Depends(get_db),
+) -> Response:
+    collection = get_collection_for_request(db, user_id, collection_id)
+    if collection.name == DEFAULT_COLLECTION_NAME:
+        raise HTTPException(status_code=400, detail="Default collection cannot be deleted")
+
+    db.delete(collection)
+    db.commit()
+    return Response(status_code=204)
 
 
 @router.get("/saved-games", response_model=list[SavedGameOut])

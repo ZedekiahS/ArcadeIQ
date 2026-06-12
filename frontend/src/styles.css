@@ -142,6 +142,17 @@ p {
   background: #eaf3ff;
 }
 
+.icon-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.icon-button:disabled:hover {
+  border-color: var(--line);
+  color: var(--muted);
+  background: var(--soft);
+}
+
 .icon-button.danger:hover {
   border-color: #f0b4b4;
   color: var(--red);
@@ -551,13 +562,14 @@ select {
 
 .collection-controls {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 30px;
+  grid-template-columns: minmax(0, 1fr) 30px 30px 30px;
   gap: 8px;
   align-items: end;
   margin-bottom: 10px;
 }
 
-.collection-create {
+.collection-create,
+.collection-edit {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
@@ -587,6 +599,13 @@ select {
 
 .small-button:hover {
   background: #dcecff;
+}
+
+.form-error {
+  margin: 0 0 10px;
+  color: var(--red);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .shortlist-item {

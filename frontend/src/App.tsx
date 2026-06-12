@@ -8,6 +8,7 @@ import {
   Folder,
   Gamepad2,
   LineChart,
+  Pencil,
   Plus,
   RefreshCcw,
   Search,
@@ -22,6 +23,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   clearSavedGames,
   createCollection,
+  deleteCollection,
   getCatalog,
   getCollections,
   getGameDetail,
@@ -31,6 +33,7 @@ import {
   removeSavedGame,
   saveGame,
   searchCatalog,
+  updateCollection,
 } from "./services/catalog";
 import { createSessionUserId, getActiveSessionUserId, getKnownSessionUserIds, setActiveSessionUserId as persistSessionUserId } from "./services/session";
 import type { Game, GameCollection, GameInsights, SavedGame, SearchIntent, ShortlistInsights } from "./types";
@@ -49,6 +52,8 @@ const initialIntent: SearchIntent = {
   tags: ["Multiplayer", "Survival"],
   mode: "player",
 };
+
+const DEFAULT_COLLECTION_NAME = "Default Shortlist";
 
 function formatMoney(value: number) {
   return value === 0 ? "Free" : `$${value.toFixed(2)}`;
@@ -78,6 +83,9 @@ export default function App() {
   const [activeCollectionId, setActiveCollectionId] = useState<number | null>(null);
   const [isCreatingCollection, setIsCreatingCollection] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
+  const [isEditingCollection, setIsEditingCollection] = useState(false);
+  const [editingCollectionName, setEditingCollectionName] = useState("");
+  const [collectionActionError, setCollectionActionError] = useState("");
   const [isSaveMenuOpen, setIsSaveMenuOpen] = useState(false);
   const [isCreatingSaveCollection, setIsCreatingSaveCollection] = useState(false);
   const [saveCollectionName, setSaveCollectionName] = useState("");
@@ -97,6 +105,11 @@ export default function App() {
     setActiveCollectionId(null);
     setSavedGamesByCollection({});
     setShortlistInsights(null);
+    setIsCreatingCollection(false);
+    setNewCollectionName("");
+    setIsEditingCollection(false);
+    setEditingCollectionName("");
+    setCollectionActionError("");
     setIsSaveMenuOpen(false);
     setIsCreatingSaveCollection(false);
     setSaveCollectionName("");
@@ -156,6 +169,7 @@ export default function App() {
   const selectedCollection = useMemo(() => {
     return collections.find((collection) => collection.id === activeCollectionId) ?? collections[0] ?? null;
   }, [activeCollectionId, collections]);
+  const isDefaultCollection = selectedCollection?.name === DEFAULT_COLLECTION_NAME;
   const selectedPreview = useMemo(() => {
     return filteredGames.find((game) => game.id === selectedId) ?? filteredGames[0] ?? catalog[0];
   }, [catalog, filteredGames, selectedId]);
@@ -267,6 +281,7 @@ export default function App() {
     const name = newCollectionName.trim();
     if (!name) return;
 
+    setCollectionActionError("");
     const collection = await createCollection(name, sessionUserId);
     setCollections((current) => {
       if (current.some((item) => item.id === collection.id)) return current;
@@ -275,6 +290,62 @@ export default function App() {
     setActiveCollectionId(collection.id);
     setNewCollectionName("");
     setIsCreatingCollection(false);
+  }
+
+  function selectCollection(collectionId: number) {
+    setActiveCollectionId(collectionId);
+    setIsEditingCollection(false);
+    setEditingCollectionName("");
+    setCollectionActionError("");
+  }
+
+  function startEditingCollection() {
+    if (!selectedCollection || isDefaultCollection) return;
+    setIsCreatingCollection(false);
+    setIsEditingCollection(true);
+    setEditingCollectionName(selectedCollection.name);
+    setCollectionActionError("");
+  }
+
+  async function renameCollection(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedCollection || isDefaultCollection) return;
+
+    const name = editingCollectionName.trim();
+    if (!name) return;
+
+    try {
+      setCollectionActionError("");
+      const updated = await updateCollection(selectedCollection.id, name, sessionUserId);
+      setCollections((current) => current.map((collection) => (collection.id === updated.id ? updated : collection)));
+      setIsEditingCollection(false);
+      setEditingCollectionName("");
+    } catch (error) {
+      console.error(error);
+      setCollectionActionError("Collection name is already used or invalid.");
+    }
+  }
+
+  async function removeCollection() {
+    if (!selectedCollection || isDefaultCollection) return;
+
+    try {
+      setCollectionActionError("");
+      await deleteCollection(selectedCollection.id, sessionUserId);
+      const nextCollections = collections.filter((collection) => collection.id !== selectedCollection.id);
+      setCollections(nextCollections);
+      setSavedGamesByCollection((current) => {
+        const nextSavedGames = { ...current };
+        delete nextSavedGames[selectedCollection.id];
+        return nextSavedGames;
+      });
+      setActiveCollectionId(nextCollections[0]?.id ?? null);
+      setIsEditingCollection(false);
+      setEditingCollectionName("");
+    } catch (error) {
+      console.error(error);
+      setCollectionActionError("This collection could not be deleted.");
+    }
   }
 
   async function createCollectionAndSave(event: React.FormEvent<HTMLFormElement>, game: Game) {
@@ -456,7 +527,7 @@ export default function App() {
               <span>Collection</span>
               <select
                 value={activeCollectionId ?? ""}
-                onChange={(event) => setActiveCollectionId(Number(event.target.value))}
+                onChange={(event) => selectCollection(Number(event.target.value))}
               >
                 {collections.map((collection) => (
                   <option key={collection.id} value={collection.id}>
@@ -474,6 +545,26 @@ export default function App() {
             >
               <Plus size={15} aria-hidden="true" />
             </button>
+            <button
+              className="icon-button"
+              type="button"
+              onClick={startEditingCollection}
+              title="Rename collection"
+              aria-label="Rename collection"
+              disabled={!selectedCollection || isDefaultCollection}
+            >
+              <Pencil size={15} aria-hidden="true" />
+            </button>
+            <button
+              className="icon-button danger"
+              type="button"
+              onClick={() => void removeCollection()}
+              title="Delete collection"
+              aria-label="Delete collection"
+              disabled={!selectedCollection || isDefaultCollection}
+            >
+              <Trash2 size={15} aria-hidden="true" />
+            </button>
           </div>
           {isCreatingCollection && (
             <form className="collection-create" onSubmit={(event) => void addCollection(event)}>
@@ -489,6 +580,20 @@ export default function App() {
               </button>
             </form>
           )}
+          {isEditingCollection && selectedCollection && (
+            <form className="collection-edit" onSubmit={(event) => void renameCollection(event)}>
+              <input
+                className="text-input"
+                aria-label="Rename collection"
+                value={editingCollectionName}
+                onChange={(event) => setEditingCollectionName(event.target.value)}
+              />
+              <button className="small-button" type="submit">
+                Save
+              </button>
+            </form>
+          )}
+          {collectionActionError && <div className="form-error">{collectionActionError}</div>}
           <div className="shortlist-list">
             {savedGames.map((savedGame) => (
               <button

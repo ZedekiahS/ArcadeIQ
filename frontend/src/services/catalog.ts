@@ -60,6 +60,42 @@ export async function createCollection(name: string, userId: string): Promise<Ga
   }
 }
 
+export async function updateCollection(collectionId: number, name: string, userId: string): Promise<GameCollection> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/collections/${collectionId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name, userId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Update collection API returned ${response.status}`);
+    }
+
+    return (await response.json()) as GameCollection;
+  } catch (error) {
+    console.warn("Using local mock collection update because the backend API is unavailable.", error);
+    return updateLocalCollection(collectionId, name, userId);
+  }
+}
+
+export async function deleteCollection(collectionId: number, userId: string): Promise<void> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/collections/${collectionId}?userId=${encodeURIComponent(userId)}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Delete collection API returned ${response.status}`);
+    }
+  } catch (error) {
+    console.warn("Using local mock collection delete because the backend API is unavailable.", error);
+    deleteLocalCollection(collectionId, userId);
+  }
+}
+
 export async function getSavedGames(catalog: Game[], userId: string, collectionId?: number): Promise<SavedGame[]> {
   try {
     const response = await fetch(`${API_BASE_URL}/saved-games?${buildCollectionParams(userId, collectionId)}`);
@@ -319,6 +355,54 @@ function createLocalCollection(name: string, userId: string): GameCollection {
   };
   window.localStorage.setItem(getUserStorageKey(COLLECTION_STORAGE_KEY, userId), JSON.stringify([...collections, collection]));
   return collection;
+}
+
+function updateLocalCollection(collectionId: number, name: string, userId: string): GameCollection {
+  const collections = getLocalCollections(userId);
+  const collection = collections.find((item) => item.id === collectionId);
+  if (!collection) {
+    throw new Error("Collection not found");
+  }
+  if (collection.name === DEFAULT_COLLECTION_NAME) {
+    throw new Error("Default collection cannot be renamed");
+  }
+
+  const normalizedName = name.trim();
+  if (!normalizedName) {
+    throw new Error("Collection name is required");
+  }
+
+  const duplicate = collections.find(
+    (item) => item.id !== collectionId && item.name.toLowerCase() === normalizedName.toLowerCase(),
+  );
+  if (duplicate) {
+    throw new Error("Collection name already exists");
+  }
+
+  const updated = { ...collection, name: normalizedName };
+  window.localStorage.setItem(
+    getUserStorageKey(COLLECTION_STORAGE_KEY, userId),
+    JSON.stringify(collections.map((item) => (item.id === collectionId ? updated : item))),
+  );
+  return updated;
+}
+
+function deleteLocalCollection(collectionId: number, userId: string) {
+  const collections = getLocalCollections(userId);
+  const collection = collections.find((item) => item.id === collectionId);
+  if (!collection) return;
+  if (collection.name === DEFAULT_COLLECTION_NAME) {
+    throw new Error("Default collection cannot be deleted");
+  }
+
+  window.localStorage.setItem(
+    getUserStorageKey(COLLECTION_STORAGE_KEY, userId),
+    JSON.stringify(collections.filter((item) => item.id !== collectionId)),
+  );
+
+  const savedMap = readLocalSavedMap(userId);
+  delete savedMap[collectionId.toString()];
+  window.localStorage.setItem(getUserStorageKey(SAVED_COLLECTION_STORAGE_KEY, userId), JSON.stringify(savedMap));
 }
 
 function isGameCollection(value: unknown): value is GameCollection {

@@ -68,6 +68,14 @@ class CollectionCreateRequest(BaseModel):
     description: str = ""
 
 
+class CollectionUpdateRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    user_id: str = Field(default="demo-user", alias="userId")
+    name: str
+    description: str | None = None
+
+
 class CollectionOut(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
