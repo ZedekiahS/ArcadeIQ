@@ -1,6 +1,7 @@
 import { games } from "../data/games";
 import { filterGames, getSignal, parseSearchIntent } from "../lib/search";
 import type { Game, GameCollection, GameInsights, SavedGame, SearchResponse, ShortlistInsights } from "../types";
+import { getStoredAuthToken } from "./users";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
 const DEFAULT_COLLECTION_ID = 1;
@@ -28,7 +29,9 @@ export function getMockCatalog(): Game[] {
 
 export async function getCollections(userId: string): Promise<GameCollection[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/collections?userId=${encodeURIComponent(userId)}`);
+    const response = await fetch(`${API_BASE_URL}/collections?userId=${encodeURIComponent(userId)}`, {
+      headers: buildAuthHeaders(),
+    });
     if (!response.ok) {
       throw new Error(`Collections API returned ${response.status}`);
     }
@@ -43,9 +46,7 @@ export async function createCollection(name: string, userId: string): Promise<Ga
   try {
     const response = await fetch(`${API_BASE_URL}/collections`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: buildJsonHeaders(),
       body: JSON.stringify({ name, userId }),
     });
 
@@ -64,9 +65,7 @@ export async function updateCollection(collectionId: number, name: string, userI
   try {
     const response = await fetch(`${API_BASE_URL}/collections/${collectionId}`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: buildJsonHeaders(),
       body: JSON.stringify({ name, userId }),
     });
 
@@ -85,6 +84,7 @@ export async function deleteCollection(collectionId: number, userId: string): Pr
   try {
     const response = await fetch(`${API_BASE_URL}/collections/${collectionId}?userId=${encodeURIComponent(userId)}`, {
       method: "DELETE",
+      headers: buildAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -98,7 +98,9 @@ export async function deleteCollection(collectionId: number, userId: string): Pr
 
 export async function getSavedGames(catalog: Game[], userId: string, collectionId?: number): Promise<SavedGame[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/saved-games?${buildCollectionParams(userId, collectionId)}`);
+    const response = await fetch(`${API_BASE_URL}/saved-games?${buildCollectionParams(userId, collectionId)}`, {
+      headers: buildAuthHeaders(),
+    });
     if (!response.ok) {
       throw new Error(`Saved games API returned ${response.status}`);
     }
@@ -115,7 +117,9 @@ export async function getShortlistInsights(savedGames: SavedGame[], userId: stri
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/saved-games/insights?${buildCollectionParams(userId, collectionId)}`);
+    const response = await fetch(`${API_BASE_URL}/saved-games/insights?${buildCollectionParams(userId, collectionId)}`, {
+      headers: buildAuthHeaders(),
+    });
     if (!response.ok) {
       throw new Error(`Shortlist insights API returned ${response.status}`);
     }
@@ -130,9 +134,7 @@ export async function saveGame(game: Game, catalog: Game[], userId: string, coll
   try {
     const response = await fetch(`${API_BASE_URL}/saved-games`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: buildJsonHeaders(),
       body: JSON.stringify({ gameId: game.id, userId, collectionId }),
     });
 
@@ -154,6 +156,7 @@ export async function removeSavedGame(gameId: number, userId: string, collection
   try {
     const response = await fetch(`${API_BASE_URL}/saved-games/${gameId}?${buildCollectionParams(userId, collectionId)}`, {
       method: "DELETE",
+      headers: buildAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -173,6 +176,7 @@ export async function clearSavedGames(userId: string, collectionId?: number): Pr
   try {
     const response = await fetch(`${API_BASE_URL}/saved-games?${buildCollectionParams(userId, collectionId)}`, {
       method: "DELETE",
+      headers: buildAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -281,6 +285,15 @@ function buildMockInsights(game: Game): GameInsights {
 
 function formatCompact(value: number) {
   return Intl.NumberFormat("en", { notation: "compact" }).format(value);
+}
+
+function buildAuthHeaders(headers: Record<string, string> = {}) {
+  const token = getStoredAuthToken();
+  return token ? { ...headers, Authorization: `Bearer ${token}` } : headers;
+}
+
+function buildJsonHeaders() {
+  return buildAuthHeaders({ "Content-Type": "application/json" });
 }
 
 function buildCollectionParams(userId: string, collectionId?: number) {
