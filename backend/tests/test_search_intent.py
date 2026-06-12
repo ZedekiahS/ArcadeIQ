@@ -7,6 +7,7 @@ from app.services.search_intent import normalize_search_intent, parse_search_int
 AVAILABLE_TAGS = [
     "Adventure",
     "Exploration",
+    "FPS",
     "Metroidvania",
     "Multiplayer",
     "Puzzle",
@@ -28,6 +29,10 @@ class SearchIntentTests(unittest.TestCase):
                 "has_reviews": True,
                 "tags": ["Story Rich"],
                 "mode": "player",
+                "sort_by": "rating",
+                "sort_direction": "desc",
+                "limit": None,
+                "offset": 0,
             },
         )
 
@@ -39,6 +44,10 @@ class SearchIntentTests(unittest.TestCase):
         self.assertIs(intent["has_reviews"], True)
         self.assertEqual(intent["tags"], ["Multiplayer", "Survival"])
         self.assertEqual(intent["mode"], "player")
+        self.assertEqual(intent["sort_by"], "price")
+        self.assertEqual(intent["sort_direction"], "asc")
+        self.assertIsNone(intent["limit"])
+        self.assertEqual(intent["offset"], 0)
 
     def test_parse_developer_catalog_query(self) -> None:
         intent = parse_search_intent("Find premium exploration games for developer catalog analysis", AVAILABLE_TAGS)
@@ -47,6 +56,29 @@ class SearchIntentTests(unittest.TestCase):
         self.assertIs(intent["has_reviews"], False)
         self.assertEqual(intent["tags"], ["Exploration"])
         self.assertEqual(intent["mode"], "developer")
+        self.assertIsNone(intent["sort_by"])
+        self.assertEqual(intent["sort_direction"], "asc")
+        self.assertIsNone(intent["limit"])
+        self.assertEqual(intent["offset"], 0)
+
+    def test_parse_second_most_expensive_fps_query(self) -> None:
+        intent = parse_search_intent("Find the second most expensive FPS game", AVAILABLE_TAGS)
+
+        self.assertEqual(intent["max_price"], 70)
+        self.assertEqual(intent["tags"], ["FPS"])
+        self.assertEqual(intent["sort_by"], "price")
+        self.assertEqual(intent["sort_direction"], "desc")
+        self.assertEqual(intent["limit"], 1)
+        self.assertEqual(intent["offset"], 1)
+
+    def test_parse_chinese_second_expensive_fps_query(self) -> None:
+        intent = parse_search_intent("第二贵的FPSgame", AVAILABLE_TAGS)
+
+        self.assertEqual(intent["tags"], ["FPS"])
+        self.assertEqual(intent["sort_by"], "price")
+        self.assertEqual(intent["sort_direction"], "desc")
+        self.assertEqual(intent["limit"], 1)
+        self.assertEqual(intent["offset"], 1)
 
     def test_normalize_intent_filters_unknown_tags(self) -> None:
         intent = normalize_search_intent(
@@ -56,6 +88,10 @@ class SearchIntentTests(unittest.TestCase):
                 "hasReviews": "true",
                 "tags": ["Story Rich", "Unknown Tag"],
                 "mode": "developer",
+                "sortBy": "price",
+                "sortDirection": "desc",
+                "limit": "1",
+                "offset": "1",
             },
             AVAILABLE_TAGS,
         )
@@ -65,3 +101,7 @@ class SearchIntentTests(unittest.TestCase):
         self.assertIs(intent["has_reviews"], True)
         self.assertEqual(intent["tags"], ["Story Rich"])
         self.assertEqual(intent["mode"], "developer")
+        self.assertEqual(intent["sort_by"], "price")
+        self.assertEqual(intent["sort_direction"], "desc")
+        self.assertEqual(intent["limit"], 1)
+        self.assertEqual(intent["offset"], 1)

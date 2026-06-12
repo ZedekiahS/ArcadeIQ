@@ -53,7 +53,7 @@ def search_games(request: SearchRequest, db: Session = Depends(get_db)) -> dict[
     except AIProviderError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
-    stmt: Select[tuple[Game]] = select(Game).order_by(Game.name)
+    stmt: Select[tuple[Game]] = select(Game)
     stmt = apply_intent_filters(stmt, result.intent)
 
     return {
@@ -79,5 +79,23 @@ def apply_intent_filters(stmt: Select[tuple[Game]], intent: SearchIntent) -> Sel
 
     for tag in intent["tags"]:
         stmt = stmt.where(Game.tags.contains([tag]))
+
+    sort_columns = {
+        "name": Game.name,
+        "price": Game.price,
+        "rating": Game.rating,
+        "review_count": Game.review_count,
+        "release_year": Game.release_year,
+        "revenue": Game.revenue,
+        "ownership": Game.ownership,
+    }
+    sort_column = sort_columns.get(intent["sort_by"] or "name", Game.name)
+    primary_sort = sort_column.desc() if intent["sort_direction"] == "desc" else sort_column.asc()
+    stmt = stmt.order_by(primary_sort, Game.name.asc())
+
+    if intent["offset"] > 0:
+        stmt = stmt.offset(intent["offset"])
+    if intent["limit"] is not None:
+        stmt = stmt.limit(intent["limit"])
 
     return stmt

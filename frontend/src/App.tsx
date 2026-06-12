@@ -52,17 +52,22 @@ import type { Game, GameCollection, GameInsights, SavedGame, SearchIntent, Short
 import { filterGames, getSignal } from "./lib/search";
 
 const exampleQueries = [
+  "Find the second most expensive FPS game",
   "Find cheap multiplayer survival games with good reviews",
   "Show highly rated story rich games under 25 dollars",
   "Find premium exploration games for developer catalog analysis",
 ];
 
 const initialIntent: SearchIntent = {
-  maxPrice: 35,
+  maxPrice: 70,
   minRating: 0,
-  hasReviews: true,
-  tags: ["Multiplayer", "Survival"],
+  hasReviews: false,
+  tags: ["FPS"],
   mode: "player",
+  sortBy: "price",
+  sortDirection: "desc",
+  limit: 1,
+  offset: 1,
 };
 
 const DEFAULT_COLLECTION_NAME = "Default Shortlist";
@@ -648,7 +653,7 @@ export default function App() {
                   void runSearch(example);
                 }}
               >
-                {example.includes("story") ? "Story picks" : example.includes("developer") ? "Dev lens" : "Survival deal"}
+                {example.includes("FPS") ? "FPS rank" : example.includes("story") ? "Story picks" : example.includes("developer") ? "Dev lens" : "Survival deal"}
               </button>
             ))}
           </div>

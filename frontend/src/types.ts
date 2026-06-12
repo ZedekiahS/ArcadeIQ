@@ -1,4 +1,5 @@
 export type GameSignal = "Strong" | "Watch" | "Risk";
+export type SearchSortBy = "name" | "price" | "rating" | "review_count" | "release_year" | "revenue" | "ownership";
 
 export interface Game {
   id: number;
@@ -21,6 +22,10 @@ export interface SearchIntent {
   hasReviews: boolean;
   tags: string[];
   mode: "player" | "developer";
+  sortBy: SearchSortBy | null;
+  sortDirection: "asc" | "desc";
+  limit: number | null;
+  offset: number;
 }
 
 export interface SearchResponse {

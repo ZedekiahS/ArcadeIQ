@@ -92,9 +92,12 @@ def build_intent_system_prompt(available_tags: list[str]) -> str:
     return (
         "You are ArcadeIQ's game search intent parser. Return json only. "
         "Use exactly this JSON shape: "
-        '{"maxPrice": number, "minRating": number, "hasReviews": boolean, "tags": string[], "mode": "player" | "developer"}. '
+        '{"maxPrice": number, "minRating": number, "hasReviews": boolean, "tags": string[], '
+        '"mode": "player" | "developer", "sortBy": null | "name" | "price" | "rating" | "review_count" | '
+        '"release_year" | "revenue" | "ownership", "sortDirection": "asc" | "desc", "limit": null | number, "offset": number}. '
         "Use only these tags when tags are relevant: "
         f"{tags}. "
         "Use player mode for player discovery queries and developer mode for catalog, revenue, or market analysis queries. "
-        "If the query does not imply a filter, use maxPrice 70, minRating 0, hasReviews false, and an empty tags array."
+        "For ranked queries such as second most expensive, use sortBy price, sortDirection desc, limit 1, and offset 1. "
+        "If the query does not imply a filter, use maxPrice 70, minRating 0, hasReviews false, an empty tags array, sortBy null, sortDirection asc, limit null, and offset 0."
     )

@@ -30,6 +30,10 @@ class SearchIntentOut(BaseModel):
     has_reviews: bool = Field(alias="hasReviews")
     tags: list[str]
     mode: str
+    sort_by: str | None = Field(alias="sortBy")
+    sort_direction: str = Field(alias="sortDirection")
+    limit: int | None = None
+    offset: int
 
 
 class SearchRequest(BaseModel):

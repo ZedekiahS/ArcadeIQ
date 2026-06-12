@@ -6,6 +6,10 @@ const defaultIntent: SearchIntent = {
   hasReviews: false,
   tags: [],
   mode: "player",
+  sortBy: null,
+  sortDirection: "asc",
+  limit: null,
+  offset: 0,
 };
 
 export function parseSearchIntent(query: string, availableTags: string[]): SearchIntent {
@@ -33,6 +37,8 @@ export function parseSearchIntent(query: string, availableTags: string[]): Searc
     intent.mode = "developer";
   }
 
+  applyRankingIntent(text, intent);
+
   const tags = new Set<string>();
   for (const tag of availableTags) {
     const normalized = tag.toLowerCase();
@@ -51,13 +57,15 @@ export function parseSearchIntent(query: string, availableTags: string[]): Searc
 }
 
 export function filterGames(games: Game[], intent: SearchIntent): Game[] {
-  return games.filter((game) => {
+  const filteredGames = games.filter((game) => {
     const priceMatch = game.price <= intent.maxPrice;
     const ratingMatch = game.rating >= intent.minRating;
     const reviewMatch = !intent.hasReviews || game.reviewCount > 0;
     const tagMatch = intent.tags.length === 0 || intent.tags.every((tag) => game.tags.includes(tag));
     return priceMatch && ratingMatch && reviewMatch && tagMatch;
   });
+
+  return rankGames(filteredGames, intent);
 }
 
 export function getSignal(game: Game): GameSignal {
@@ -80,4 +88,118 @@ function prioritizeTags(tags: string[], text: string): string[] {
 
   for (const tag of tags) push(tag);
   return priority.slice(0, 3);
+}
+
+function applyRankingIntent(text: string, intent: SearchIntent) {
+  if (hasAny(text, ["most expensive", "highest price", "priciest"]) || text.includes("最贵") || /第[一二三四五]\s*贵/.test(text)) {
+    intent.sortBy = "price";
+    intent.sortDirection = "desc";
+  } else if (hasAny(text, ["cheapest", "lowest price", "least expensive", "cheap", "deal"]) || text.includes("便宜")) {
+    intent.sortBy = "price";
+    intent.sortDirection = "asc";
+  } else if (hasAny(text, ["highest rated", "top rated", "best rated", "highly rated"]) || /\bbest\b/.test(text)) {
+    intent.sortBy = "rating";
+    intent.sortDirection = "desc";
+  } else if (hasAny(text, ["most reviewed", "review volume", "most reviews"])) {
+    intent.sortBy = "review_count";
+    intent.sortDirection = "desc";
+  } else if (hasAny(text, ["newest", "latest", "most recent"])) {
+    intent.sortBy = "release_year";
+    intent.sortDirection = "desc";
+  } else if (text.includes("oldest")) {
+    intent.sortBy = "release_year";
+    intent.sortDirection = "asc";
+  } else if (hasAny(text, ["highest revenue", "most revenue", "top revenue"])) {
+    intent.sortBy = "revenue";
+    intent.sortDirection = "desc";
+  } else if (hasAny(text, ["most owned", "highest ownership"])) {
+    intent.sortBy = "ownership";
+    intent.sortDirection = "desc";
+  }
+
+  const requestedLimit = parseRequestedLimit(text);
+  if (requestedLimit !== null) {
+    intent.limit = requestedLimit;
+    if (intent.sortBy === null) {
+      intent.sortBy = "rating";
+      intent.sortDirection = "desc";
+    }
+  }
+
+  const ordinalRank = parseOrdinalRank(text);
+  if (ordinalRank !== null) {
+    intent.offset = ordinalRank - 1;
+    intent.limit = 1;
+  }
+}
+
+function rankGames(games: Game[], intent: SearchIntent): Game[] {
+  const sortedGames = [...games].sort((first, second) => {
+    const comparison = compareGames(first, second, intent);
+    return comparison === 0 ? first.name.localeCompare(second.name) : comparison;
+  });
+  const offset = Math.max(0, intent.offset);
+  const end = intent.limit === null ? undefined : offset + Math.max(1, intent.limit);
+  return sortedGames.slice(offset, end);
+}
+
+function compareGames(first: Game, second: Game, intent: SearchIntent) {
+  const sortBy = intent.sortBy ?? "name";
+  const firstValue = getSortValue(first, sortBy);
+  const secondValue = getSortValue(second, sortBy);
+  const direction = intent.sortDirection === "desc" ? -1 : 1;
+
+  if (typeof firstValue === "string" && typeof secondValue === "string") {
+    return firstValue.localeCompare(secondValue) * direction;
+  }
+  return (Number(firstValue) - Number(secondValue)) * direction;
+}
+
+function getSortValue(game: Game, sortBy: NonNullable<SearchIntent["sortBy"]>) {
+  if (sortBy === "review_count") return game.reviewCount;
+  if (sortBy === "release_year") return game.releaseYear;
+  return game[sortBy];
+}
+
+function parseRequestedLimit(text: string) {
+  const patterns = [/\btop\s+(\d{1,2})\b/, /\b(?:show|find|give me|list)\s+(?:the\s+)?(\d{1,2})\b/];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return Math.max(1, Math.min(Number(match[1]), 50));
+  }
+  return null;
+}
+
+function parseOrdinalRank(text: string) {
+  const chineseOrdinals: Record<string, number> = {
+    "第一": 1,
+    "第二": 2,
+    "第三": 3,
+    "第四": 4,
+    "第五": 5,
+  };
+  for (const [token, rank] of Object.entries(chineseOrdinals)) {
+    if (text.includes(token)) return rank;
+  }
+
+  const ordinalWords: Record<string, number> = {
+    first: 1,
+    "1st": 1,
+    second: 2,
+    "2nd": 2,
+    third: 3,
+    "3rd": 3,
+    fourth: 4,
+    "4th": 4,
+    fifth: 5,
+    "5th": 5,
+  };
+  for (const [token, rank] of Object.entries(ordinalWords)) {
+    if (new RegExp(`\\b${token}\\b`).test(text)) return rank;
+  }
+  return null;
+}
+
+function hasAny(text: string, phrases: string[]) {
+  return phrases.some((phrase) => text.includes(phrase));
 }
