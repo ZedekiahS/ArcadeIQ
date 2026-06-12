@@ -20,6 +20,10 @@ class Settings:
         self.deepseek_api_key = os.getenv("DEEPSEEK_API_KEY", "")
         self.deepseek_base_url = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
         self.deepseek_model = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash")
+        self.admin_user_id = os.getenv("ARCADEIQ_ADMIN_USER_ID", "local-admin").strip()
+        self.admin_email = os.getenv("ARCADEIQ_ADMIN_EMAIL", "admin@arcadeiq.local").strip()
+        self.admin_display_name = os.getenv("ARCADEIQ_ADMIN_DISPLAY_NAME", "Local Admin").strip()
+        self.admin_password = os.getenv("ARCADEIQ_ADMIN_PASSWORD", "change-this-local-admin-password")
 
 
 def env_bool(name: str, *, default: bool) -> bool:

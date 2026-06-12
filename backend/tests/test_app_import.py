@@ -40,3 +40,17 @@ class AppImportTests(unittest.TestCase):
 
         self.assertIn("PATCH", methods)
         self.assertIn("DELETE", methods)
+
+    def test_users_routes_are_registered(self) -> None:
+        from app.main import app
+
+        collection_methods = set()
+        session_methods = set()
+        for route in app.routes:
+            if getattr(route, "path", None) == "/api/users":
+                collection_methods.update(getattr(route, "methods", set()))
+            if getattr(route, "path", None) == "/api/users/session":
+                session_methods.update(getattr(route, "methods", set()))
+
+        self.assertIn("GET", collection_methods)
+        self.assertIn("POST", session_methods)

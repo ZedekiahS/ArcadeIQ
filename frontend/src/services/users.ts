@@ -1,0 +1,72 @@
+import type { UserProfile, UserRole } from "../types";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
+const LOCAL_ADMIN_USER_ID = "local-admin";
+
+export async function getUsers(): Promise<UserProfile[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/users`);
+    if (!response.ok) {
+      throw new Error(`Users API returned ${response.status}`);
+    }
+    return (await response.json()) as UserProfile[];
+  } catch (error) {
+    console.warn("Using local mock users because the backend API is unavailable.", error);
+    return [buildLocalAdminProfile()];
+  }
+}
+
+export async function ensureSessionUser(userId: string): Promise<UserProfile> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/users/session`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userId, displayName: formatSessionDisplayName(userId) }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Session user API returned ${response.status}`);
+    }
+
+    return (await response.json()) as UserProfile;
+  } catch (error) {
+    console.warn("Using local mock session user because the backend API is unavailable.", error);
+    return userId === LOCAL_ADMIN_USER_ID ? buildLocalAdminProfile() : buildGuestProfile(userId);
+  }
+}
+
+export function formatRoleLabel(role: UserRole) {
+  if (role === "admin") return "Admin";
+  if (role === "developer") return "Developer";
+  if (role === "player") return "Player";
+  return "Guest";
+}
+
+function buildLocalAdminProfile(): UserProfile {
+  return {
+    id: LOCAL_ADMIN_USER_ID,
+    email: "admin@arcadeiq.local",
+    displayName: "Local Admin",
+    role: "admin",
+    isActive: true,
+    createdAt: "2026-06-12T00:00:00.000Z",
+  };
+}
+
+function buildGuestProfile(userId: string): UserProfile {
+  return {
+    id: userId,
+    email: null,
+    displayName: formatSessionDisplayName(userId),
+    role: "guest",
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function formatSessionDisplayName(userId: string) {
+  const suffix = userId.replace(/^guest-/, "").slice(0, 8);
+  return suffix ? `Guest ${suffix}` : "Guest User";
+}

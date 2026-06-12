@@ -42,6 +42,24 @@ class SearchResponse(BaseModel):
     source: str = "rules"
 
 
+class UserSessionRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    user_id: str = Field(alias="userId")
+    display_name: str | None = Field(default=None, alias="displayName")
+
+
+class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: str
+    email: str | None = None
+    display_name: str = Field(alias="displayName")
+    role: str
+    is_active: bool = Field(alias="isActive")
+    created_at: datetime = Field(alias="createdAt")
+
+
 class InsightPanelOut(BaseModel):
     title: str
     caption: str

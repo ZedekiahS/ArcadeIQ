@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.games import router as games_router
 from app.api.saved_games import router as saved_games_router
+from app.api.users import router as users_router
 from app.config import get_settings
 
 settings = get_settings()
@@ -31,3 +32,4 @@ def health_check() -> dict[str, str]:
 
 app.include_router(games_router, prefix="/api")
 app.include_router(saved_games_router, prefix="/api")
+app.include_router(users_router, prefix="/api")

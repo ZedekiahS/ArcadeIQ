@@ -1,7 +1,9 @@
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.db.database import SessionLocal
-from app.db.models import Game
+from app.db.models import Game, User
+from app.services.auth import hash_password, verify_password
 
 # Portfolio demo metrics, not live storefront data.
 SEED_GAMES = [
@@ -355,11 +357,43 @@ def seed_games(db: Session) -> None:
     db.commit()
 
 
+def seed_users(db: Session) -> None:
+    settings = get_settings()
+    admin_user_id = settings.admin_user_id or "local-admin"
+    admin_email = settings.admin_email or "admin@arcadeiq.local"
+    admin_display_name = settings.admin_display_name or "Local Admin"
+    admin_password = settings.admin_password
+
+    user = db.get(User, admin_user_id)
+    if user is None:
+        db.add(
+            User(
+                id=admin_user_id,
+                email=admin_email,
+                display_name=admin_display_name,
+                role="admin",
+                password_hash=hash_password(admin_password),
+                is_active=True,
+            )
+        )
+    else:
+        user.email = admin_email
+        user.display_name = admin_display_name
+        user.role = "admin"
+        user.is_active = True
+        if not verify_password(admin_password, user.password_hash):
+            user.password_hash = hash_password(admin_password)
+
+    db.commit()
+
+
 def main() -> None:
     db = SessionLocal()
     try:
         seed_games(db)
+        seed_users(db)
         print(f"Seeded {len(SEED_GAMES)} games.")
+        print("Seeded local admin user.")
     finally:
         db.close()
 

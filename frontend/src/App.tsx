@@ -12,6 +12,7 @@ import {
   Plus,
   RefreshCcw,
   Search,
+  ShieldCheck,
   SlidersHorizontal,
   Sparkles,
   Star,
@@ -36,7 +37,8 @@ import {
   updateCollection,
 } from "./services/catalog";
 import { createSessionUserId, getActiveSessionUserId, getKnownSessionUserIds, setActiveSessionUserId as persistSessionUserId } from "./services/session";
-import type { Game, GameCollection, GameInsights, SavedGame, SearchIntent, ShortlistInsights } from "./types";
+import { ensureSessionUser, formatRoleLabel, getUsers } from "./services/users";
+import type { Game, GameCollection, GameInsights, SavedGame, SearchIntent, ShortlistInsights, UserProfile, UserRole } from "./types";
 import { filterGames, getSignal } from "./lib/search";
 
 const exampleQueries = [
@@ -67,9 +69,23 @@ function formatSessionLabel(userId: string) {
   return userId.length > 18 ? `${userId.slice(0, 18)}...` : userId;
 }
 
+function buildGuestProfile(userId: string): UserProfile {
+  const suffix = userId.replace(/^guest-/, "").slice(0, 8);
+  return {
+    id: userId,
+    email: null,
+    displayName: suffix ? `Guest ${suffix}` : "Guest User",
+    role: "guest",
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  };
+}
+
 export default function App() {
   const [sessionUserId, setSessionUserId] = useState(getActiveSessionUserId);
   const [knownSessionUserIds, setKnownSessionUserIds] = useState(getKnownSessionUserIds);
+  const [knownBackendUsers, setKnownBackendUsers] = useState<UserProfile[]>([]);
+  const [activeUserProfile, setActiveUserProfile] = useState<UserProfile | null>(null);
   const [catalog, setCatalog] = useState<Game[]>([]);
   const [query, setQuery] = useState(exampleQueries[0]);
   const [intent, setIntent] = useState<SearchIntent>(initialIntent);
@@ -101,6 +117,18 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
+    getUsers().then((users) => {
+      if (!cancelled) setKnownBackendUsers(users);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setActiveUserProfile(null);
     setCollections([]);
     setActiveCollectionId(null);
     setSavedGamesByCollection({});
@@ -114,6 +142,15 @@ export default function App() {
     setIsCreatingSaveCollection(false);
     setSaveCollectionName("");
 
+    ensureSessionUser(sessionUserId).then((profile) => {
+      if (cancelled) return;
+      setActiveUserProfile(profile);
+      setKnownBackendUsers((current) => {
+        const existing = current.filter((user) => user.id !== profile.id);
+        return [profile, ...existing];
+      });
+    });
+
     getCollections(sessionUserId).then((items) => {
       if (cancelled) return;
       setCollections(items);
@@ -124,6 +161,29 @@ export default function App() {
       cancelled = true;
     };
   }, [sessionUserId]);
+
+  const userOptions = useMemo(() => {
+    const usersById = new Map<string, UserProfile>();
+    for (const user of knownBackendUsers) {
+      usersById.set(user.id, user);
+    }
+    if (activeUserProfile) {
+      usersById.set(activeUserProfile.id, activeUserProfile);
+    }
+    for (const userId of knownSessionUserIds) {
+      if (!usersById.has(userId)) {
+        usersById.set(userId, buildGuestProfile(userId));
+      }
+    }
+    if (!usersById.has(sessionUserId)) {
+      usersById.set(sessionUserId, buildGuestProfile(sessionUserId));
+    }
+
+    return [...usersById.values()].sort((first, second) => {
+      const roleOrder: Record<UserRole, number> = { admin: 0, developer: 1, player: 2, guest: 3 };
+      return roleOrder[first.role] - roleOrder[second.role] || first.displayName.localeCompare(second.displayName);
+    });
+  }, [activeUserProfile, knownBackendUsers, knownSessionUserIds, sessionUserId]);
 
   useEffect(() => {
     if (catalog.length === 0 || collections.length === 0) {
@@ -402,13 +462,13 @@ export default function App() {
               <UserRound size={16} aria-hidden="true" />
               Session
             </h2>
-            <span>Local user</span>
+            <span>{activeUserProfile ? formatRoleLabel(activeUserProfile.role) : "Loading"}</span>
           </div>
           <div className="session-controls">
             <select value={sessionUserId} onChange={(event) => activateSession(event.target.value)} aria-label="Session user">
-              {knownSessionUserIds.map((userId) => (
-                <option key={userId} value={userId}>
-                  {formatSessionLabel(userId)}
+              {userOptions.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.displayName} ({formatRoleLabel(user.role)})
                 </option>
               ))}
             </select>
@@ -416,7 +476,15 @@ export default function App() {
               <RefreshCcw size={15} aria-hidden="true" />
             </button>
           </div>
-          <p className="session-id">{sessionUserId}</p>
+          <div className="session-meta">
+            <p className="session-id">{formatSessionLabel(sessionUserId)}</p>
+            {activeUserProfile?.role === "admin" && (
+              <span className="role-pill admin">
+                <ShieldCheck size={12} aria-hidden="true" />
+                Admin
+              </span>
+            )}
+          </div>
         </section>
 
         <section className="tool-panel">

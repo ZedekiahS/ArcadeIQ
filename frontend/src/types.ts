@@ -29,6 +29,17 @@ export interface SearchResponse {
   source: "rules" | "deepseek" | "mock";
 }
 
+export type UserRole = "guest" | "player" | "developer" | "admin";
+
+export interface UserProfile {
+  id: string;
+  email: string | null;
+  displayName: string;
+  role: UserRole;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface InsightPanelContent {
   title: string;
   caption: string;

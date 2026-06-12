@@ -28,6 +28,9 @@ List seeded games:
 GET /api/games
 GET /api/games/{id}
 GET /api/games/{id}/insights
+GET /api/users
+GET /api/users/{userId}
+POST /api/users/session
 GET /api/collections
 POST /api/collections
 GET /api/saved-games
@@ -38,6 +41,17 @@ DELETE /api/saved-games/{gameId}
 ```
 
 Saved-game endpoints accept an optional `collectionId` query/body field. When omitted, the API uses the user's `Default Shortlist` collection.
+
+The seed script also creates a local admin placeholder account. Configure these values through local environment variables only:
+
+```env
+ARCADEIQ_ADMIN_USER_ID=local-admin
+ARCADEIQ_ADMIN_EMAIL=admin@arcadeiq.local
+ARCADEIQ_ADMIN_DISPLAY_NAME=Local Admin
+ARCADEIQ_ADMIN_PASSWORD=change-this-local-admin-password
+```
+
+The password is hashed before storage. Full token-based login is intentionally left for the next authentication phase.
 
 Run the AI-ready search flow:
 
