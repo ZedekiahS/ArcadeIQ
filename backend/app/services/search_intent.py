@@ -6,6 +6,31 @@ from typing import Literal, TypedDict
 SearchSortBy = Literal["name", "price", "rating", "review_count", "release_year", "revenue", "ownership"]
 SearchSortDirection = Literal["asc", "desc"]
 
+TAG_ALIASES: dict[str, list[str]] = {
+    "Action": ["动作"],
+    "Adventure": ["冒险"],
+    "Atmospheric": ["氛围", "沉浸"],
+    "Card Battler": ["卡牌"],
+    "Co-op": ["合作", "协作"],
+    "Crafting": ["制作", "建造"],
+    "Exploration": ["探索"],
+    "FPS": ["第一人称射击"],
+    "Management": ["管理"],
+    "Multiplayer": ["多人", "联机"],
+    "Open World": ["开放世界"],
+    "Puzzle": ["解谜", "谜题"],
+    "RPG": ["角色扮演"],
+    "Roguelike": ["肉鸽"],
+    "Shooter": ["射击", "枪战"],
+    "Simulation": ["模拟"],
+    "Singleplayer": ["单人"],
+    "Space": ["太空"],
+    "Story Rich": ["剧情", "故事"],
+    "Strategy": ["策略"],
+    "Survival": ["生存"],
+    "Survival Horror": ["恐怖", "生存恐怖"],
+}
+
 
 class SearchIntent(TypedDict):
     max_price: float
@@ -40,7 +65,7 @@ def parse_search_intent(query: str, available_tags: list[str]) -> SearchIntent:
     explicit_price = re.search(r"(?:under|below|less than)\s+\$?(\d+)", text)
     if explicit_price:
         intent["max_price"] = int(explicit_price.group(1))
-    elif "cheap" in text or "deal" in text:
+    elif is_budget_price_query(text):
         intent["max_price"] = 35
 
     if "highly rated" in text or "top rated" in text:
@@ -69,6 +94,8 @@ def parse_search_intent(query: str, available_tags: list[str]) -> SearchIntent:
         matched_tags.add("Survival Horror")
     if "multiplayer" in text:
         matched_tags.add("Multiplayer")
+
+    add_alias_tags(text, matched_tags, available_tags)
 
     intent["tags"] = prioritize_tags(sorted(matched_tags), text)
     return intent
@@ -115,7 +142,14 @@ def apply_ranking_intent(text: str, intent: SearchIntent) -> None:
     if has_any(text, ["most expensive", "highest price", "priciest"]) or "最贵" in text or re.search(r"第[一二三四五]\s*贵", text):
         intent["sort_by"] = "price"
         intent["sort_direction"] = "desc"
-    elif has_any(text, ["cheapest", "lowest price", "least expensive", "cheap", "deal"]) or "便宜" in text:
+        if should_limit_superlative(text):
+            intent["limit"] = 1
+    elif has_any(text, ["cheapest", "lowest price", "least expensive"]) or "最便宜" in text:
+        intent["sort_by"] = "price"
+        intent["sort_direction"] = "asc"
+        if should_limit_superlative(text):
+            intent["limit"] = 1
+    elif has_any(text, ["cheap", "deal"]) or "便宜" in text:
         intent["sort_by"] = "price"
         intent["sort_direction"] = "asc"
     elif has_any(text, ["highest rated", "top rated", "best rated", "highly rated"]) or re.search(r"\bbest\b", text):
@@ -148,6 +182,22 @@ def apply_ranking_intent(text: str, intent: SearchIntent) -> None:
     if ordinal_rank is not None:
         intent["offset"] = ordinal_rank - 1
         intent["limit"] = 1
+
+
+def is_budget_price_query(text: str) -> bool:
+    if has_any(text, ["cheapest", "lowest price", "least expensive"]) or "最便宜" in text:
+        return False
+    return has_any(text, ["cheap", "deal"]) or "便宜" in text
+
+
+def should_limit_superlative(text: str) -> bool:
+    if parse_requested_limit(text) is not None:
+        return False
+    if re.search(r"\b(?:all|list)\b", text):
+        return False
+    if re.search(r"\bgames\b", text) and not re.search(r"\bgame\b", text):
+        return False
+    return True
 
 
 def parse_requested_limit(text: str) -> int | None:
@@ -193,6 +243,14 @@ def parse_ordinal_rank(text: str) -> int | None:
 
 def has_any(text: str, phrases: list[str]) -> bool:
     return any(phrase in text for phrase in phrases)
+
+
+def add_alias_tags(text: str, matched_tags: set[str], available_tags: list[str]) -> None:
+    available_tag_lookup = {tag.lower(): tag for tag in available_tags}
+    for canonical_tag, aliases in TAG_ALIASES.items():
+        tag = available_tag_lookup.get(canonical_tag.lower())
+        if tag and any(alias in text for alias in aliases):
+            matched_tags.add(tag)
 
 
 def normalize_sort_by(value: object | None) -> SearchSortBy | None:

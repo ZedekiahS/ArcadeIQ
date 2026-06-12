@@ -71,6 +71,32 @@ class SearchIntentTests(unittest.TestCase):
         self.assertEqual(intent["limit"], 1)
         self.assertEqual(intent["offset"], 1)
 
+    def test_parse_most_expensive_game_defaults_to_one_result(self) -> None:
+        intent = parse_search_intent("Find the most expensive game", AVAILABLE_TAGS)
+
+        self.assertEqual(intent["sort_by"], "price")
+        self.assertEqual(intent["sort_direction"], "desc")
+        self.assertEqual(intent["limit"], 1)
+        self.assertEqual(intent["offset"], 0)
+
+    def test_parse_cheapest_game_defaults_to_one_result(self) -> None:
+        intent = parse_search_intent("Find the cheapest game", AVAILABLE_TAGS)
+
+        self.assertEqual(intent["max_price"], 70)
+        self.assertEqual(intent["sort_by"], "price")
+        self.assertEqual(intent["sort_direction"], "asc")
+        self.assertEqual(intent["limit"], 1)
+        self.assertEqual(intent["offset"], 0)
+
+    def test_parse_plural_most_expensive_games_keeps_list(self) -> None:
+        intent = parse_search_intent("Find the most expensive FPS games", AVAILABLE_TAGS)
+
+        self.assertEqual(intent["tags"], ["FPS"])
+        self.assertEqual(intent["sort_by"], "price")
+        self.assertEqual(intent["sort_direction"], "desc")
+        self.assertIsNone(intent["limit"])
+        self.assertEqual(intent["offset"], 0)
+
     def test_parse_chinese_second_expensive_fps_query(self) -> None:
         intent = parse_search_intent("第二贵的FPSgame", AVAILABLE_TAGS)
 
@@ -79,6 +105,15 @@ class SearchIntentTests(unittest.TestCase):
         self.assertEqual(intent["sort_direction"], "desc")
         self.assertEqual(intent["limit"], 1)
         self.assertEqual(intent["offset"], 1)
+
+    def test_parse_chinese_mixed_superlative_and_tag_aliases(self) -> None:
+        intent = parse_search_intent("找最便宜的多人 生存 game", AVAILABLE_TAGS)
+
+        self.assertEqual(intent["tags"], ["Multiplayer", "Survival"])
+        self.assertEqual(intent["sort_by"], "price")
+        self.assertEqual(intent["sort_direction"], "asc")
+        self.assertEqual(intent["limit"], 1)
+        self.assertEqual(intent["offset"], 0)
 
     def test_normalize_intent_filters_unknown_tags(self) -> None:
         intent = normalize_search_intent(

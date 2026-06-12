@@ -12,6 +12,31 @@ const defaultIntent: SearchIntent = {
   offset: 0,
 };
 
+const tagAliases: Record<string, string[]> = {
+  Action: ["动作"],
+  Adventure: ["冒险"],
+  Atmospheric: ["氛围", "沉浸"],
+  "Card Battler": ["卡牌"],
+  "Co-op": ["合作", "协作"],
+  Crafting: ["制作", "建造"],
+  Exploration: ["探索"],
+  FPS: ["第一人称射击"],
+  Management: ["管理"],
+  Multiplayer: ["多人", "联机"],
+  "Open World": ["开放世界"],
+  Puzzle: ["解谜", "谜题"],
+  RPG: ["角色扮演"],
+  Roguelike: ["肉鸽"],
+  Shooter: ["射击", "枪战"],
+  Simulation: ["模拟"],
+  Singleplayer: ["单人"],
+  Space: ["太空"],
+  "Story Rich": ["剧情", "故事"],
+  Strategy: ["策略"],
+  Survival: ["生存"],
+  "Survival Horror": ["恐怖", "生存恐怖"],
+};
+
 export function parseSearchIntent(query: string, availableTags: string[]): SearchIntent {
   const text = query.toLowerCase();
   const intent: SearchIntent = { ...defaultIntent, tags: [] };
@@ -19,7 +44,7 @@ export function parseSearchIntent(query: string, availableTags: string[]): Searc
   const explicitPrice = text.match(/(?:under|below|less than)\s+\$?(\d+)/);
   if (explicitPrice) {
     intent.maxPrice = Number(explicitPrice[1]);
-  } else if (text.includes("cheap") || text.includes("deal")) {
+  } else if (isBudgetPriceQuery(text)) {
     intent.maxPrice = 35;
   }
 
@@ -51,6 +76,8 @@ export function parseSearchIntent(query: string, availableTags: string[]): Searc
   if (text.includes("story")) tags.add("Story Rich");
   if (text.includes("horror")) tags.add("Survival Horror");
   if (text.includes("multiplayer")) tags.add("Multiplayer");
+
+  addAliasTags(text, tags, availableTags);
 
   intent.tags = prioritizeTags([...tags], text);
   return intent;
@@ -94,7 +121,12 @@ function applyRankingIntent(text: string, intent: SearchIntent) {
   if (hasAny(text, ["most expensive", "highest price", "priciest"]) || text.includes("最贵") || /第[一二三四五]\s*贵/.test(text)) {
     intent.sortBy = "price";
     intent.sortDirection = "desc";
-  } else if (hasAny(text, ["cheapest", "lowest price", "least expensive", "cheap", "deal"]) || text.includes("便宜")) {
+    if (shouldLimitSuperlative(text)) intent.limit = 1;
+  } else if (hasAny(text, ["cheapest", "lowest price", "least expensive"]) || text.includes("最便宜")) {
+    intent.sortBy = "price";
+    intent.sortDirection = "asc";
+    if (shouldLimitSuperlative(text)) intent.limit = 1;
+  } else if (hasAny(text, ["cheap", "deal"]) || text.includes("便宜")) {
     intent.sortBy = "price";
     intent.sortDirection = "asc";
   } else if (hasAny(text, ["highest rated", "top rated", "best rated", "highly rated"]) || /\bbest\b/.test(text)) {
@@ -131,6 +163,18 @@ function applyRankingIntent(text: string, intent: SearchIntent) {
     intent.offset = ordinalRank - 1;
     intent.limit = 1;
   }
+}
+
+function isBudgetPriceQuery(text: string) {
+  if (hasAny(text, ["cheapest", "lowest price", "least expensive"]) || text.includes("最便宜")) return false;
+  return hasAny(text, ["cheap", "deal"]) || text.includes("便宜");
+}
+
+function shouldLimitSuperlative(text: string) {
+  if (parseRequestedLimit(text) !== null) return false;
+  if (/\b(?:all|list)\b/.test(text)) return false;
+  if (/\bgames\b/.test(text) && !/\bgame\b/.test(text)) return false;
+  return true;
 }
 
 function rankGames(games: Game[], intent: SearchIntent): Game[] {
@@ -202,4 +246,14 @@ function parseOrdinalRank(text: string) {
 
 function hasAny(text: string, phrases: string[]) {
   return phrases.some((phrase) => text.includes(phrase));
+}
+
+function addAliasTags(text: string, tags: Set<string>, availableTags: string[]) {
+  const availableTagLookup = new Map(availableTags.map((tag) => [tag.toLowerCase(), tag]));
+  for (const [canonicalTag, aliases] of Object.entries(tagAliases)) {
+    const tag = availableTagLookup.get(canonicalTag.toLowerCase());
+    if (tag && aliases.some((alias) => text.includes(alias))) {
+      tags.add(tag);
+    }
+  }
 }
