@@ -47,6 +47,7 @@ import {
   getStoredAuthToken,
   getUsers,
   loginUser,
+  registerUser,
 } from "./services/users";
 import type { Game, GameCollection, GameInsights, SavedGame, SearchIntent, ShortlistInsights, UserProfile, UserRole } from "./types";
 import { filterGames, getSignal } from "./lib/search";
@@ -107,8 +108,12 @@ export default function App() {
   const [activeUserProfile, setActiveUserProfile] = useState<UserProfile | null>(null);
   const [authenticatedUserProfile, setAuthenticatedUserProfile] = useState<UserProfile | null>(null);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
-  const [pendingAdminUserId, setPendingAdminUserId] = useState<string | null>(null);
-  const [adminPassword, setAdminPassword] = useState("");
+  const [authMode, setAuthMode] = useState<"login" | "register" | null>(null);
+  const [pendingAuthUserId, setPendingAuthUserId] = useState<string | null>(null);
+  const [loginIdentifier, setLoginIdentifier] = useState("");
+  const [accountPassword, setAccountPassword] = useState("");
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [registerDisplayName, setRegisterDisplayName] = useState("");
   const [authError, setAuthError] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [catalog, setCatalog] = useState<Game[]>([]);
@@ -242,10 +247,12 @@ export default function App() {
   useEffect(() => {
     if (!isAuthChecked) return;
     const currentUser = userOptions.find((user) => user.id === sessionUserId);
-    if (currentUser?.role !== "admin" || authenticatedUserProfile?.id === sessionUserId) return;
+    if (!currentUser || currentUser.role === "guest" || authenticatedUserProfile?.id === sessionUserId) return;
 
-    setPendingAdminUserId(sessionUserId);
-    setAdminPassword("");
+    setPendingAuthUserId(sessionUserId);
+    setLoginIdentifier(currentUser.email ?? currentUser.id);
+    setAuthMode("login");
+    setAccountPassword("");
     setAuthError("");
     activateSession(createSessionUserId());
   }, [authenticatedUserProfile, isAuthChecked, sessionUserId, userOptions]);
@@ -501,53 +508,99 @@ export default function App() {
 
   function requestSessionActivation(userId: string) {
     const user = userOptions.find((option) => option.id === userId);
-    if (user?.role === "admin" && authenticatedUserProfile?.id !== userId) {
-      setPendingAdminUserId(userId);
-      setAdminPassword("");
+    if (user && user.role !== "guest" && authenticatedUserProfile?.id !== userId) {
+      setPendingAuthUserId(userId);
+      setLoginIdentifier(user.email ?? user.id);
+      setAuthMode("login");
+      setAccountPassword("");
       setAuthError("");
       return;
     }
 
-    setPendingAdminUserId(null);
-    setAuthError("");
+    resetAuthForm();
     activateSession(userId);
   }
 
   function startNewSession() {
-    setPendingAdminUserId(null);
-    setAuthError("");
+    resetAuthForm();
     activateSession(createSessionUserId());
   }
 
-  async function loginAdmin(event: React.FormEvent<HTMLFormElement>) {
+  function resetAuthForm() {
+    setAuthMode(null);
+    setPendingAuthUserId(null);
+    setLoginIdentifier("");
+    setAccountPassword("");
+    setRegisterEmail("");
+    setRegisterDisplayName("");
+    setAuthError("");
+  }
+
+  function openLoginForm() {
+    setAuthMode("login");
+    setPendingAuthUserId(null);
+    setLoginIdentifier("");
+    setAccountPassword("");
+    setAuthError("");
+  }
+
+  function openRegisterForm() {
+    setAuthMode("register");
+    setPendingAuthUserId(null);
+    setRegisterEmail("");
+    setRegisterDisplayName("");
+    setAccountPassword("");
+    setAuthError("");
+  }
+
+  async function loginAccount(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const userId = pendingAdminUserId ?? "local-admin";
-    const password = adminPassword.trim();
-    if (!password) return;
+    const identifier = (loginIdentifier || pendingAuthUserId || "").trim();
+    const password = accountPassword.trim();
+    if (!identifier || !password) return;
 
     try {
       setIsLoggingIn(true);
       setAuthError("");
-      const session = await loginUser(userId, password);
+      const session = await loginUser(identifier, password);
       setAuthenticatedUserProfile(session.user);
       setKnownBackendUsers((current) => mergeUserProfile(current, session.user));
-      setPendingAdminUserId(null);
-      setAdminPassword("");
+      resetAuthForm();
       activateSession(session.user.id);
     } catch (error) {
-      setAuthError("Admin password is incorrect.");
+      setAuthError("Account credentials are incorrect.");
     } finally {
       setIsLoggingIn(false);
     }
   }
 
-  function logoutAdmin() {
+  async function registerAccount(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const email = registerEmail.trim();
+    const displayName = registerDisplayName.trim();
+    const password = accountPassword.trim();
+    if (!email || !displayName || password.length < 8) return;
+
+    try {
+      setIsLoggingIn(true);
+      setAuthError("");
+      const session = await registerUser(email, displayName, password);
+      setAuthenticatedUserProfile(session.user);
+      setKnownBackendUsers((current) => mergeUserProfile(current, session.user));
+      resetAuthForm();
+      activateSession(session.user.id);
+    } catch (error) {
+      setAuthError("Account could not be created.");
+    } finally {
+      setIsLoggingIn(false);
+    }
+  }
+
+  function logoutAccount() {
     clearStoredAuthToken();
     setAuthenticatedUserProfile(null);
-    setPendingAdminUserId(null);
-    setAdminPassword("");
-    setAuthError("");
-    if (activeUserProfile?.role === "admin") {
+    resetAuthForm();
+    if (activeUserProfile && activeUserProfile.role !== "guest") {
       activateSession(createSessionUserId());
     }
   }
@@ -556,6 +609,7 @@ export default function App() {
   const signalClass = `signal ${signal.toLowerCase()}`;
   const reviewInsight = insights?.reviewIntelligence;
   const selectedRecommendation = view === "developer" ? insights?.developerOpportunity : insights?.playerRecommendation;
+  const pendingAuthUser = pendingAuthUserId ? userOptions.find((user) => user.id === pendingAuthUserId) : null;
 
   return (
     <div className="app-shell">
@@ -592,32 +646,105 @@ export default function App() {
           </div>
           <div className="session-meta">
             <p className="session-id">{formatSessionLabel(sessionUserId)}</p>
-            {activeUserProfile?.role === "admin" && (
-              <span className="role-pill admin">
+            {activeUserProfile && activeUserProfile.role !== "guest" && (
+              <span className={`role-pill ${activeUserProfile.role}`}>
                 <ShieldCheck size={12} aria-hidden="true" />
-                Admin
+                {formatRoleLabel(activeUserProfile.role)}
               </span>
             )}
           </div>
-          {pendingAdminUserId && (
-            <form className="admin-login" onSubmit={(event) => void loginAdmin(event)}>
+          {!authenticatedUserProfile && authMode === null && (
+            <div className="account-actions">
+              <button className="small-button" type="button" onClick={openLoginForm}>
+                <KeyRound size={13} aria-hidden="true" />
+                Sign In
+              </button>
+              <button className="ghost-button" type="button" onClick={openRegisterForm}>
+                Create Account
+              </button>
+            </div>
+          )}
+          {authMode === "login" && (
+            <form className="account-form" onSubmit={(event) => void loginAccount(event)}>
               <label className="field compact">
-                <span>Admin Password</span>
+                <span>{pendingAuthUser ? `${formatRoleLabel(pendingAuthUser.role)} Sign In` : "User ID or Email"}</span>
+                <input
+                  className="text-input"
+                  type="text"
+                  value={loginIdentifier}
+                  onChange={(event) => setLoginIdentifier(event.target.value)}
+                  placeholder="player@example.com"
+                  aria-label="User ID or email"
+                />
+              </label>
+              <label className="field compact">
+                <span>Password</span>
                 <input
                   className="text-input"
                   type="password"
-                  value={adminPassword}
-                  onChange={(event) => setAdminPassword(event.target.value)}
-                  placeholder="Local admin password"
-                  aria-label="Admin password"
+                  value={accountPassword}
+                  onChange={(event) => setAccountPassword(event.target.value)}
+                  placeholder="Password"
+                  aria-label="Account password"
                 />
               </label>
-              <div className="admin-login-actions">
-                <button className="small-button" type="submit" disabled={isLoggingIn || !adminPassword.trim()}>
+              <div className="account-form-actions">
+                <button className="small-button" type="submit" disabled={isLoggingIn || !loginIdentifier.trim() || !accountPassword.trim()}>
                   <KeyRound size={13} aria-hidden="true" />
                   {isLoggingIn ? "Signing in" : "Sign In"}
                 </button>
-                <button className="ghost-button" type="button" onClick={() => setPendingAdminUserId(null)}>
+                <button className="ghost-button" type="button" onClick={resetAuthForm}>
+                  Cancel
+                </button>
+              </div>
+              {authError && <div className="form-error">{authError}</div>}
+            </form>
+          )}
+          {authMode === "register" && (
+            <form className="account-form" onSubmit={(event) => void registerAccount(event)}>
+              <label className="field compact">
+                <span>Email</span>
+                <input
+                  className="text-input"
+                  type="email"
+                  value={registerEmail}
+                  onChange={(event) => setRegisterEmail(event.target.value)}
+                  placeholder="player@example.com"
+                  aria-label="Register email"
+                />
+              </label>
+              <label className="field compact">
+                <span>Display Name</span>
+                <input
+                  className="text-input"
+                  type="text"
+                  value={registerDisplayName}
+                  onChange={(event) => setRegisterDisplayName(event.target.value)}
+                  placeholder="Player name"
+                  aria-label="Register display name"
+                />
+              </label>
+              <label className="field compact">
+                <span>Password</span>
+                <input
+                  className="text-input"
+                  type="password"
+                  value={accountPassword}
+                  onChange={(event) => setAccountPassword(event.target.value)}
+                  placeholder="8+ characters"
+                  aria-label="Register password"
+                />
+              </label>
+              <div className="account-form-actions">
+                <button
+                  className="small-button"
+                  type="submit"
+                  disabled={isLoggingIn || !registerEmail.trim() || !registerDisplayName.trim() || accountPassword.trim().length < 8}
+                >
+                  <UserRound size={13} aria-hidden="true" />
+                  {isLoggingIn ? "Creating" : "Create"}
+                </button>
+                <button className="ghost-button" type="button" onClick={resetAuthForm}>
                   Cancel
                 </button>
               </div>
@@ -625,9 +752,9 @@ export default function App() {
             </form>
           )}
           {authenticatedUserProfile && (
-            <button className="ghost-button session-logout" type="button" onClick={logoutAdmin}>
+            <button className="ghost-button session-logout" type="button" onClick={logoutAccount}>
               <LogOut size={13} aria-hidden="true" />
-              Sign Out Admin
+              Sign Out {formatRoleLabel(authenticatedUserProfile.role)}
             </button>
           )}
         </section>

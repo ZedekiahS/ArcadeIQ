@@ -2,7 +2,14 @@ from __future__ import annotations
 
 import unittest
 
-from app.schemas import AuthLoginRequest, CollectionCreateRequest, CollectionUpdateRequest, SavedGameRequest, UserSessionRequest
+from app.schemas import (
+    AuthLoginRequest,
+    AuthRegisterRequest,
+    CollectionCreateRequest,
+    CollectionUpdateRequest,
+    SavedGameRequest,
+    UserSessionRequest,
+)
 
 
 class SavedGamesSchemaTests(unittest.TestCase):
@@ -37,4 +44,13 @@ class SavedGamesSchemaTests(unittest.TestCase):
         request = AuthLoginRequest.model_validate({"userId": "local-admin", "password": "local-password"})
 
         self.assertEqual(request.user_id, "local-admin")
+        self.assertEqual(request.password, "local-password")
+
+    def test_auth_register_request_accepts_frontend_aliases(self) -> None:
+        request = AuthRegisterRequest.model_validate(
+            {"email": "player@example.com", "displayName": "Player One", "password": "local-password"}
+        )
+
+        self.assertEqual(request.email, "player@example.com")
+        self.assertEqual(request.display_name, "Player One")
         self.assertEqual(request.password, "local-password")

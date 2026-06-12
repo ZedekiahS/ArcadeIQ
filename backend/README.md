@@ -32,6 +32,7 @@ GET /api/users
 GET /api/users/{userId}
 POST /api/users/session
 POST /api/auth/login
+POST /api/auth/register
 GET /api/auth/me
 GET /api/collections
 POST /api/collections

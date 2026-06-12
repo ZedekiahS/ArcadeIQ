@@ -56,6 +56,24 @@ export async function loginUser(userId: string, password: string): Promise<AuthS
   return session;
 }
 
+export async function registerUser(email: string, displayName: string, password: string): Promise<AuthSession> {
+  const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, displayName, password }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Register API returned ${response.status}`);
+  }
+
+  const session = (await response.json()) as AuthSession;
+  setStoredAuthToken(session.accessToken);
+  return session;
+}
+
 export async function getAuthenticatedUser(token: string): Promise<UserProfile> {
   const response = await fetch(`${API_BASE_URL}/auth/me`, {
     headers: {

@@ -71,6 +71,14 @@ class AuthLoginRequest(BaseModel):
     password: str
 
 
+class AuthRegisterRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    email: str
+    display_name: str = Field(alias="displayName")
+    password: str
+
+
 class AuthSessionOut(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 

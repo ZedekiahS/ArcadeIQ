@@ -317,6 +317,18 @@ select {
   background: #eaf3ff;
 }
 
+.role-pill.player {
+  border-color: #91d0b8;
+  color: #14634d;
+  background: #e7f7f1;
+}
+
+.role-pill.developer {
+  border-color: #dac17e;
+  color: #745400;
+  background: #fff7df;
+}
+
 .metric-row {
   display: flex;
   justify-content: space-between;
@@ -659,13 +671,20 @@ select {
   background: #eaf3ff;
 }
 
-.admin-login {
+.account-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.account-form {
   display: grid;
   gap: 8px;
   margin-top: 10px;
 }
 
-.admin-login-actions {
+.account-form-actions {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
