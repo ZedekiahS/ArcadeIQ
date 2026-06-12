@@ -403,6 +403,7 @@ select {
   justify-content: center;
   gap: 8px;
   align-items: center;
+  width: 100%;
   min-height: 44px;
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
@@ -415,6 +416,115 @@ select {
 .save-button:hover,
 .save-button.active {
   background: rgba(255, 255, 255, 0.24);
+}
+
+.save-picker {
+  position: relative;
+}
+
+.save-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 10;
+  width: min(296px, calc(100vw - 48px));
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  color: var(--ink);
+  background: #ffffff;
+  box-shadow: 0 18px 45px rgba(17, 24, 39, 0.2);
+}
+
+.save-menu-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.save-menu-header strong {
+  font-size: 13px;
+}
+
+.save-menu-header span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.save-menu-list {
+  display: grid;
+  gap: 6px;
+}
+
+.save-menu-option {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 38px;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px;
+  text-align: left;
+  background: var(--soft);
+  cursor: pointer;
+}
+
+.save-menu-option:hover,
+.save-menu-option.active {
+  border-color: #91bcf7;
+  background: #edf6ff;
+}
+
+.save-menu-option span:nth-child(2) {
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.save-menu-option strong {
+  color: var(--accent-strong);
+  font-size: 12px;
+}
+
+.save-menu-check {
+  display: grid;
+  place-items: center;
+  color: var(--accent-strong);
+}
+
+.save-menu-create,
+.save-menu-create-button {
+  margin-top: 8px;
+}
+
+.save-menu-create {
+  display: grid;
+  gap: 8px;
+}
+
+.save-menu-create-button {
+  display: inline-flex;
+  justify-content: center;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  min-height: 36px;
+  border: 1px dashed #9bbff2;
+  border-radius: 6px;
+  color: #124888;
+  background: #f5faff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.save-menu-create-button:hover {
+  background: #eaf3ff;
 }
 
 .content-grid {

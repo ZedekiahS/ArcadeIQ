@@ -3,6 +3,7 @@ import {
   Bookmark,
   BookmarkCheck,
   Brain,
+  Check,
   CircleDollarSign,
   Folder,
   Gamepad2,
@@ -77,7 +78,10 @@ export default function App() {
   const [activeCollectionId, setActiveCollectionId] = useState<number | null>(null);
   const [isCreatingCollection, setIsCreatingCollection] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
-  const [savedGames, setSavedGames] = useState<SavedGame[]>([]);
+  const [isSaveMenuOpen, setIsSaveMenuOpen] = useState(false);
+  const [isCreatingSaveCollection, setIsCreatingSaveCollection] = useState(false);
+  const [saveCollectionName, setSaveCollectionName] = useState("");
+  const [savedGamesByCollection, setSavedGamesByCollection] = useState<Record<number, SavedGame[]>>({});
   const [shortlistInsights, setShortlistInsights] = useState<ShortlistInsights | null>(null);
 
   useEffect(() => {
@@ -91,8 +95,11 @@ export default function App() {
     let cancelled = false;
     setCollections([]);
     setActiveCollectionId(null);
-    setSavedGames([]);
+    setSavedGamesByCollection({});
     setShortlistInsights(null);
+    setIsSaveMenuOpen(false);
+    setIsCreatingSaveCollection(false);
+    setSaveCollectionName("");
 
     getCollections(sessionUserId).then((items) => {
       if (cancelled) return;
@@ -106,21 +113,32 @@ export default function App() {
   }, [sessionUserId]);
 
   useEffect(() => {
-    if (catalog.length === 0 || activeCollectionId === null) {
-      setSavedGames([]);
+    if (catalog.length === 0 || collections.length === 0) {
+      setSavedGamesByCollection({});
       return;
     }
 
     let cancelled = false;
-    setSavedGames([]);
-    getSavedGames(catalog, sessionUserId, activeCollectionId).then((items) => {
-      if (!cancelled) setSavedGames(items);
+    setSavedGamesByCollection({});
+
+    Promise.all(
+      collections.map(async (collection) => {
+        const items = await getSavedGames(catalog, sessionUserId, collection.id);
+        return [collection.id, items] as const;
+      }),
+    ).then((entries) => {
+      if (cancelled) return;
+      setSavedGamesByCollection(Object.fromEntries(entries));
     });
 
     return () => {
       cancelled = true;
     };
-  }, [activeCollectionId, catalog, sessionUserId]);
+  }, [catalog, collections, sessionUserId]);
+
+  const savedGames = useMemo(() => {
+    return activeCollectionId === null ? [] : savedGamesByCollection[activeCollectionId] ?? [];
+  }, [activeCollectionId, savedGamesByCollection]);
 
   useEffect(() => {
     let cancelled = false;
@@ -142,8 +160,19 @@ export default function App() {
     return filteredGames.find((game) => game.id === selectedId) ?? filteredGames[0] ?? catalog[0];
   }, [catalog, filteredGames, selectedId]);
   const selectedGame = selectedDetail?.id === selectedId ? selectedDetail : selectedPreview;
-  const savedGameIds = useMemo(() => new Set(savedGames.map((savedGame) => savedGame.gameId)), [savedGames]);
-  const selectedIsSaved = selectedGame ? savedGameIds.has(selectedGame.id) : false;
+  const selectedSavedCollectionIds = useMemo(() => {
+    const collectionIds = new Set<number>();
+    if (!selectedGame) return collectionIds;
+
+    for (const collection of collections) {
+      if ((savedGamesByCollection[collection.id] ?? []).some((savedGame) => savedGame.gameId === selectedGame.id)) {
+        collectionIds.add(collection.id);
+      }
+    }
+
+    return collectionIds;
+  }, [collections, savedGamesByCollection, selectedGame]);
+  const selectedIsSaved = selectedSavedCollectionIds.size > 0;
 
   useEffect(() => {
     if (selectedId === null) {
@@ -171,6 +200,12 @@ export default function App() {
     };
   }, [catalog, selectedId]);
 
+  useEffect(() => {
+    setIsSaveMenuOpen(false);
+    setIsCreatingSaveCollection(false);
+    setSaveCollectionName("");
+  }, [selectedId]);
+
   const metrics = useMemo(() => {
     const visible = filteredGames.length || 1;
     return {
@@ -196,24 +231,35 @@ export default function App() {
     setSearchSource("rules");
   }
 
-  async function toggleSavedGame(game: Game) {
-    const collectionId = selectedCollection?.id ?? activeCollectionId ?? undefined;
-    if (savedGameIds.has(game.id)) {
-      await removeSavedGame(game.id, sessionUserId, collectionId);
-      setSavedGames((current) => current.filter((savedGame) => savedGame.gameId !== game.id));
+  function updateCollectionSavedGames(collectionId: number, updater: (items: SavedGame[]) => SavedGame[]) {
+    setSavedGamesByCollection((current) => ({
+      ...current,
+      [collectionId]: updater(current[collectionId] ?? []),
+    }));
+  }
+
+  async function toggleSavedGameForCollection(game: Game, collection: GameCollection) {
+    const isSaved = selectedSavedCollectionIds.has(collection.id);
+    if (isSaved) {
+      await removeSavedGame(game.id, sessionUserId, collection.id);
+      updateCollectionSavedGames(collection.id, (items) => items.filter((savedGame) => savedGame.gameId !== game.id));
       return;
     }
 
-    const savedGame = await saveGame(game, catalog, sessionUserId, collectionId);
-    setSavedGames((current) => {
-      if (current.some((item) => item.gameId === savedGame.gameId)) return current;
-      return [savedGame, ...current];
+    const savedGame = await saveGame(game, catalog, sessionUserId, collection.id);
+    updateCollectionSavedGames(collection.id, (items) => {
+      if (items.some((item) => item.gameId === savedGame.gameId)) return items;
+      return [savedGame, ...items];
     });
+    setActiveCollectionId(collection.id);
   }
 
   async function clearShortlist() {
-    await clearSavedGames(sessionUserId, selectedCollection?.id ?? activeCollectionId ?? undefined);
-    setSavedGames([]);
+    const collectionId = selectedCollection?.id ?? activeCollectionId;
+    if (collectionId === null) return;
+
+    await clearSavedGames(sessionUserId, collectionId);
+    updateCollectionSavedGames(collectionId, () => []);
   }
 
   async function addCollection(event: React.FormEvent<HTMLFormElement>) {
@@ -229,6 +275,26 @@ export default function App() {
     setActiveCollectionId(collection.id);
     setNewCollectionName("");
     setIsCreatingCollection(false);
+  }
+
+  async function createCollectionAndSave(event: React.FormEvent<HTMLFormElement>, game: Game) {
+    event.preventDefault();
+    const name = saveCollectionName.trim();
+    if (!name) return;
+
+    const collection = await createCollection(name, sessionUserId);
+    const savedGame = await saveGame(game, catalog, sessionUserId, collection.id);
+    setCollections((current) => {
+      if (current.some((item) => item.id === collection.id)) return current;
+      return [...current, collection];
+    });
+    updateCollectionSavedGames(collection.id, (items) => {
+      if (items.some((item) => item.gameId === savedGame.gameId)) return items;
+      return [savedGame, ...items];
+    });
+    setActiveCollectionId(collection.id);
+    setSaveCollectionName("");
+    setIsCreatingSaveCollection(false);
   }
 
   function activateSession(userId: string) {
@@ -492,15 +558,62 @@ export default function App() {
               <Stat icon={<Star size={16} />} label="Rating" value={selectedGame.rating.toFixed(1)} />
               <Stat icon={<CircleDollarSign size={16} />} label="Price" value={formatMoney(selectedGame.price)} />
               <Stat icon={<LineChart size={16} />} label="Signal" value={signal} className={signalClass} />
-              <button
-                className={`save-button ${selectedIsSaved ? "active" : ""}`}
-                type="button"
-                onClick={() => void toggleSavedGame(selectedGame)}
-                title={selectedIsSaved ? `Remove from ${selectedCollection?.name ?? "collection"}` : `Save to ${selectedCollection?.name ?? "collection"}`}
-              >
-                {selectedIsSaved ? <BookmarkCheck size={16} aria-hidden="true" /> : <Bookmark size={16} aria-hidden="true" />}
-                {selectedIsSaved ? "Saved" : "Save"}
-              </button>
+              <div className="save-picker">
+                <button
+                  className={`save-button ${selectedIsSaved ? "active" : ""}`}
+                  type="button"
+                  onClick={() => setIsSaveMenuOpen((current) => !current)}
+                  title={selectedIsSaved ? "Manage saved collections" : "Choose a collection"}
+                  aria-expanded={isSaveMenuOpen}
+                >
+                  {selectedIsSaved ? <BookmarkCheck size={16} aria-hidden="true" /> : <Bookmark size={16} aria-hidden="true" />}
+                  {selectedIsSaved ? `Saved (${selectedSavedCollectionIds.size})` : "Save"}
+                </button>
+                {isSaveMenuOpen && (
+                  <div className="save-menu">
+                    <div className="save-menu-header">
+                      <strong>Choose Collection</strong>
+                      <span>{selectedSavedCollectionIds.size} saved</span>
+                    </div>
+                    <div className="save-menu-list">
+                      {collections.map((collection) => {
+                        const isSaved = selectedSavedCollectionIds.has(collection.id);
+                        return (
+                          <button
+                            key={collection.id}
+                            className={`save-menu-option ${isSaved ? "active" : ""}`}
+                            type="button"
+                            onClick={() => void toggleSavedGameForCollection(selectedGame, collection)}
+                          >
+                            <span className="save-menu-check">{isSaved && <Check size={14} aria-hidden="true" />}</span>
+                            <span>{collection.name}</span>
+                            <strong>{isSaved ? "Remove" : "Save"}</strong>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {isCreatingSaveCollection ? (
+                      <form className="save-menu-create" onSubmit={(event) => void createCollectionAndSave(event, selectedGame)}>
+                        <input
+                          className="text-input"
+                          aria-label="New collection name"
+                          placeholder="Research picks"
+                          value={saveCollectionName}
+                          onChange={(event) => setSaveCollectionName(event.target.value)}
+                        />
+                        <button className="small-button" type="submit">
+                          Create & Save
+                        </button>
+                      </form>
+                    ) : (
+                      <button className="save-menu-create-button" type="button" onClick={() => setIsCreatingSaveCollection(true)}>
+                        <Plus size={14} aria-hidden="true" />
+                        New Collection
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </section>
         )}
