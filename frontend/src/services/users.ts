@@ -1,7 +1,8 @@
-import type { UserProfile, UserRole } from "../types";
+import type { AuthSession, UserProfile, UserRole } from "../types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
 const LOCAL_ADMIN_USER_ID = "local-admin";
+const AUTH_TOKEN_STORAGE_KEY = "arcadeiq.authToken";
 
 export async function getUsers(): Promise<UserProfile[]> {
   try {
@@ -35,6 +36,50 @@ export async function ensureSessionUser(userId: string): Promise<UserProfile> {
     console.warn("Using local mock session user because the backend API is unavailable.", error);
     return userId === LOCAL_ADMIN_USER_ID ? buildLocalAdminProfile() : buildGuestProfile(userId);
   }
+}
+
+export async function loginUser(userId: string, password: string): Promise<AuthSession> {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ userId, password }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Login API returned ${response.status}`);
+  }
+
+  const session = (await response.json()) as AuthSession;
+  setStoredAuthToken(session.accessToken);
+  return session;
+}
+
+export async function getAuthenticatedUser(token: string): Promise<UserProfile> {
+  const response = await fetch(`${API_BASE_URL}/auth/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Auth me API returned ${response.status}`);
+  }
+
+  return (await response.json()) as UserProfile;
+}
+
+export function getStoredAuthToken(): string | null {
+  return window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+}
+
+export function setStoredAuthToken(token: string) {
+  window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+}
+
+export function clearStoredAuthToken() {
+  window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
 }
 
 export function formatRoleLabel(role: UserRole) {

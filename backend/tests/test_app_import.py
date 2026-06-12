@@ -54,3 +54,17 @@ class AppImportTests(unittest.TestCase):
 
         self.assertIn("GET", collection_methods)
         self.assertIn("POST", session_methods)
+
+    def test_auth_routes_are_registered(self) -> None:
+        from app.main import app
+
+        login_methods = set()
+        me_methods = set()
+        for route in app.routes:
+            if getattr(route, "path", None) == "/api/auth/login":
+                login_methods.update(getattr(route, "methods", set()))
+            if getattr(route, "path", None) == "/api/auth/me":
+                me_methods.update(getattr(route, "methods", set()))
+
+        self.assertIn("POST", login_methods)
+        self.assertIn("GET", me_methods)

@@ -40,6 +40,13 @@ export interface UserProfile {
   createdAt: string;
 }
 
+export interface AuthSession {
+  accessToken: string;
+  tokenType: "bearer";
+  expiresIn: number;
+  user: UserProfile;
+}
+
 export interface InsightPanelContent {
   title: string;
   caption: string;

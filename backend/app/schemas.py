@@ -60,6 +60,22 @@ class UserOut(BaseModel):
     created_at: datetime = Field(alias="createdAt")
 
 
+class AuthLoginRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    user_id: str = Field(alias="userId")
+    password: str
+
+
+class AuthSessionOut(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    access_token: str = Field(alias="accessToken")
+    token_type: str = Field(default="bearer", alias="tokenType")
+    expires_in: int = Field(alias="expiresIn")
+    user: UserOut
+
+
 class InsightPanelOut(BaseModel):
     title: str
     caption: str

@@ -7,7 +7,9 @@ import {
   CircleDollarSign,
   Folder,
   Gamepad2,
+  KeyRound,
   LineChart,
+  LogOut,
   Pencil,
   Plus,
   RefreshCcw,
@@ -37,7 +39,15 @@ import {
   updateCollection,
 } from "./services/catalog";
 import { createSessionUserId, getActiveSessionUserId, getKnownSessionUserIds, setActiveSessionUserId as persistSessionUserId } from "./services/session";
-import { ensureSessionUser, formatRoleLabel, getUsers } from "./services/users";
+import {
+  clearStoredAuthToken,
+  ensureSessionUser,
+  formatRoleLabel,
+  getAuthenticatedUser,
+  getStoredAuthToken,
+  getUsers,
+  loginUser,
+} from "./services/users";
 import type { Game, GameCollection, GameInsights, SavedGame, SearchIntent, ShortlistInsights, UserProfile, UserRole } from "./types";
 import { filterGames, getSignal } from "./lib/search";
 
@@ -81,11 +91,21 @@ function buildGuestProfile(userId: string): UserProfile {
   };
 }
 
+function mergeUserProfile(users: UserProfile[], profile: UserProfile) {
+  return [profile, ...users.filter((user) => user.id !== profile.id)];
+}
+
 export default function App() {
   const [sessionUserId, setSessionUserId] = useState(getActiveSessionUserId);
   const [knownSessionUserIds, setKnownSessionUserIds] = useState(getKnownSessionUserIds);
   const [knownBackendUsers, setKnownBackendUsers] = useState<UserProfile[]>([]);
   const [activeUserProfile, setActiveUserProfile] = useState<UserProfile | null>(null);
+  const [authenticatedUserProfile, setAuthenticatedUserProfile] = useState<UserProfile | null>(null);
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
+  const [pendingAdminUserId, setPendingAdminUserId] = useState<string | null>(null);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [catalog, setCatalog] = useState<Game[]>([]);
   const [query, setQuery] = useState(exampleQueries[0]);
   const [intent, setIntent] = useState<SearchIntent>(initialIntent);
@@ -120,6 +140,35 @@ export default function App() {
     getUsers().then((users) => {
       if (!cancelled) setKnownBackendUsers(users);
     });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const token = getStoredAuthToken();
+    if (!token) {
+      setIsAuthChecked(true);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    getAuthenticatedUser(token)
+      .then((profile) => {
+        if (cancelled) return;
+        setAuthenticatedUserProfile(profile);
+        setKnownBackendUsers((current) => mergeUserProfile(current, profile));
+      })
+      .catch(() => {
+        clearStoredAuthToken();
+        if (!cancelled) setAuthenticatedUserProfile(null);
+      })
+      .finally(() => {
+        if (!cancelled) setIsAuthChecked(true);
+      });
 
     return () => {
       cancelled = true;
@@ -184,6 +233,17 @@ export default function App() {
       return roleOrder[first.role] - roleOrder[second.role] || first.displayName.localeCompare(second.displayName);
     });
   }, [activeUserProfile, knownBackendUsers, knownSessionUserIds, sessionUserId]);
+
+  useEffect(() => {
+    if (!isAuthChecked) return;
+    const currentUser = userOptions.find((user) => user.id === sessionUserId);
+    if (currentUser?.role !== "admin" || authenticatedUserProfile?.id === sessionUserId) return;
+
+    setPendingAdminUserId(sessionUserId);
+    setAdminPassword("");
+    setAuthError("");
+    activateSession(createSessionUserId());
+  }, [authenticatedUserProfile, isAuthChecked, sessionUserId, userOptions]);
 
   useEffect(() => {
     if (catalog.length === 0 || collections.length === 0) {
@@ -434,8 +494,57 @@ export default function App() {
     setKnownSessionUserIds(getKnownSessionUserIds());
   }
 
+  function requestSessionActivation(userId: string) {
+    const user = userOptions.find((option) => option.id === userId);
+    if (user?.role === "admin" && authenticatedUserProfile?.id !== userId) {
+      setPendingAdminUserId(userId);
+      setAdminPassword("");
+      setAuthError("");
+      return;
+    }
+
+    setPendingAdminUserId(null);
+    setAuthError("");
+    activateSession(userId);
+  }
+
   function startNewSession() {
+    setPendingAdminUserId(null);
+    setAuthError("");
     activateSession(createSessionUserId());
+  }
+
+  async function loginAdmin(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const userId = pendingAdminUserId ?? "local-admin";
+    const password = adminPassword.trim();
+    if (!password) return;
+
+    try {
+      setIsLoggingIn(true);
+      setAuthError("");
+      const session = await loginUser(userId, password);
+      setAuthenticatedUserProfile(session.user);
+      setKnownBackendUsers((current) => mergeUserProfile(current, session.user));
+      setPendingAdminUserId(null);
+      setAdminPassword("");
+      activateSession(session.user.id);
+    } catch (error) {
+      setAuthError("Admin password is incorrect.");
+    } finally {
+      setIsLoggingIn(false);
+    }
+  }
+
+  function logoutAdmin() {
+    clearStoredAuthToken();
+    setAuthenticatedUserProfile(null);
+    setPendingAdminUserId(null);
+    setAdminPassword("");
+    setAuthError("");
+    if (activeUserProfile?.role === "admin") {
+      activateSession(createSessionUserId());
+    }
   }
 
   const signal = insights?.signal ?? (selectedGame ? getSignal(selectedGame) : "Watch");
@@ -465,7 +574,7 @@ export default function App() {
             <span>{activeUserProfile ? formatRoleLabel(activeUserProfile.role) : "Loading"}</span>
           </div>
           <div className="session-controls">
-            <select value={sessionUserId} onChange={(event) => activateSession(event.target.value)} aria-label="Session user">
+            <select value={sessionUserId} onChange={(event) => requestSessionActivation(event.target.value)} aria-label="Session user">
               {userOptions.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.displayName} ({formatRoleLabel(user.role)})
@@ -485,6 +594,37 @@ export default function App() {
               </span>
             )}
           </div>
+          {pendingAdminUserId && (
+            <form className="admin-login" onSubmit={(event) => void loginAdmin(event)}>
+              <label className="field compact">
+                <span>Admin Password</span>
+                <input
+                  className="text-input"
+                  type="password"
+                  value={adminPassword}
+                  onChange={(event) => setAdminPassword(event.target.value)}
+                  placeholder="Local admin password"
+                  aria-label="Admin password"
+                />
+              </label>
+              <div className="admin-login-actions">
+                <button className="small-button" type="submit" disabled={isLoggingIn || !adminPassword.trim()}>
+                  <KeyRound size={13} aria-hidden="true" />
+                  {isLoggingIn ? "Signing in" : "Sign In"}
+                </button>
+                <button className="ghost-button" type="button" onClick={() => setPendingAdminUserId(null)}>
+                  Cancel
+                </button>
+              </div>
+              {authError && <div className="form-error">{authError}</div>}
+            </form>
+          )}
+          {authenticatedUserProfile && (
+            <button className="ghost-button session-logout" type="button" onClick={logoutAdmin}>
+              <LogOut size={13} aria-hidden="true" />
+              Sign Out Admin
+            </button>
+          )}
         </section>
 
         <section className="tool-panel">

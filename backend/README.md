@@ -31,6 +31,8 @@ GET /api/games/{id}/insights
 GET /api/users
 GET /api/users/{userId}
 POST /api/users/session
+POST /api/auth/login
+GET /api/auth/me
 GET /api/collections
 POST /api/collections
 GET /api/saved-games
@@ -49,9 +51,11 @@ ARCADEIQ_ADMIN_USER_ID=local-admin
 ARCADEIQ_ADMIN_EMAIL=admin@arcadeiq.local
 ARCADEIQ_ADMIN_DISPLAY_NAME=Local Admin
 ARCADEIQ_ADMIN_PASSWORD=change-this-local-admin-password
+ARCADEIQ_AUTH_SECRET=local-only-change-this-auth-secret
+ARCADEIQ_AUTH_TOKEN_TTL_SECONDS=43200
 ```
 
-The password is hashed before storage. Full token-based login is intentionally left for the next authentication phase.
+The password is hashed before storage. `/api/auth/login` returns a local bearer token for the current admin shell; use deployment secrets for real environments.
 
 Run the AI-ready search flow:
 

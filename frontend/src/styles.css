@@ -613,6 +613,10 @@ select {
 }
 
 .small-button {
+  display: inline-flex;
+  justify-content: center;
+  gap: 6px;
+  align-items: center;
   min-height: 34px;
   border: 1px solid #9bbff2;
   border-radius: 6px;
@@ -626,6 +630,50 @@ select {
 
 .small-button:hover {
   background: #dcecff;
+}
+
+.small-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ghost-button {
+  display: inline-flex;
+  justify-content: center;
+  gap: 6px;
+  align-items: center;
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 10px;
+  color: var(--muted);
+  background: var(--soft);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ghost-button:hover {
+  border-color: #9bbff2;
+  color: #124888;
+  background: #eaf3ff;
+}
+
+.admin-login {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.admin-login-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.session-logout {
+  width: 100%;
+  margin-top: 8px;
 }
 
 .form-error {

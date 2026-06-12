@@ -24,6 +24,8 @@ class Settings:
         self.admin_email = os.getenv("ARCADEIQ_ADMIN_EMAIL", "admin@arcadeiq.local").strip()
         self.admin_display_name = os.getenv("ARCADEIQ_ADMIN_DISPLAY_NAME", "Local Admin").strip()
         self.admin_password = os.getenv("ARCADEIQ_ADMIN_PASSWORD", "change-this-local-admin-password")
+        self.auth_secret = os.getenv("ARCADEIQ_AUTH_SECRET", "local-only-change-this-auth-secret")
+        self.auth_token_ttl_seconds = int(os.getenv("ARCADEIQ_AUTH_TOKEN_TTL_SECONDS", "43200"))
 
 
 def env_bool(name: str, *, default: bool) -> bool:
