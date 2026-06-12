@@ -4,8 +4,8 @@ This guide runs the modern ArcadeIQ backend with PostgreSQL. This is the recomme
 
 ## Prerequisites
 
-- Docker Desktop
-- Python 3.10 or newer recommended
+- PostgreSQL 16 or newer installed locally, or Docker Desktop if you prefer a containerized database
+- Python 3.10 or newer; Python 3.12 is recommended
 - Node.js for the frontend
 
 ## 1. Configure Environment
@@ -28,15 +28,26 @@ VITE_API_BASE_URL=http://localhost:8000/api
 
 ## 2. Start PostgreSQL
 
+### Option A: Installed PostgreSQL
+
+```powershell
+psql -U postgres -d postgres -c "CREATE ROLE arcadeiq LOGIN PASSWORD 'arcadeiq_dev_password';"
+createdb -U postgres --owner arcadeiq arcadeiq
+```
+
+If the role or database already exists, keep the existing objects and make sure the password matches `ARCADEIQ_DATABASE_URL`.
+
+### Option B: Docker PostgreSQL
+
 ```powershell
 docker compose --env-file .env up -d postgres
 ```
 
-This uses the `pgvector/pgvector:pg16` image so the local database is ready for future vector search work.
+The Docker path uses the `pgvector/pgvector:pg16` image so the local database is ready for future vector search work.
 
 ## 3. Install Backend Dependencies
 
-The recommended path is Docker:
+If you run the backend in Docker:
 
 ```powershell
 docker compose --env-file .env up -d postgres backend
@@ -44,11 +55,11 @@ docker compose exec backend alembic upgrade head
 docker compose exec backend python -m app.scripts.seed
 ```
 
-If you want to run the backend directly on Windows instead, use a Python virtual environment:
+If you run the backend directly on Windows, use a Python virtual environment:
 
 ```powershell
 cd backend
-python -m venv .venv
+py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```

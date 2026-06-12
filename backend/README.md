@@ -84,21 +84,30 @@ DEEPSEEK_API_KEY=your-local-key
 
 If the provider is disabled, missing a key, or returns an invalid payload, `/api/search` falls back to the local rules parser when `ARCADEIQ_AI_FALLBACK_TO_RULES=true`.
 
-### Python virtual environment
+### Local PostgreSQL + Python virtual environment
+
+The backend reads environment variables from the repository root `.env` file when it exists. The default local URL is:
+
+```powershell
+$env:ARCADEIQ_DATABASE_URL="postgresql+psycopg://arcadeiq:arcadeiq_dev_password@localhost:5432/arcadeiq"
+```
 
 Create a virtual environment and install dependencies:
 
 ```powershell
 cd backend
-python -m venv .venv
+py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
-Set a PostgreSQL database URL:
+If Python 3.12 is unavailable, use Python 3.10 or newer.
+
+Create the local database once in PostgreSQL:
 
 ```powershell
-$env:ARCADEIQ_DATABASE_URL="postgresql+psycopg://arcadeiq:arcadeiq_dev_password@localhost:5432/arcadeiq"
+psql -U postgres -d postgres -c "CREATE ROLE arcadeiq LOGIN PASSWORD 'arcadeiq_dev_password';"
+createdb -U postgres --owner arcadeiq arcadeiq
 ```
 
 Run migrations and seed demo data:
