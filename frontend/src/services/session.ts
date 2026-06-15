@@ -18,7 +18,7 @@ export function getKnownSessionUserIds(): string[] {
     const rawValue = window.localStorage.getItem(KNOWN_SESSIONS_STORAGE_KEY);
     if (!rawValue) return [];
     const parsed = JSON.parse(rawValue);
-    return Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === "string" && value.length > 0) : [];
+    return Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === "string" && isGuestSessionUserId(value)) : [];
   } catch {
     return [];
   }
@@ -35,7 +35,12 @@ export function createSessionUserId(): string {
   return `guest-${randomPart}`;
 }
 
+export function isGuestSessionUserId(userId: string) {
+  return userId.trim().startsWith("guest-");
+}
+
 function rememberSessionUserId(userId: string) {
+  if (!isGuestSessionUserId(userId)) return;
   const knownUserIds = getKnownSessionUserIds();
   if (knownUserIds.includes(userId)) return;
   window.localStorage.setItem(KNOWN_SESSIONS_STORAGE_KEY, JSON.stringify([userId, ...knownUserIds].slice(0, 6)));

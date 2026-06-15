@@ -38,7 +38,13 @@ import {
   searchCatalog,
   updateCollection,
 } from "./services/catalog";
-import { createSessionUserId, getActiveSessionUserId, getKnownSessionUserIds, setActiveSessionUserId as persistSessionUserId } from "./services/session";
+import {
+  createSessionUserId,
+  getActiveSessionUserId,
+  getKnownSessionUserIds,
+  isGuestSessionUserId,
+  setActiveSessionUserId as persistSessionUserId,
+} from "./services/session";
 import {
   clearStoredAuthToken,
   ensureSessionUser,
@@ -147,14 +153,28 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
+    if (!authenticatedUserProfile) {
+      setKnownBackendUsers([]);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (authenticatedUserProfile.role !== "admin") {
+      setKnownBackendUsers([authenticatedUserProfile]);
+      return () => {
+        cancelled = true;
+      };
+    }
+
     getUsers().then((users) => {
-      if (!cancelled) setKnownBackendUsers(users);
+      if (!cancelled) setKnownBackendUsers(mergeUserProfile(users, authenticatedUserProfile));
     });
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [authenticatedUserProfile]);
 
   useEffect(() => {
     let cancelled = false;
@@ -201,14 +221,35 @@ export default function App() {
     setIsCreatingSaveCollection(false);
     setSaveCollectionName("");
 
-    ensureSessionUser(sessionUserId).then((profile) => {
-      if (cancelled) return;
-      setActiveUserProfile(profile);
-      setKnownBackendUsers((current) => {
-        const existing = current.filter((user) => user.id !== profile.id);
-        return [profile, ...existing];
+    if (!isAuthChecked && getStoredAuthToken()) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (authenticatedUserProfile && authenticatedUserProfile.id !== sessionUserId) {
+      activateSession(authenticatedUserProfile.id);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (authenticatedUserProfile?.id === sessionUserId) {
+      setActiveUserProfile(authenticatedUserProfile);
+      setKnownBackendUsers((current) => mergeUserProfile(current, authenticatedUserProfile));
+    } else if (!isGuestSessionUserId(sessionUserId)) {
+      if (isAuthChecked) {
+        activateSession(createSessionUserId());
+      }
+      return () => {
+        cancelled = true;
+      };
+    } else {
+      ensureSessionUser(sessionUserId).then((profile) => {
+        if (cancelled) return;
+        setActiveUserProfile(profile);
       });
-    });
+    }
 
     getCollections(sessionUserId).then((items) => {
       if (cancelled) return;
@@ -219,12 +260,15 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [sessionUserId]);
+  }, [authenticatedUserProfile, isAuthChecked, sessionUserId]);
 
   const userOptions = useMemo(() => {
     const usersById = new Map<string, UserProfile>();
     for (const user of knownBackendUsers) {
       usersById.set(user.id, user);
+    }
+    if (authenticatedUserProfile) {
+      usersById.set(authenticatedUserProfile.id, authenticatedUserProfile);
     }
     if (activeUserProfile) {
       usersById.set(activeUserProfile.id, activeUserProfile);
@@ -242,7 +286,7 @@ export default function App() {
       const roleOrder: Record<UserRole, number> = { admin: 0, developer: 1, player: 2, guest: 3 };
       return roleOrder[first.role] - roleOrder[second.role] || first.displayName.localeCompare(second.displayName);
     });
-  }, [activeUserProfile, knownBackendUsers, knownSessionUserIds, sessionUserId]);
+  }, [activeUserProfile, authenticatedUserProfile, knownBackendUsers, knownSessionUserIds, sessionUserId]);
 
   useEffect(() => {
     if (!isAuthChecked) return;
@@ -518,10 +562,16 @@ export default function App() {
     }
 
     resetAuthForm();
+    if (user?.role === "guest" && authenticatedUserProfile) {
+      clearStoredAuthToken();
+      setAuthenticatedUserProfile(null);
+    }
     activateSession(userId);
   }
 
   function startNewSession() {
+    clearStoredAuthToken();
+    setAuthenticatedUserProfile(null);
     resetAuthForm();
     activateSession(createSessionUserId());
   }

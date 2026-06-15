@@ -1,23 +1,37 @@
 import type { AuthSession, UserProfile, UserRole } from "../types";
+import { isGuestSessionUserId } from "./session";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
-const LOCAL_ADMIN_USER_ID = "local-admin";
 const AUTH_TOKEN_STORAGE_KEY = "arcadeiq.authToken";
 
 export async function getUsers(): Promise<UserProfile[]> {
+  const token = getStoredAuthToken();
+  if (!token) return [];
+
   try {
-    const response = await fetch(`${API_BASE_URL}/users`);
+    const response = await fetch(`${API_BASE_URL}/users`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (response.status === 401 || response.status === 403) {
+      return [];
+    }
     if (!response.ok) {
       throw new Error(`Users API returned ${response.status}`);
     }
     return (await response.json()) as UserProfile[];
   } catch (error) {
-    console.warn("Using local mock users because the backend API is unavailable.", error);
-    return [buildLocalAdminProfile()];
+    console.warn("Unable to load account directory.", error);
+    return [];
   }
 }
 
 export async function ensureSessionUser(userId: string): Promise<UserProfile> {
+  if (!isGuestSessionUserId(userId)) {
+    throw new Error("Authenticated account sessions require sign-in.");
+  }
+
   try {
     const response = await fetch(`${API_BASE_URL}/users/session`, {
       method: "POST",
@@ -34,7 +48,7 @@ export async function ensureSessionUser(userId: string): Promise<UserProfile> {
     return (await response.json()) as UserProfile;
   } catch (error) {
     console.warn("Using local mock session user because the backend API is unavailable.", error);
-    return userId === LOCAL_ADMIN_USER_ID ? buildLocalAdminProfile() : buildGuestProfile(userId);
+    return buildGuestProfile(userId);
   }
 }
 
@@ -105,17 +119,6 @@ export function formatRoleLabel(role: UserRole) {
   if (role === "developer") return "Developer";
   if (role === "player") return "Player";
   return "Guest";
-}
-
-function buildLocalAdminProfile(): UserProfile {
-  return {
-    id: LOCAL_ADMIN_USER_ID,
-    email: "admin@arcadeiq.local",
-    displayName: "Local Admin",
-    role: "admin",
-    isActive: true,
-    createdAt: "2026-06-12T00:00:00.000Z",
-  };
 }
 
 function buildGuestProfile(userId: string): UserProfile {

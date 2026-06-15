@@ -28,9 +28,9 @@ List seeded games:
 GET /api/games
 GET /api/games/{id}
 GET /api/games/{id}/insights
-GET /api/users
-GET /api/users/{userId}
-POST /api/users/session
+GET /api/users               # admin bearer token required
+GET /api/users/{userId}      # same user or admin bearer token required
+POST /api/users/session      # guest session ids only
 POST /api/auth/login
 POST /api/auth/register
 GET /api/auth/me
@@ -44,6 +44,7 @@ DELETE /api/saved-games/{gameId}
 ```
 
 Saved-game endpoints accept an optional `collectionId` query/body field. When omitted, the API uses the user's `Default Shortlist` collection.
+When a bearer token is present, collection and saved-game ownership is resolved from the token instead of a client-supplied `userId`.
 
 The seed script also creates a local admin placeholder account. Configure these values through local environment variables only:
 
