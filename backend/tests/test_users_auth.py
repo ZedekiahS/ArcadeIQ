@@ -4,7 +4,7 @@ import unittest
 
 from fastapi import HTTPException
 
-from app.api.users import require_admin_user, require_self_or_admin, validate_guest_session_user_id
+from app.api.users import require_admin_user, require_self_or_admin
 from app.db.models import User
 
 
@@ -46,12 +46,3 @@ class UsersAuthTests(unittest.TestCase):
             require_self_or_admin(make_user("player-a", "player"), "player-b")
 
         self.assertEqual(error.exception.status_code, 403)
-
-    def test_validate_guest_session_user_id_accepts_guest_id(self) -> None:
-        self.assertEqual(validate_guest_session_user_id(" guest-1234 "), "guest-1234")
-
-    def test_validate_guest_session_user_id_rejects_account_id(self) -> None:
-        with self.assertRaises(HTTPException) as error:
-            validate_guest_session_user_id("local-admin")
-
-        self.assertEqual(error.exception.status_code, 400)

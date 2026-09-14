@@ -53,7 +53,7 @@ class AppImportTests(unittest.TestCase):
                 session_methods.update(getattr(route, "methods", set()))
 
         self.assertIn("GET", collection_methods)
-        self.assertIn("POST", session_methods)
+        self.assertNotIn("POST", session_methods)
 
     def test_auth_routes_are_registered(self) -> None:
         from app.main import app

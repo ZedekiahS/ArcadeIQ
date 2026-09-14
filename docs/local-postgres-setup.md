@@ -23,8 +23,9 @@ ARCADEIQ_POSTGRES_DB=arcadeiq
 ARCADEIQ_POSTGRES_USER=arcadeiq
 ARCADEIQ_POSTGRES_PASSWORD=arcadeiq_dev_password
 ARCADEIQ_DATABASE_URL=postgresql+psycopg://arcadeiq:arcadeiq_dev_password@localhost:5432/arcadeiq
-VITE_API_BASE_URL=http://localhost:8000/api
 ```
+
+Frontend settings are separate: copy `frontend/.env.example` to `frontend/.env.local` if you need a different `VITE_DATA_MODE` or `VITE_API_BASE_URL`. The Vite project does not read the repository root `.env`.
 
 ## 2. Start PostgreSQL
 
@@ -112,10 +113,10 @@ In another terminal:
 Open:
 
 ```text
-http://localhost:5173
+http://localhost:5173/?mode=api
 ```
 
-The frontend tries the backend API first. If the backend is offline, it falls back to local mock catalog data so the UI can still be demonstrated.
+API mode uses FastAPI and PostgreSQL. Register or sign in before saving to account collections. API errors stay visible and never become local save successes. For a fixed-data demonstration without the backend, open `http://localhost:5173/?mode=demo`; this is also the default mode and saves only in the browser. See [frontend configuration](../frontend/README.md).
 
 ## Deployment Note
 

@@ -4,7 +4,7 @@ import unittest
 
 from fastapi import HTTPException
 
-from app.api.saved_games import DEFAULT_USER_ID, resolve_request_user_id
+from app.api.auth import get_current_user
 from app.db.models import User
 from app.services.auth import create_access_token
 
@@ -24,17 +24,18 @@ class FakeSettings:
 
 
 class SavedGamesAuthTests(unittest.TestCase):
-    def test_guest_request_uses_explicit_user_id_without_token(self) -> None:
-        user_id = resolve_request_user_id(" guest-123 ", None, FakeDb({}), FakeSettings())
+    def test_missing_token_is_rejected(self) -> None:
+        with self.assertRaises(HTTPException) as error:
+            get_current_user(None, FakeDb({}), FakeSettings())
+        self.assertEqual(error.exception.status_code, 401)
 
-        self.assertEqual(user_id, "guest-123")
+    def test_missing_token_user_is_rejected(self) -> None:
+        token = create_access_token("missing-player", FakeSettings.auth_secret, 60)
+        with self.assertRaises(HTTPException) as error:
+            get_current_user(f"Bearer {token}", FakeDb({}), FakeSettings())
+        self.assertEqual(error.exception.status_code, 401)
 
-    def test_guest_request_falls_back_to_default_user_id(self) -> None:
-        user_id = resolve_request_user_id(" ", None, FakeDb({}), FakeSettings())
-
-        self.assertEqual(user_id, DEFAULT_USER_ID)
-
-    def test_bearer_token_overrides_explicit_user_id(self) -> None:
+    def test_bearer_token_resolves_current_user(self) -> None:
         token = create_access_token("player-a", FakeSettings.auth_secret, 60)
         user = User(
             id="player-a",
@@ -45,13 +46,13 @@ class SavedGamesAuthTests(unittest.TestCase):
             is_active=True,
         )
 
-        user_id = resolve_request_user_id("player-b", f"Bearer {token}", FakeDb({"player-a": user}), FakeSettings())
+        current_user = get_current_user(f"Bearer {token}", FakeDb({"player-a": user}), FakeSettings())
 
-        self.assertEqual(user_id, "player-a")
+        self.assertIs(current_user, user)
 
     def test_invalid_bearer_token_is_rejected(self) -> None:
         with self.assertRaises(HTTPException) as error:
-            resolve_request_user_id("player-b", "Bearer invalid-token", FakeDb({}), FakeSettings())
+            get_current_user("Bearer invalid-token", FakeDb({}), FakeSettings())
 
         self.assertEqual(error.exception.status_code, 401)
 
@@ -67,6 +68,6 @@ class SavedGamesAuthTests(unittest.TestCase):
         )
 
         with self.assertRaises(HTTPException) as error:
-            resolve_request_user_id("player-b", f"Bearer {token}", FakeDb({"player-a": user}), FakeSettings())
+            get_current_user(f"Bearer {token}", FakeDb({"player-a": user}), FakeSettings())
 
         self.assertEqual(error.exception.status_code, 401)

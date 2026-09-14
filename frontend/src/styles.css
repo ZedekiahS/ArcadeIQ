@@ -844,6 +844,54 @@ select {
   color: #ff9a9a;
 }
 
+.data-mode-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.data-mode-links a {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 10px;
+  color: #263445;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.data-mode-links a[aria-current="page"] {
+  background: #e8efff;
+  border-color: #809edc;
+  font-weight: 700;
+}
+
+.mode-description {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.error-notice {
+  border: 1px solid #db9393;
+  border-radius: 8px;
+  background: #fff5f5;
+  padding: 12px;
+  margin-bottom: 12px;
+  color: #842929;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.error-notice p {
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+button:disabled, input:disabled, select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 @media (max-width: 1040px) {
   .app-shell,
   .content-grid,

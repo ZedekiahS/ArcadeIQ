@@ -30,12 +30,13 @@ GET /api/games/{id}
 GET /api/games/{id}/insights
 GET /api/users               # admin bearer token required
 GET /api/users/{userId}      # same user or admin bearer token required
-POST /api/users/session      # guest session ids only
 POST /api/auth/login
 POST /api/auth/register
 GET /api/auth/me
 GET /api/collections
 POST /api/collections
+PATCH /api/collections/{collectionId}
+DELETE /api/collections/{collectionId}
 GET /api/saved-games
 GET /api/saved-games/insights
 POST /api/saved-games
@@ -43,8 +44,21 @@ DELETE /api/saved-games
 DELETE /api/saved-games/{gameId}
 ```
 
-Saved-game endpoints accept an optional `collectionId` query/body field. When omitted, the API uses the user's `Default Shortlist` collection.
-When a bearer token is present, collection and saved-game ownership is resolved from the token instead of a client-supplied `userId`.
+All collection and saved-game endpoints, including `/api/saved-games/insights`, require an active account's bearer token. Missing, invalid, expired, or inactive-account tokens return `401`. Ownership always comes from that token. Requests targeting another account's collection return `404`.
+
+Saved-game endpoints accept an optional `collectionId` query/body field. When omitted, the API uses the authenticated user's `Default Shortlist` collection. Saving the same game to the same collection again returns the existing saved item.
+
+Collection create/update and saved-game request bodies no longer accept `userId` (or other extra fields); these return `422`. Legacy `userId` query parameters are ignored and cannot change ownership. Example bodies:
+
+```json
+{"name": "Wishlist", "description": "Games to compare"}
+```
+
+```json
+{"gameId": 2, "collectionId": 4}
+```
+
+The anonymous `POST /api/users/session` endpoint has been removed. Use `/api/auth/register` or `/api/auth/login` for API-backed saves. The frontend's fixed-data demo stores collections in the browser without creating server guest users. Existing guest records are retained; this change does not migrate or delete their data.
 
 The seed script also creates a local admin placeholder account. Configure these values through local environment variables only:
 
@@ -69,11 +83,11 @@ Invoke-RestMethod `
   -Body '{"query":"Show highly rated story rich games under 25 dollars"}'
 ```
 
-The search endpoint currently uses a rules-based intent parser and returns the same response shape planned for a future LLM-backed parser.
+The search endpoint defaults to the local rules-based intent parser. The optional DeepSeek provider uses the same normalized intent and search response contract.
 
 ### Optional AI Provider
 
-ArcadeIQ defaults to the free local rules parser. To prepare a DeepSeek-backed parser later, configure these values in your local `.env` or deployment secrets:
+ArcadeIQ defaults to the free local rules parser. To enable the existing DeepSeek-backed parser, configure these values in your local `.env` or deployment secrets:
 
 ```env
 ARCADEIQ_AI_ENABLED=true
@@ -133,8 +147,20 @@ http://localhost:8000/docs
 
 ## Test
 
-Run backend tests from the repository root:
+Install the development dependencies and run backend tests from the repository root:
 
 ```powershell
+python -m pip install -r backend/requirements-dev.txt
 python -m unittest discover -s backend/tests -t backend
 ```
+
+This runs the unit and HTTP route tests without connecting to a database or calling an AI provider. PostgreSQL integration tests are skipped unless explicitly enabled:
+
+```powershell
+$env:ARCADEIQ_TEST_DATABASE_URL="postgresql+psycopg://arcadeiq:arcadeiq_dev_password@localhost:5432/arcadeiq"
+python -m unittest discover -s backend/tests -t backend
+```
+
+The integration suite accepts only a local PostgreSQL URL without query parameters. It creates a unique `arcadeiq_test_<uuid>` schema per test, uses the real PostgreSQL models (including array fields), opens a fresh database session per request, and drops only its own schema during cleanup. The database user needs permission to create schemas. Existing application tables and data are not used.
+
+Coverage includes login/save/reload, repeated-save idempotence, account isolation across read/write/delete/insights routes, forged owner inputs, and rejection of missing/expired/inactive sessions without data changes. AI search fallback, intent parsing, and game/collection insight tests remain part of the same suite; these tests do not require a provider key.

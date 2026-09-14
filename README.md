@@ -1,25 +1,24 @@
 # ArcadeIQ
 
-ArcadeIQ is a database-backed game intelligence platform built around game discovery, player reviews, purchases, developer tools, and analytics. The project started as a SQL Server database application and is now being rebuilt as a personally deployed AI/data product.
+ArcadeIQ is a game-discovery portfolio application demonstrating full-stack development, account isolation, persistence, error handling, and AI integration. It originated as a group course project using Java Swing and SQL Server; the modern application uses React, FastAPI, and PostgreSQL.
 
-The project no longer depends on the original school-hosted database server. The current refactor is moving ArcadeIQ toward self-managed local and cloud deployments, with AI-assisted search, review summarization, player preference insights, and developer-facing recommendations.
+The current refactor focuses on a reproducible demonstration of reliable software behavior. A fixed-data browser demo and an authenticated API mode make the storage boundary explicit. The modern app does not depend on the original school-hosted database server.
 
 ## Project Goals
 
-- Model a real game marketplace with users, games, developers, publishers, tags, reviews, bundles, folders, purchases, and vouchers.
-- Centralize core business behavior in SQL Server stored procedures, views, constraints, and transactions.
-- Provide a desktop UI for player and developer workflows.
-- Use scraped and seeded data to populate the database.
-- Evolve the project toward AI-powered discovery and analytics.
-- Replace course-project infrastructure with personally controlled deployment infrastructure.
+- Demonstrate a complete login, save, and reload workflow with isolated account data.
+- Make API failures visible and retryable, with automated regression coverage.
+- Keep data access and identity behavior understandable as the interface evolves.
+- Preserve natural-language search and insight interfaces for further AI work.
+- Retain the original database coursework as project history.
 
 ## Current Features
 
 Modern web prototype:
 
-- Natural-language game search backed by a FastAPI rules parser with an AI-provider fallback shape.
+- Natural-language game search with a local rules parser and an optional DeepSeek provider.
 - Game detail intelligence panels for review signals, player recommendations, and developer opportunity.
-- Backend-backed guest sessions with a seeded local admin placeholder before full authentication is added.
+- Registration and login with bearer-token ownership for API collections; browser-only storage in explicit demo mode.
 - User collections for saving games into separate lists such as a default shortlist, wishlists, or research folders.
 - Collection intelligence summaries for saved games, including average price, rating, visible revenue, and top tags.
 
@@ -45,7 +44,7 @@ Legacy database application:
 - **Web frontend:** React, TypeScript, Vite
 - **Backend API:** FastAPI, SQLAlchemy, Alembic
 - **Desktop UI:** Java Swing
-- **Authentication:** bcrypt password hashing
+- **Authentication:** PBKDF2 password hashing and signed bearer tokens in the modern API; bcrypt in the legacy application
 - **Data ingestion:** TypeScript, Node.js, `mssql`, PapaParse
 - **Web scraping:** Playwright, TypeScript
 - **Seed data:** CSV files
@@ -74,6 +73,9 @@ ArcadeIQ/
 - [Local SQL Server Setup](docs/local-sqlserver-setup.md)
 - [Migration Plan](docs/migration-plan.md)
 - [Legacy SQL Migrations](migrations/README.md)
+- [Frontend modes and configuration](frontend/README.md)
+- [Backend authentication and tests](backend/README.md)
+- [Collection reliability verification](docs/verification/collections-2026-09-14.md)
 
 ## Local Demo
 
@@ -85,19 +87,33 @@ ArcadeIQ includes a lightweight browser demo that runs without SQL Server:
 
 Then open `http://localhost:4173`.
 
-The demo shows the intended product direction: natural-language game search, AI-style review intelligence, and developer-facing insights. It is a front-end prototype while the personal SQL Server deployment is being stabilized.
+This earlier static prototype is retained for reference. Use the React frontend below to demonstrate the current account and collection behavior. Sample insight text is not a summary of live review evidence.
 
 ## Web Frontend
 
-The future ArcadeIQ product surface lives in `frontend/`:
+The current web application lives in `frontend/`:
 
 ```powershell
 .\scripts\start-frontend.ps1
 ```
 
-Then open `http://localhost:5173`.
+Open [demo mode](http://localhost:5173/?mode=demo), which is also the default.
 
-The frontend is a React + TypeScript app that can use the FastAPI/PostgreSQL backend and falls back to local mock data when the backend is unavailable. It supports natural search, game insights, collection-based saved games, and collection intelligence panels.
+| Mode | Data source | Collection storage |
+| --- | --- | --- |
+| `?mode=demo` | Bundled catalog and local search/insight logic; no backend requests | This browser only; no server guest account |
+| `?mode=api` | FastAPI/PostgreSQL | Signed-in account; failures remain errors and can be retried |
+
+API mode never substitutes local samples or browser saves after a failed request. Demo data and account data are separate.
+
+To configure the frontend, copy `frontend/.env.example` to `frontend/.env.local` if you do not already have a local file:
+
+```env
+VITE_DATA_MODE=demo
+VITE_API_BASE_URL=http://localhost:8000/api
+```
+
+The URL mode takes precedence over `VITE_DATA_MODE`. Restart Vite after changing its environment, or rebuild for a static preview. The repository root `.env` configures the backend; this frontend loads its own environment from `frontend/`. See the [frontend guide](frontend/README.md).
 
 ## Backend API
 
@@ -115,9 +131,37 @@ After PostgreSQL is running, apply migrations and seed demo data:
 
 Then open `http://localhost:8000/docs`.
 
-The frontend reads `VITE_API_BASE_URL` and falls back to local mock catalog data if the backend is unavailable.
+Open [API mode](http://localhost:5173/?mode=api), then register or sign in. All collection and saved-game endpoints, including collection insights, require an active account's bearer token. Their owner is derived from that token; client-supplied owner fields are rejected. The old anonymous `/api/users/session` endpoint has been removed without deleting existing guest records.
 
-## Database Overview
+## Verification
+
+Install development dependencies and run the backend suite from the repository root:
+
+```powershell
+python -m pip install -r backend/requirements-dev.txt
+python -m unittest discover -s backend/tests -t backend
+```
+
+The default suite runs without a database connection. To include real PostgreSQL persistence and isolation checks, set a local test URL explicitly:
+
+```powershell
+$env:ARCADEIQ_TEST_DATABASE_URL="postgresql+psycopg://arcadeiq:arcadeiq_dev_password@localhost:5432/arcadeiq"
+python -m unittest discover -s backend/tests -t backend
+```
+
+Each database test creates and removes only its own UUID-named schema. The suite does not use existing application tables. See [backend test details](backend/README.md#test).
+
+From `frontend/`:
+
+```powershell
+npm ci
+npm test
+npm run build
+```
+
+The CI workflow runs the backend suite with a PostgreSQL service and runs frontend tests before building. AI-provider calls are disabled during these checks.
+
+## Legacy Database Overview
 
 The database models the core entities of a game marketplace:
 
@@ -135,24 +179,19 @@ Most workflows are implemented through stored procedures, including game search,
 
 ## AI Roadmap
 
-ArcadeIQ is being repositioned as an AI-enhanced game intelligence platform. Planned AI features include:
+The backend already supports natural-language intent parsing with local rules and an optional DeepSeek provider. When configured, provider output is normalized into the same search contract; the configured rules fallback handles disabled/unavailable providers. Game and collection insight endpoints remain available, with collection insights now protected by account ownership.
 
-- **Natural-language game search:** Convert user requests like "Find cheap multiplayer survival games with good reviews" into structured database filters.
-- **Review summarization:** Generate concise summaries of player sentiment, common praise, common complaints, and overall recommendation signals.
-- **Developer copilot:** Help developers understand revenue, reviews, tags, and player behavior for their games.
-- **Data quality assistant:** Detect missing metadata, duplicate games, malformed prices, suspicious dates, and inconsistent publisher/developer records.
-- **Recommendation engine:** Suggest games based on inventory, tags, reviews, price preferences, and player behavior.
+The current insight panels derive their text from catalog metadata and aggregate statistics. They do not yet summarize review source text. Future AI work should add inspectable review evidence and evaluate parser/provider behavior while preserving the search and insight interfaces. The collection reliability refactor does not call a paid provider or claim a live-provider evaluation.
+
+Configure AI only through the backend environment; see [the backend provider guide](backend/README.md#optional-ai-provider). Provider secrets never belong in `VITE_*` variables.
 
 ## Refactor Roadmap
 
-- Replace hardcoded database configuration with environment-based settings.
-- Clean up legacy naming from the original course project.
-- Add clearer build and run instructions for the Java UI and TypeScript scripts.
-- Organize database migrations into a cleaner migration strategy.
-- Add screenshots and architecture diagrams.
-- Introduce a backend API layer to separate UI concerns from database calls.
-- Add AI-powered search and review intelligence as the first production-style AI features.
-- Move from the legacy school-hosted SQL Server environment to personal local and cloud deployments.
+- Establish and preserve automated checks for the current application.
+- Complete trustworthy account collections, persistence, and explicit failure handling.
+- Improve title search and result selection next.
+- Split larger interface/data modules around verified behavior.
+- Extend AI with traceable evidence and reproducible evaluation.
 
 ## Security Notes
 
@@ -162,4 +201,4 @@ The Java UI and TypeScript population scripts now use the `ARCADEIQ_DB_*` enviro
 
 ## Status
 
-ArcadeIQ is currently in refactor mode. The existing codebase demonstrates the database model and application workflows, while the next phase focuses on personal deployment, documentation, configuration cleanup, AI feature design, and a more modern application architecture.
+ArcadeIQ is a portfolio application under focused refactoring. The current work targets reliable account and collection behavior, with documented checks and retained AI integration points. Deployment and live-provider validation are separate from this iteration.

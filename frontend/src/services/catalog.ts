@@ -1,243 +1,124 @@
 import { games } from "../data/games";
 import { filterGames, getSignal, parseSearchIntent } from "../lib/search";
 import type { Game, GameCollection, GameInsights, SavedGame, SearchResponse, ShortlistInsights } from "../types";
-import { getStoredAuthToken } from "./users";
+import { requestApi } from "./http";
+import { DATA_MODE } from "./runtime";
+import { requireAuthHeaders } from "./users";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
 const DEFAULT_COLLECTION_ID = 1;
 const DEFAULT_COLLECTION_NAME = "Default Shortlist";
-const COLLECTION_STORAGE_KEY = "arcadeiq.collections";
-const SAVED_COLLECTION_STORAGE_KEY = "arcadeiq.savedCollectionGameIds";
-const LEGACY_SAVED_STORAGE_KEY = "arcadeiq.savedGameIds";
+const COLLECTION_STORAGE_KEY = "arcadeiq.demo.collections";
+const SAVED_COLLECTION_STORAGE_KEY = "arcadeiq.demo.savedCollectionGameIds";
 
 export async function getCatalog(): Promise<Game[]> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/games`);
-    if (!response.ok) {
-      throw new Error(`Catalog API returned ${response.status}`);
-    }
-    return (await response.json()) as Game[];
-  } catch (error) {
-    console.warn("Using local mock catalog because the backend API is unavailable.", error);
-    return games;
-  }
-}
-
-export function getMockCatalog(): Game[] {
-  return games;
+  if (DATA_MODE === "demo") return games;
+  return requestApi<Game[]>("/games");
 }
 
 export async function getCollections(userId: string): Promise<GameCollection[]> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/collections?userId=${encodeURIComponent(userId)}`, {
-      headers: buildAuthHeaders(),
-    });
-    if (!response.ok) {
-      throw new Error(`Collections API returned ${response.status}`);
-    }
-    return (await response.json()) as GameCollection[];
-  } catch (error) {
-    console.warn("Using local mock collections because the backend API is unavailable.", error);
-    return getLocalCollections(userId);
-  }
+  if (DATA_MODE === "demo") return getLocalCollections(userId);
+  return requestApi<GameCollection[]>("/collections", { headers: requireAuthHeaders() });
 }
 
 export async function createCollection(name: string, userId: string): Promise<GameCollection> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/collections`, {
-      method: "POST",
-      headers: buildJsonHeaders(),
-      body: JSON.stringify({ name, userId }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Create collection API returned ${response.status}`);
-    }
-
-    return (await response.json()) as GameCollection;
-  } catch (error) {
-    console.warn("Using local mock collection create because the backend API is unavailable.", error);
-    return createLocalCollection(name, userId);
-  }
+  if (DATA_MODE === "demo") return createLocalCollection(name, userId);
+  return requestApi<GameCollection>("/collections", {
+    method: "POST",
+    headers: buildJsonHeaders(),
+    body: JSON.stringify({ name }),
+  });
 }
 
 export async function updateCollection(collectionId: number, name: string, userId: string): Promise<GameCollection> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/collections/${collectionId}`, {
-      method: "PATCH",
-      headers: buildJsonHeaders(),
-      body: JSON.stringify({ name, userId }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Update collection API returned ${response.status}`);
-    }
-
-    return (await response.json()) as GameCollection;
-  } catch (error) {
-    console.warn("Using local mock collection update because the backend API is unavailable.", error);
-    return updateLocalCollection(collectionId, name, userId);
-  }
+  if (DATA_MODE === "demo") return updateLocalCollection(collectionId, name, userId);
+  return requestApi<GameCollection>(`/collections/${collectionId}`, {
+    method: "PATCH",
+    headers: buildJsonHeaders(),
+    body: JSON.stringify({ name }),
+  });
 }
 
 export async function deleteCollection(collectionId: number, userId: string): Promise<void> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/collections/${collectionId}?userId=${encodeURIComponent(userId)}`, {
-      method: "DELETE",
-      headers: buildAuthHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Delete collection API returned ${response.status}`);
-    }
-  } catch (error) {
-    console.warn("Using local mock collection delete because the backend API is unavailable.", error);
-    deleteLocalCollection(collectionId, userId);
-  }
+  if (DATA_MODE === "demo") return deleteLocalCollection(collectionId, userId);
+  return requestApi<void>(`/collections/${collectionId}`, {
+    method: "DELETE",
+    headers: requireAuthHeaders(),
+  });
 }
 
 export async function getSavedGames(catalog: Game[], userId: string, collectionId?: number): Promise<SavedGame[]> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/saved-games?${buildCollectionParams(userId, collectionId)}`, {
-      headers: buildAuthHeaders(),
-    });
-    if (!response.ok) {
-      throw new Error(`Saved games API returned ${response.status}`);
-    }
-    return (await response.json()) as SavedGame[];
-  } catch (error) {
-    console.warn("Using local mock saved games because the backend API is unavailable.", error);
-    return getLocalSavedGames(catalog, userId, collectionId);
-  }
+  if (DATA_MODE === "demo") return getLocalSavedGames(catalog, userId, collectionId);
+  return requestApi<SavedGame[]>(`/saved-games${buildCollectionQuery(collectionId)}`, {
+    headers: requireAuthHeaders(),
+  });
 }
 
 export async function getShortlistInsights(savedGames: SavedGame[], userId: string, collectionId?: number): Promise<ShortlistInsights> {
-  if (savedGames.length === 0) {
-    return buildMockShortlistInsights(savedGames, userId, "rules");
-  }
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/saved-games/insights?${buildCollectionParams(userId, collectionId)}`, {
-      headers: buildAuthHeaders(),
-    });
-    if (!response.ok) {
-      throw new Error(`Shortlist insights API returned ${response.status}`);
-    }
-    return (await response.json()) as ShortlistInsights;
-  } catch (error) {
-    console.warn("Using local mock shortlist insights because the backend API is unavailable.", error);
-    return buildMockShortlistInsights(savedGames, userId, "mock");
-  }
+  if (DATA_MODE === "demo") return buildMockShortlistInsights(savedGames, userId);
+  return requestApi<ShortlistInsights>(`/saved-games/insights${buildCollectionQuery(collectionId)}`, {
+    headers: requireAuthHeaders(),
+  });
 }
 
 export async function saveGame(game: Game, catalog: Game[], userId: string, collectionId?: number): Promise<SavedGame> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/saved-games`, {
-      method: "POST",
-      headers: buildJsonHeaders(),
-      body: JSON.stringify({ gameId: game.id, userId, collectionId }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Save game API returned ${response.status}`);
-    }
-
-    return (await response.json()) as SavedGame;
-  } catch (error) {
-    console.warn("Using local mock save because the backend API is unavailable.", error);
+  if (DATA_MODE === "demo") {
     const savedIds = new Set(readLocalSavedIds(userId, collectionId));
     savedIds.add(game.id);
     writeLocalSavedIds(userId, collectionId, [...savedIds]);
     return buildMockSavedGame(game, catalog, userId, getCollectionId(collectionId));
   }
+  return requestApi<SavedGame>("/saved-games", {
+    method: "POST",
+    headers: buildJsonHeaders(),
+    body: JSON.stringify({ gameId: game.id, collectionId }),
+  });
 }
 
 export async function removeSavedGame(gameId: number, userId: string, collectionId?: number): Promise<void> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/saved-games/${gameId}?${buildCollectionParams(userId, collectionId)}`, {
-      method: "DELETE",
-      headers: buildAuthHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Remove saved game API returned ${response.status}`);
-    }
-  } catch (error) {
-    console.warn("Using local mock unsave because the backend API is unavailable.", error);
+  if (DATA_MODE === "demo") {
     writeLocalSavedIds(
       userId,
       collectionId,
       readLocalSavedIds(userId, collectionId).filter((id) => id !== gameId),
     );
+    return;
   }
+  return requestApi<void>(`/saved-games/${gameId}${buildCollectionQuery(collectionId)}`, {
+    method: "DELETE",
+    headers: requireAuthHeaders(),
+  });
 }
 
 export async function clearSavedGames(userId: string, collectionId?: number): Promise<void> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/saved-games?${buildCollectionParams(userId, collectionId)}`, {
-      method: "DELETE",
-      headers: buildAuthHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Clear saved games API returned ${response.status}`);
-    }
-  } catch (error) {
-    console.warn("Using local mock clear shortlist because the backend API is unavailable.", error);
-    writeLocalSavedIds(userId, collectionId, []);
-  }
+  if (DATA_MODE === "demo") return writeLocalSavedIds(userId, collectionId, []);
+  return requestApi<void>(`/saved-games${buildCollectionQuery(collectionId)}`, {
+    method: "DELETE",
+    headers: requireAuthHeaders(),
+  });
 }
 
 export async function getGameDetail(gameId: number, catalog: Game[]): Promise<Game | null> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/games/${gameId}`);
-    if (!response.ok) {
-      throw new Error(`Game detail API returned ${response.status}`);
-    }
-    return (await response.json()) as Game;
-  } catch (error) {
-    console.warn("Using local mock game detail because the backend API is unavailable.", error);
+  if (DATA_MODE === "demo") {
     return catalog.find((game) => game.id === gameId) ?? games.find((game) => game.id === gameId) ?? null;
   }
+  return requestApi<Game>(`/games/${gameId}`);
 }
 
 export async function getGameInsights(game: Game): Promise<GameInsights> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/games/${game.id}/insights`);
-    if (!response.ok) {
-      throw new Error(`Game insights API returned ${response.status}`);
-    }
-    return (await response.json()) as GameInsights;
-  } catch (error) {
-    console.warn("Using local mock game insights because the backend API is unavailable.", error);
-    return buildMockInsights(game);
-  }
+  if (DATA_MODE === "demo") return buildMockInsights(game);
+  return requestApi<GameInsights>(`/games/${game.id}/insights`);
 }
 
 export async function searchCatalog(query: string, availableTags: string[], catalog: Game[]): Promise<SearchResponse> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/search`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ query }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Search API returned ${response.status}`);
-    }
-
-    return (await response.json()) as SearchResponse;
-  } catch (error) {
-    console.warn("Using local mock search because the backend API is unavailable.", error);
+  if (DATA_MODE === "demo") {
     const intent = parseSearchIntent(query, availableTags);
-    return {
-      intent,
-      games: filterGames(catalog, intent),
-      source: "mock",
-    };
+    return { intent, games: filterGames(catalog, intent), source: "mock" };
   }
+  return requestApi<SearchResponse>("/search", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query }),
+  });
 }
 
 function buildMockInsights(game: Game): GameInsights {
@@ -251,7 +132,7 @@ function buildMockInsights(game: Game): GameInsights {
     signal,
     reviewIntelligence: {
       title: "Review Intelligence",
-      caption: "Mock fallback",
+      caption: "Demo rules",
       body: `${game.name} is showing ${game.rating >= 4.5 ? "very strong" : "steady"} review sentiment. The strongest positioning comes from ${primaryTag} identity and ${tagPhrase} demand.`,
       bullets: [
         `Common praise: ${primaryTag} identity and clear audience fit.`,
@@ -261,7 +142,7 @@ function buildMockInsights(game: Game): GameInsights {
     },
     developerOpportunity: {
       title: "Developer Copilot",
-      caption: "Mock fallback",
+      caption: "Demo rules",
       body: `${game.developer} can use this title as a ${signal.toLowerCase()} catalog signal with ${formatCompact(game.ownership)} owners and $${formatCompact(game.revenue)} visible revenue.`,
       bullets: [
         `Market signal: ${primaryTag} demand is visible in the local catalog.`,
@@ -271,7 +152,7 @@ function buildMockInsights(game: Game): GameInsights {
     },
     playerRecommendation: {
       title: "Player Recommendation",
-      caption: "Mock fallback",
+      caption: "Demo rules",
       body: `This is a good match for players who want ${primaryTag} and ${tagPhrase} with a ${game.price <= 25 ? "friendly" : "premium"} price point.`,
       bullets: [
         `Signal: ${signal} based on rating and review volume.`,
@@ -287,21 +168,12 @@ function formatCompact(value: number) {
   return Intl.NumberFormat("en", { notation: "compact" }).format(value);
 }
 
-function buildAuthHeaders(headers: Record<string, string> = {}) {
-  const token = getStoredAuthToken();
-  return token ? { ...headers, Authorization: `Bearer ${token}` } : headers;
-}
-
 function buildJsonHeaders() {
-  return buildAuthHeaders({ "Content-Type": "application/json" });
+  return requireAuthHeaders({ "Content-Type": "application/json" });
 }
 
-function buildCollectionParams(userId: string, collectionId?: number) {
-  const params = new URLSearchParams({ userId });
-  if (collectionId !== undefined) {
-    params.set("collectionId", collectionId.toString());
-  }
-  return params.toString();
+function buildCollectionQuery(collectionId?: number) {
+  return collectionId === undefined ? "" : `?${new URLSearchParams({ collectionId: collectionId.toString() })}`;
 }
 
 function getCollectionId(collectionId?: number) {
@@ -339,19 +211,15 @@ function buildDefaultCollection(userId: string): GameCollection {
 
 function getLocalCollections(userId: string): GameCollection[] {
   const defaultCollection = buildDefaultCollection(userId);
-  try {
-    const rawValue = window.localStorage.getItem(getUserStorageKey(COLLECTION_STORAGE_KEY, userId));
-    if (!rawValue) return [defaultCollection];
-    const parsed = JSON.parse(rawValue);
-    if (!Array.isArray(parsed)) return [defaultCollection];
-    const collections = parsed.filter(isGameCollection);
-    if (collections.some((collection) => collection.id === DEFAULT_COLLECTION_ID)) {
-      return collections;
-    }
-    return [defaultCollection, ...collections];
-  } catch {
-    return [defaultCollection];
+  const rawValue = window.localStorage.getItem(getUserStorageKey(COLLECTION_STORAGE_KEY, userId));
+  if (rawValue === null) return [defaultCollection];
+  const parsed = JSON.parse(rawValue);
+  if (!Array.isArray(parsed)) throw new Error("Saved demo collections are not a valid list.");
+  const collections = parsed.filter(isGameCollection);
+  if (collections.some((collection) => collection.id === DEFAULT_COLLECTION_ID)) {
+    return collections;
   }
+  return [defaultCollection, ...collections];
 }
 
 function createLocalCollection(name: string, userId: string): GameCollection {
@@ -408,12 +276,13 @@ function deleteLocalCollection(collectionId: number, userId: string) {
     throw new Error("Default collection cannot be deleted");
   }
 
+  // Read both records before changing either one so failed reads cannot erase data.
+  const savedMap = readLocalSavedMap(userId);
   window.localStorage.setItem(
     getUserStorageKey(COLLECTION_STORAGE_KEY, userId),
     JSON.stringify(collections.filter((item) => item.id !== collectionId)),
   );
 
-  const savedMap = readLocalSavedMap(userId);
   delete savedMap[collectionId.toString()];
   window.localStorage.setItem(getUserStorageKey(SAVED_COLLECTION_STORAGE_KEY, userId), JSON.stringify(savedMap));
 }
@@ -431,63 +300,34 @@ function isGameCollection(value: unknown): value is GameCollection {
 }
 
 function readLocalSavedIds(userId: string, collectionId?: number): number[] {
-  try {
-    const rawValue = window.localStorage.getItem(getUserStorageKey(SAVED_COLLECTION_STORAGE_KEY, userId));
-    if (!rawValue) {
-      return collectionId === undefined || collectionId === DEFAULT_COLLECTION_ID ? readLegacySavedIds(userId) : [];
-    }
-    const parsed = JSON.parse(rawValue);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return [];
-    const savedIds = (parsed as Record<string, unknown>)[getCollectionId(collectionId).toString()];
-    return Array.isArray(savedIds) ? savedIds.filter((value): value is number => Number.isInteger(value)) : [];
-  } catch {
-    return [];
-  }
-}
-
-function readLegacySavedIds(userId: string): number[] {
-  try {
-    if (userId !== "demo-user") return [];
-    const rawValue = window.localStorage.getItem(LEGACY_SAVED_STORAGE_KEY);
-    if (!rawValue) return [];
-    const parsed = JSON.parse(rawValue);
-    return Array.isArray(parsed) ? parsed.filter((value): value is number => Number.isInteger(value)) : [];
-  } catch {
-    return [];
-  }
+  return readLocalSavedMap(userId)[getCollectionId(collectionId).toString()] ?? [];
 }
 
 function writeLocalSavedIds(userId: string, collectionId: number | undefined, gameIds: number[]) {
   const savedMap = readLocalSavedMap(userId);
   savedMap[getCollectionId(collectionId).toString()] = [...new Set(gameIds)];
   window.localStorage.setItem(getUserStorageKey(SAVED_COLLECTION_STORAGE_KEY, userId), JSON.stringify(savedMap));
-  window.localStorage.removeItem(LEGACY_SAVED_STORAGE_KEY);
 }
 
 function readLocalSavedMap(userId: string): Record<string, number[]> {
-  try {
-    const rawValue = window.localStorage.getItem(getUserStorageKey(SAVED_COLLECTION_STORAGE_KEY, userId));
-    if (!rawValue) {
-      const legacyIds = readLegacySavedIds(userId);
-      return legacyIds.length > 0 ? { [DEFAULT_COLLECTION_ID.toString()]: legacyIds } : {};
-    }
-    const parsed = JSON.parse(rawValue);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
-    const savedMap: Record<string, number[]> = {};
-    for (const [collectionId, values] of Object.entries(parsed as Record<string, unknown>)) {
-      savedMap[collectionId] = Array.isArray(values) ? values.filter((value): value is number => Number.isInteger(value)) : [];
-    }
-    return savedMap;
-  } catch {
-    return {};
+  const rawValue = window.localStorage.getItem(getUserStorageKey(SAVED_COLLECTION_STORAGE_KEY, userId));
+  if (rawValue === null) return {};
+  const parsed = JSON.parse(rawValue);
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("Saved demo games are not a valid collection map.");
   }
+  const savedMap: Record<string, number[]> = {};
+  for (const [collectionId, values] of Object.entries(parsed as Record<string, unknown>)) {
+    savedMap[collectionId] = Array.isArray(values) ? values.filter((value): value is number => Number.isInteger(value)) : [];
+  }
+  return savedMap;
 }
 
 function getUserStorageKey(baseKey: string, userId: string) {
   return `${baseKey}.${userId}`;
 }
 
-function buildMockShortlistInsights(savedGames: SavedGame[], userId: string, source: "rules" | "mock"): ShortlistInsights {
+function buildMockShortlistInsights(savedGames: SavedGame[], userId: string): ShortlistInsights {
   const savedCount = savedGames.length;
   if (savedCount === 0) {
     return {
@@ -499,7 +339,7 @@ function buildMockShortlistInsights(savedGames: SavedGame[], userId: string, sou
       topTags: [],
       strategy: {
         title: "Collection Intelligence",
-        caption: "Mock fallback",
+        caption: "Demo rules",
         body: "Save games to this collection to compare pricing, sentiment, and genre concentration.",
         bullets: [
           "Start with two or three games from different tags.",
@@ -507,7 +347,7 @@ function buildMockShortlistInsights(savedGames: SavedGame[], userId: string, sou
           "Future AI summaries can use this endpoint as their context source.",
         ],
       },
-      source,
+      source: "mock",
     };
   }
 
@@ -537,7 +377,7 @@ function buildMockShortlistInsights(savedGames: SavedGame[], userId: string, sou
     topTags,
     strategy: {
       title: "Collection Intelligence",
-      caption: "Mock fallback",
+      caption: "Demo rules",
       body: `This collection leans ${averagePrice <= 25 ? "accessible" : "premium"} with ${tagPhrase} demand. ${strongestGame.name} is the strongest sentiment anchor at ${strongestGame.rating.toFixed(1)} rating.`,
       bullets: [
         `Saved games: ${savedCount}.`,
@@ -546,7 +386,7 @@ function buildMockShortlistInsights(savedGames: SavedGame[], userId: string, sou
         `Top tags: ${tagPhrase}.`,
       ],
     },
-    source,
+    source: "mock",
   };
 }
 

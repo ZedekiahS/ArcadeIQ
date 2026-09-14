@@ -46,13 +46,6 @@ class SearchResponse(BaseModel):
     source: str = "rules"
 
 
-class UserSessionRequest(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    user_id: str = Field(alias="userId")
-    display_name: str | None = Field(default=None, alias="displayName")
-
-
 class UserOut(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
@@ -107,17 +100,15 @@ class GameInsightsOut(BaseModel):
 
 
 class CollectionCreateRequest(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
 
-    user_id: str = Field(default="demo-user", alias="userId")
     name: str
     description: str = ""
 
 
 class CollectionUpdateRequest(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
 
-    user_id: str = Field(default="demo-user", alias="userId")
     name: str
     description: str | None = None
 
@@ -133,10 +124,9 @@ class CollectionOut(BaseModel):
 
 
 class SavedGameRequest(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
 
     game_id: int = Field(alias="gameId")
-    user_id: str = Field(default="demo-user", alias="userId")
     collection_id: int | None = Field(default=None, alias="collectionId")
 
 
