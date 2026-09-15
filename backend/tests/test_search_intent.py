@@ -18,12 +18,24 @@ AVAILABLE_TAGS = [
 
 
 class SearchIntentTests(unittest.TestCase):
+    def test_chinese_presets_match_english_semantics(self) -> None:
+        pairs = [
+            ("找第二贵的FPS游戏", "Find the second most expensive FPS game"),
+            ("找便宜且有评价的多人生存游戏", "Find cheap multiplayer survival games with good reviews"),
+            ("找25美元以下的高评分剧情游戏", "Show highly rated story rich games under 25 dollars"),
+            ("为开发者分析探索类游戏", "Find exploration games for developer catalog analysis"),
+        ]
+        for chinese, english in pairs:
+            with self.subTest(query=chinese):
+                self.assertEqual(parse_search_intent(chinese, AVAILABLE_TAGS), parse_search_intent(english, AVAILABLE_TAGS))
+
     def test_parse_story_rich_budget_query(self) -> None:
         intent = parse_search_intent("Show highly rated story rich games under 25 dollars", AVAILABLE_TAGS)
 
         self.assertEqual(
             intent,
             {
+                "title_query": None,
                 "max_price": 25,
                 "min_rating": 4.4,
                 "has_reviews": True,
@@ -52,7 +64,7 @@ class SearchIntentTests(unittest.TestCase):
     def test_parse_developer_catalog_query(self) -> None:
         intent = parse_search_intent("Find premium exploration games for developer catalog analysis", AVAILABLE_TAGS)
 
-        self.assertEqual(intent["max_price"], 70)
+        self.assertIsNone(intent["max_price"])
         self.assertIs(intent["has_reviews"], False)
         self.assertEqual(intent["tags"], ["Exploration"])
         self.assertEqual(intent["mode"], "developer")
@@ -64,7 +76,7 @@ class SearchIntentTests(unittest.TestCase):
     def test_parse_second_most_expensive_fps_query(self) -> None:
         intent = parse_search_intent("Find the second most expensive FPS game", AVAILABLE_TAGS)
 
-        self.assertEqual(intent["max_price"], 70)
+        self.assertIsNone(intent["max_price"])
         self.assertEqual(intent["tags"], ["FPS"])
         self.assertEqual(intent["sort_by"], "price")
         self.assertEqual(intent["sort_direction"], "desc")
@@ -82,7 +94,7 @@ class SearchIntentTests(unittest.TestCase):
     def test_parse_cheapest_game_defaults_to_one_result(self) -> None:
         intent = parse_search_intent("Find the cheapest game", AVAILABLE_TAGS)
 
-        self.assertEqual(intent["max_price"], 70)
+        self.assertIsNone(intent["max_price"])
         self.assertEqual(intent["sort_by"], "price")
         self.assertEqual(intent["sort_direction"], "asc")
         self.assertEqual(intent["limit"], 1)

@@ -1,204 +1,135 @@
 # ArcadeIQ
 
-ArcadeIQ is a game-discovery portfolio application demonstrating full-stack development, account isolation, persistence, error handling, and AI integration. It originated as a group course project using Java Swing and SQL Server; the modern application uses React, FastAPI, and PostgreSQL.
+**Discover your next game. Research the games behind your next idea.**
 
-The current refactor focuses on a reproducible demonstration of reliable software behavior. A fixed-data browser demo and an authenticated API mode make the storage boundary explicit. The modern app does not depend on the original school-hosted database server.
+ArcadeIQ is a bilingual game-discovery portfolio application built with React, TypeScript, FastAPI, and PostgreSQL. It demonstrates reliable software behavior through account-owned collections, explicit persistence modes, recoverable failures, and an optional AI search provider.
 
-## Project Goals
+The project began as group coursework using Java Swing and SQL Server. The modern web application is a subsequent refactor; the original implementation remains in the repository as project history. The modern app runs independently of the original school database.
 
-- Demonstrate a complete login, save, and reload workflow with isolated account data.
-- Make API failures visible and retryable, with automated regression coverage.
-- Keep data access and identity behavior understandable as the interface evolves.
-- Preserve natural-language search and insight interfaces for further AI work.
-- Retain the original database coursework as project history.
+## Two Ways to Explore
 
-## Current Features
+The homepage offers player and developer entry points. Each opens a distinct browsing experience before the user starts a search.
 
-Modern web prototype:
+| Player discovery | Developer research |
+| --- | --- |
+| Illustrated recommendations, a featured game, price/rating signals, and saved favorites. | A catalog overview, frequent tags, research references, and selected-game opportunity insights. |
+| Recommendations use catalog rating and review count with stable tie-breaking. | Overview statistics describe the loaded catalog; ownership and revenue estimates are labelled. |
+| Search by title, genre, budget, or natural-language conditions. | Drill into a tag or search and sort games for comparison. |
 
-- Natural-language game search with a local rules parser and an optional DeepSeek provider.
-- Game detail intelligence panels for review signals, player recommendations, and developer opportunity.
-- Registration and login with bearer-token ownership for API collections; browser-only storage in explicit demo mode.
-- User collections for saving games into separate lists such as a default shortlist, wishlists, or research folders.
-- Collection intelligence summaries for saved games, including average price, rating, visible revenue, and top tags.
+These are viewing perspectives, independent of account permissions. Both support collections and return to the homepage to choose another perspective.
 
-Legacy database application:
+### Player / 玩家
 
-- Player and developer registration/login with bcrypt password hashing.
-- Game browsing with filters for name, reviews, tags, developers, publishers, price, and release date.
-- Game detail views with developers, publishers, tags, pricing, release date, and reviews.
-- Player inventory and game purchasing with balance checks.
-- Review creation and review browsing.
-- Developer game management, including add, edit, delete, tag updates, developer links, and publisher links.
-- Bundle creation, bundle linking, bundle viewing, and bundle purchasing.
-- Game folders for organizing favorite or owned games.
-- Voucher creation and redemption.
-- Steam game scraping pipeline for generating seed data.
-- CSV-based population scripts for games, users, and reviews.
+| 中文 | English |
+| --- | --- |
+| ![Chinese player discovery with recommendations](docs/screenshots/player-zh.png) | ![English player discovery with recommendations](docs/screenshots/player-en.png) |
 
-## Tech Stack
+### Developer / 开发者
 
-- **Database:** Microsoft SQL Server
-- **Modern product database:** PostgreSQL with pgvector-ready local development
-- **Database logic:** SQL migrations, stored procedures, views, table-valued parameters, transactions
-- **Web frontend:** React, TypeScript, Vite
-- **Backend API:** FastAPI, SQLAlchemy, Alembic
-- **Desktop UI:** Java Swing
-- **Authentication:** PBKDF2 password hashing and signed bearer tokens in the modern API; bcrypt in the legacy application
-- **Data ingestion:** TypeScript, Node.js, `mssql`, PapaParse
-- **Web scraping:** Playwright, TypeScript
-- **Seed data:** CSV files
+| 中文 | English |
+| --- | --- |
+| ![Chinese developer research overview](docs/screenshots/developer-zh.png) | ![English developer research overview](docs/screenshots/developer-en.png) |
 
-## Repository Structure
+Screenshots show the fixed-data demo. The dark gaming interface includes locally bundled game artwork, responsive layouts, and an English/Chinese switch that preserves the current page state. Game names, user-created collection names, and external provider text remain unchanged. See [artwork sources](docs/verification/game-artwork-sources.md) and the [bilingual behavior](frontend/README.md#english-and-chinese).
 
-```text
-ArcadeIQ/
-  data/                 CSV seed data for users, games, and reviews
-  demo/                 Static browser demo that runs without dependencies
-  docs/                 Architecture notes and modernization plan
-  backend/              FastAPI backend for the modern web app
-  frontend/             React + TypeScript web app prototype
-  migrations/           SQL Server schema, stored procedures, views, and grants
-  PopulationScripts/    TypeScript scripts for loading CSV data into SQL Server
-  UI/                   Java Swing desktop application
-  Views/                Additional SQL view definitions
-  WebScrape/            Playwright scraper for Steam game data
-  ER.vsdx               Entity relationship diagram
-```
+## Run the Demo
 
-## Documentation
-
-- [Architecture](docs/architecture.md)
-- [Local PostgreSQL Setup](docs/local-postgres-setup.md)
-- [Local SQL Server Setup](docs/local-sqlserver-setup.md)
-- [Migration Plan](docs/migration-plan.md)
-- [Legacy SQL Migrations](migrations/README.md)
-- [Frontend modes and configuration](frontend/README.md)
-- [Backend authentication and tests](backend/README.md)
-- [Collection reliability verification](docs/verification/collections-2026-09-14.md)
-
-## Local Demo
-
-ArcadeIQ includes a lightweight browser demo that runs without SQL Server:
+Use Node.js 20, matching CI. From the repository root:
 
 ```powershell
-.\scripts\start-demo.ps1
+cd frontend
+npm ci
+npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
-Then open `http://localhost:4173`.
+Open [ArcadeIQ demo](http://127.0.0.1:5173/?mode=demo). No database or AI key is required.
 
-This earlier static prototype is retained for reference. Use the React frontend below to demonstrate the current account and collection behavior. Sample insight text is not a summary of live review evidence.
-
-## Web Frontend
-
-The current web application lives in `frontend/`:
-
-```powershell
-.\scripts\start-frontend.ps1
-```
-
-Open [demo mode](http://localhost:5173/?mode=demo), which is also the default.
-
-| Mode | Data source | Collection storage |
+| Mode | Catalog and search | Collections |
 | --- | --- | --- |
-| `?mode=demo` | Bundled catalog and local search/insight logic; no backend requests | This browser only; no server guest account |
-| `?mode=api` | FastAPI/PostgreSQL | Signed-in account; failures remain errors and can be retried |
+| `?mode=demo` | Bundled sample catalog and local rules; no backend requests. | Saved in this browser only. |
+| `?mode=api` | FastAPI/PostgreSQL and the configured search provider. | Saved to the signed-in account. |
 
-API mode never substitutes local samples or browser saves after a failed request. Demo data and account data are separate.
+The header identifies the active mode. An API failure remains visible with recovery controls; it never becomes a sample result or a browser-only save. Demo and account collections are separate.
 
-To configure the frontend, copy `frontend/.env.example` to `frontend/.env.local` if you do not already have a local file:
+## Run with the API
 
-```env
-VITE_DATA_MODE=demo
-VITE_API_BASE_URL=http://localhost:8000/api
-```
-
-The URL mode takes precedence over `VITE_DATA_MODE`. Restart Vite after changing its environment, or rebuild for a static preview. The repository root `.env` configures the backend; this frontend loads its own environment from `frontend/`. See the [frontend guide](frontend/README.md).
-
-## Backend API
-
-The modern backend lives in `backend/` and exposes the first API surface for the web app:
+Start PostgreSQL and the backend with Docker, then migrate and seed the local database. Run these commands from the repository root while the frontend remains open in another terminal:
 
 ```powershell
-.\scripts\start-backend.ps1
+docker compose up -d postgres backend
+docker compose exec backend alembic upgrade head
+docker compose exec backend python -m app.scripts.seed
 ```
 
-After PostgreSQL is running, apply migrations and seed demo data:
+Open [API mode](http://127.0.0.1:5173/?mode=api), choose a perspective, and register or sign in to save games. API documentation is available at [localhost:8000/docs](http://localhost:8000/docs). For an existing local PostgreSQL installation, use the [native Python setup](backend/README.md#local-postgresql--python-virtual-environment).
 
-```powershell
-.\scripts\seed-backend.ps1
-```
+The frontend defaults to `http://localhost:8000/api`. To change it, copy `frontend/.env.example` to `frontend/.env.local` and set `VITE_API_BASE_URL`; restart Vite afterward. The URL's `mode` overrides `VITE_DATA_MODE`. Backend settings belong in the repository root `.env`; for a different frontend host or port, include its exact origin in `ARCADEIQ_CORS_ORIGINS`. See the [frontend](frontend/README.md) and [backend](backend/README.md) configuration guides.
 
-Then open `http://localhost:8000/docs`.
+## Engineering Focus
 
-Open [API mode](http://localhost:5173/?mode=api), then register or sign in. All collection and saved-game endpoints, including collection insights, require an active account's bearer token. Their owner is derived from that token; client-supplied owner fields are rejected. The old anonymous `/api/users/session` endpoint has been removed without deleting existing guest records.
+- **Account ownership:** collection and saved-game routes derive the owner from a signed bearer token. Missing or expired sessions are rejected, and another account's collections are hidden.
+- **Persistence and recovery:** loading, mutations, retries, and account changes have explicit states. Failed requests do not change storage modes or report a successful save.
+- **Concurrent requests:** an older search, game insight, or account response cannot replace a newer selection or session.
+- **Search consistency:** literal title search combines with price, tag, and review filters. Frontend rules and PostgreSQL search tests share `tests/fixtures/search-contract.json`.
+- **Clear module boundaries:** page composition, discovery, selected-game details, account/collection state, and API/demo adapters have separate responsibilities.
+- **Reproducible verification:** unit and UI tests, isolated PostgreSQL integration tests, TypeScript/build checks, and a GitHub Actions workflow accompany the implementation.
+
+## AI Behavior and Boundaries
+
+Natural-language search supports a local rules parser and an optional DeepSeek provider. Provider output is normalized into the same search contract; PostgreSQL executes the resulting filters and ranking. Search responses identify their source as `rules` or `deepseek`. Configured fallback returns rules results when the provider fails; disabling fallback exposes the provider error.
+
+Game and collection insight text currently uses catalog metadata and aggregate statistics. It is not a summary of review source text, and recommendations are not personalized or live-trending claims. Source labels and estimate notes stay visible. The Chinese interface translates recognized sample/rule content and preserves unrecognized provider text with an original-content note.
+
+See the [optional provider configuration](backend/README.md#optional-ai-provider). Provider keys stay in backend environment variables, never in `VITE_*` variables or Git. Live-provider quality evaluation and traceable review evidence are future work; the [delivery verification record](docs/verification/api-delivery-2026-09-15.md) states which real and controlled paths were exercised.
 
 ## Verification
 
-Install development dependencies and run the backend suite from the repository root:
+Frontend tests and production build, from `frontend/`:
+
+```powershell
+npm test
+npm run build
+```
+
+Backend tests, from the repository root using Python 3.10 or newer:
 
 ```powershell
 python -m pip install -r backend/requirements-dev.txt
 python -m unittest discover -s backend/tests -t backend
 ```
 
-The default suite runs without a database connection. To include real PostgreSQL persistence and isolation checks, set a local test URL explicitly:
+To include PostgreSQL persistence, ownership, and search checks, set a local test database URL before running the same backend command:
 
 ```powershell
 $env:ARCADEIQ_TEST_DATABASE_URL="postgresql+psycopg://arcadeiq:arcadeiq_dev_password@localhost:5432/arcadeiq"
 python -m unittest discover -s backend/tests -t backend
 ```
 
-Each database test creates and removes only its own UUID-named schema. The suite does not use existing application tables. See [backend test details](backend/README.md#test).
+Each database suite creates and removes only its own UUID-named schema. Existing application tables are not used. Without the explicit URL, database tests are skipped. Provider responses are controlled in automated AI tests; the suite does not call a paid provider. [GitHub Actions](.github/workflows/ci.yml) configures PostgreSQL for the backend tests and runs the frontend tests and build.
 
-From `frontend/`:
+Verification records separate the executed checks from their limitations:
 
-```powershell
-npm ci
-npm test
-npm run build
-```
+- [API workflow and delivery](docs/verification/api-delivery-2026-09-15.md)
+- [Collection persistence and isolation](docs/verification/collections-2026-09-14.md)
+- [Search contract and response ordering](docs/verification/search-2026-09-14.md)
+- [Module refactor](docs/verification/modules-2026-09-15.md)
+- [Bilingual interface](docs/verification/bilingual-2026-09-15.md), [entry flow](docs/verification/entry-2026-09-15.md), [player recommendations](docs/verification/recommendations-2026-09-15.md), and [research overview](docs/verification/research-overview-2026-09-15.md)
 
-The CI workflow runs the backend suite with a PostgreSQL service and runs frontend tests before building. AI-provider calls are disabled during these checks.
+## Repository Guide
 
-## Legacy Database Overview
+| Path | Purpose |
+| --- | --- |
+| `frontend/` | Current React/TypeScript application, API/demo adapters, and UI tests. |
+| `backend/` | FastAPI routes, SQLAlchemy models, Alembic migrations, and backend tests. |
+| `tests/fixtures/` | Search cases shared across frontend and backend. |
+| `docs/` | Architecture, setup guides, verification records, and screenshots. |
+| `scripts/` | Local frontend, backend, and database setup helpers. |
+| `UI/`, `migrations/`, `Views/` | Original Java Swing/SQL Server application and database logic. |
+| `PopulationScripts/`, `WebScrape/`, `data/` | Legacy CSV ingestion, scraping utilities, and seed data. |
+| `demo/` | Earlier static prototype retained for reference. |
 
-The database models the core entities of a game marketplace:
+Read the [architecture guide](docs/architecture.md) for the current module and data flow. The modern application uses PostgreSQL; SQL Server stored procedures, transactions, Java Swing, and bcrypt belong to the legacy implementation. The modern API uses PBKDF2 password hashing and signed bearer tokens.
 
-- `User` and `DevUser` for player and developer accounts
-- `Game` for game catalog entries
-- `Developer`, `Producer`, `Develops`, and `Produces` for studio and publisher relationships
-- `Tag` and `HasTag` for game classification
-- `Reviews` for player ratings and written feedback
-- `UserHasGame` for ownership and inventory
-- `Bundle` and `InBundle` for grouped purchases
-- `Folder` and `FavoriteGame` for user-curated collections
-- `Voucher` for redemption-based ownership
+The retained coursework includes marketplace workflows such as purchasing, reviews, bundles, vouchers, and folders. These are historical features, not claims about the current web interface. See the [SQL Server setup](docs/local-sqlserver-setup.md), [legacy migrations](migrations/README.md), and [migration plan](docs/migration-plan.md).
 
-Most workflows are implemented through stored procedures, including game search, user registration, authentication lookup, purchasing, review creation, bundle purchase, folder management, and developer analytics.
-
-## AI Roadmap
-
-The backend already supports natural-language intent parsing with local rules and an optional DeepSeek provider. When configured, provider output is normalized into the same search contract; the configured rules fallback handles disabled/unavailable providers. Game and collection insight endpoints remain available, with collection insights now protected by account ownership.
-
-The current insight panels derive their text from catalog metadata and aggregate statistics. They do not yet summarize review source text. Future AI work should add inspectable review evidence and evaluate parser/provider behavior while preserving the search and insight interfaces. The collection reliability refactor does not call a paid provider or claim a live-provider evaluation.
-
-Configure AI only through the backend environment; see [the backend provider guide](backend/README.md#optional-ai-provider). Provider secrets never belong in `VITE_*` variables.
-
-## Refactor Roadmap
-
-- Establish and preserve automated checks for the current application.
-- Complete trustworthy account collections, persistence, and explicit failure handling.
-- Improve title search and result selection next.
-- Split larger interface/data modules around verified behavior.
-- Extend AI with traceable evidence and reproducible evaluation.
-
-## Security Notes
-
-This repository should not contain real database passwords, private keys, or production credentials. Runtime secrets should be provided through environment variables or local configuration files that are excluded from Git.
-
-The Java UI and TypeScript population scripts now use the `ARCADEIQ_DB_*` environment variables shown in `.env.example`.
-
-## Status
-
-ArcadeIQ is a portfolio application under focused refactoring. The current work targets reliable account and collection behavior, with documented checks and retained AI integration points. Deployment and live-provider validation are separate from this iteration.
+ArcadeIQ is a portfolio application. Further work centers on traceable AI evidence and evaluated provider behavior; a public production deployment is outside the current demonstration scope.

@@ -25,7 +25,8 @@ class GameOut(BaseModel):
 class SearchIntentOut(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    max_price: float = Field(alias="maxPrice")
+    title_query: str | None = Field(default=None, alias="titleQuery")
+    max_price: float | None = Field(default=None, alias="maxPrice")
     min_rating: float = Field(alias="minRating")
     has_reviews: bool = Field(alias="hasReviews")
     tags: list[str]

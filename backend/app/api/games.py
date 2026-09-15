@@ -47,9 +47,11 @@ def get_game_insights(game_id: int, db: Session = Depends(get_db)) -> dict[str, 
 
 @router.post("/search", response_model=SearchResponse)
 def search_games(request: SearchRequest, db: Session = Depends(get_db)) -> dict[str, object]:
-    available_tags = sorted({tag for game_tags in db.scalars(select(Game.tags)).all() for tag in game_tags})
+    catalog = db.execute(select(Game.name, Game.tags)).all()
+    available_tags = sorted({tag for _, game_tags in catalog for tag in game_tags})
+    available_titles = [name for name, _ in catalog]
     try:
-        result = resolve_search_intent(request.query, available_tags, get_settings())
+        result = resolve_search_intent(request.query, available_tags, get_settings(), available_titles)
     except AIProviderError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
@@ -71,7 +73,10 @@ def get_game_or_404(game_id: int, db: Session) -> Game:
 
 
 def apply_intent_filters(stmt: Select[tuple[Game]], intent: SearchIntent) -> Select[tuple[Game]]:
-    stmt = stmt.where(Game.price <= float(intent["max_price"]))
+    if intent["title_query"]:
+        stmt = stmt.where(Game.name.icontains(intent["title_query"], autoescape=True))
+    if intent["max_price"] is not None:
+        stmt = stmt.where(Game.price <= intent["max_price"])
     stmt = stmt.where(Game.rating >= float(intent["min_rating"]))
 
     if intent["has_reviews"]:

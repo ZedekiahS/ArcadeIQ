@@ -62,9 +62,9 @@ export function useCollections(catalog: Game[], userId: string | null, sessionRe
     const request = generation.current;
     let cancelled = false;
     const collectionId = visible.activeCollectionId;
-    if (userId === null || collectionId === null || loading) return;
-    setState((previous) => previous.scope === scope
-      ? { ...previous, shortlistInsights: null, insightsError: "" } : previous);
+    // Wait for compound create-and-save operations to settle before deriving insights.
+    // Invalidate at the data change itself, not with a synchronous write in this effect.
+    if (userId === null || collectionId === null || loading || visible.busy) return;
     catalogService.getShortlistInsights(visible.savedGamesByCollection[collectionId] ?? [], userId, collectionId)
       .then((insights) => {
         if (!cancelled && currentScope.current === scope && generation.current === request) {
@@ -76,7 +76,7 @@ export function useCollections(catalog: Game[], userId: string | null, sessionRe
         }
       });
     return () => { cancelled = true; };
-  }, [scope, userId, loading, visible.activeCollectionId, visible.savedGamesByCollection]);
+  }, [scope, userId, loading, visible.busy, visible.activeCollectionId, visible.savedGamesByCollection]);
 
   async function change<T>(
     action: (current: () => boolean) => Promise<T | null>,
@@ -107,7 +107,8 @@ export function useCollections(catalog: Game[], userId: string | null, sessionRe
   }
 
   function withSaved(previous: CollectionState, collectionId: number, items: SavedGame[]): CollectionState {
-    return { ...previous, savedGamesByCollection: { ...previous.savedGamesByCollection, [collectionId]: items } };
+    return { ...previous, savedGamesByCollection: { ...previous.savedGamesByCollection, [collectionId]: items },
+      shortlistInsights: null, insightsError: "" };
   }
 
   async function save(game: Game, collection: GameCollection) {
@@ -136,7 +137,7 @@ export function useCollections(catalog: Game[], userId: string | null, sessionRe
     const collections = previous.collections.some((item) => item.id === collection.id)
       ? previous.collections.map((item) => item.id === collection.id ? collection : item)
       : [...previous.collections, collection];
-    return { ...previous, collections, activeCollectionId: collection.id };
+    return { ...previous, collections, activeCollectionId: collection.id, shortlistInsights: null, insightsError: "" };
   }
 
   async function create(name: string) {
@@ -156,7 +157,7 @@ export function useCollections(catalog: Game[], userId: string | null, sessionRe
       const remaining = { ...previous.savedGamesByCollection };
       delete remaining[collectionId];
       return {
-        ...previous, collections, savedGamesByCollection: remaining,
+        ...previous, collections, savedGamesByCollection: remaining, shortlistInsights: null, insightsError: "",
         activeCollectionId: previous.activeCollectionId === collectionId ? collections[0]?.id ?? null : previous.activeCollectionId,
       };
     })) !== null;
@@ -176,8 +177,8 @@ export function useCollections(catalog: Game[], userId: string | null, sessionRe
 
   return {
     ...visible, loading, save, remove, clear, create, rename, deleteCollection, createAndSave,
-    setActiveCollectionId: (id: number) => setState((previous) => previous.scope === scope
-      ? { ...previous, activeCollectionId: id, shortlistInsights: null } : previous),
+    setActiveCollectionId: (id: number) => setState((previous) => previous.scope === scope && previous.activeCollectionId !== id
+      ? { ...previous, activeCollectionId: id, shortlistInsights: null, insightsError: "" } : previous),
     retry: () => { if (mutation.current === null) setReload((value) => value + 1); },
   };
 }

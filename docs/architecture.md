@@ -1,99 +1,103 @@
 # ArcadeIQ Architecture
 
-ArcadeIQ is being modernized from a course-era SQL Server desktop application into a personally deployed game intelligence platform.
+ArcadeIQ is a portfolio application demonstrating reliable search, account collections, and explicit AI integration. The current React/FastAPI/PostgreSQL application evolved from group coursework using Java Swing and SQL Server. The original implementation remains as project history.
 
-## Current Legacy Architecture
+## Current Application
 
-```text
-Java Swing UI
-    |
-    | JDBC stored procedure calls
-    v
-SQL Server database
-    |
-    | tables, views, stored procedures, grants
-    v
-Marketplace data model
-
-TypeScript population scripts
-    |
-    | CSV import through mssql
-    v
-SQL Server database
-
-Playwright scraper
-    |
-    | Steam data export
-    v
-CSV seed data
+```mermaid
+flowchart TD
+    App[App / LanguageProvider / usePage] --> Home[HomePage: choose a perspective]
+    App --> Workspace[WorkspaceSession: player or developer]
+    Workspace --> Account[AccountPanel / useAccount]
+    Workspace --> Discovery[useDiscovery: browse, search and selection]
+    Discovery --> Browse[Player recommendations or research overview]
+    Discovery --> Search[SearchControls: explicit search and filters]
+    Workspace --> Details[GameWorkspace / useGameDetails]
+    Workspace --> Collections[CollectionsPanel and SaveGameMenu / useCollections]
+    Account --> Users[users / HTTP transport]
+    Discovery --> Catalog[catalog: select configured adapter]
+    Details --> Catalog
+    Collections --> Catalog
+    Catalog --> Demo[demo: bundled games, browser storage, rules]
+    Catalog --> API[api: HTTP requests]
+    API --> FastAPI[FastAPI routes]
+    Users --> FastAPI
+    FastAPI --> Database[PostgreSQL]
+    FastAPI --> AI[Search intent: rules or optional DeepSeek]
 ```
 
-The legacy system keeps most business behavior in SQL Server stored procedures. The Java UI calls those procedures directly through JDBC. The TypeScript population scripts load games, users, and reviews from CSV data.
+The data mode is selected at page load by `?mode=demo` / `?mode=api`, or the frontend environment when no URL override is present. Switching modes reloads the page. An API failure stays an error and never switches the adapter or writes to demo storage.
 
-## Core Domains
+The homepage has no catalog, account, collection, or insight effects. Entering a workspace mounts those behaviors; returning home unmounts them. Language preference, page perspective, and data mode are separate concerns. The player/developer choice does not grant account permissions.
 
-- **Identity:** player users, developer users, bcrypt password hashes
-- **Catalog:** games, tags, developers, publishers
-- **Commerce:** purchases, bundles, vouchers, user balances
-- **Community:** reviews and ratings
-- **Collections:** user folders and favorite games
-- **Developer tools:** game editing, bundle management, revenue lookup
-- **Data ingestion:** Steam scraping and CSV population
+## Frontend Responsibilities
 
-## Target Architecture
+| Module | Responsibility |
+| --- | --- |
+| `App.tsx` | Compose the header and chosen page; mount the account/discovery/collection session only inside a workspace and connect selected games to save controls. |
+| `hooks/usePage.ts`, `components/HomePage.tsx` | Present player/developer entry choices and read native hash navigation. Keep public viewing perspective independent of account authorization. |
+| `components/GameArtwork.tsx` | Render locally bundled, title-matched artwork with a neutral fallback; independent of game IDs, search, and AI interfaces. |
+| `i18n/` | Own UI language preference, paired interface copy, display-only tag/error translation, and recognized catalog-content translation. Keep canonical identifiers, user drafts, and provider outputs intact. |
+| `hooks/useAccount.ts` | Validate and retain the account session, perform login/register/logout, and reject stale authentication results. |
+| `hooks/useDiscovery.ts` | Load/retry the catalog, coordinate search/filter results and selection, and accept only the latest search response. |
+| `lib/recommendations.ts` | Select up to six catalog recommendations by rating, review count, then stable title/ID. Use the same ordering for initial selection and visible recommendation cards. |
+| `lib/researchOverview.ts`, `components/ResearchOverview.tsx` | Aggregate the full loaded catalog, provide stable research references, and expose tag drilldowns. Keep overview statistics separate from selected-game and AI insight requests. |
+| `hooks/useGameDetails.ts` | Load/retry one selected game's details and intelligence; ignore results for an earlier selection. |
+| `hooks/useCollections.ts` | Own collection loading, mutations, saved games, and collection intelligence within an account/revision scope. |
+| `components/AccountPanel.tsx` | Own login and registration form drafts and present account status. |
+| `components/CollectionsPanel.tsx` | Own collection create/rename drafts and present collections and their intelligence. |
+| `components/SaveGameMenu.tsx` | Own the selected game's save menu and create-and-save draft. |
+| `components/SearchControls.tsx`, `components/GameWorkspace.tsx` | Present search/filter controls, selected details, matching games, and intelligence. |
+| `services/catalog.ts` | Select the configured adapter once and expose the existing asynchronous operations to callers. |
+| `services/catalog/api.ts` | Construct API requests, adding bearer authentication for collections and saves. |
+| `services/catalog/demo.ts` | Implement browser collection storage, bundled catalog access, and sample search/insight behavior. |
+| `services/catalog/contract.ts` | Describe the common operations implemented by both adapters. |
+| `services/http.ts`, `services/users.ts` | HTTP/error handling and token/account requests. |
+
+Form drafts belong to their panels; persisted state belongs to the hooks. The composition keys collection panels by account and session revision, and save menus additionally by game ID. Changing that context discards the old draft/menu without discarding unrelated discovery state. AccountPanel keeps a stable identity so authentication progress does not erase its inputs. The hooks independently prevent delayed requests from restoring old account or game data.
+
+The adapter interface keeps existing caller inputs to preserve tested behavior. Demo operations use a browser user namespace and catalog input. API collection ownership comes exclusively from the bearer token; the API adapter does not transmit a client owner ID. Both adapters return promises, including when local storage throws, so callers use the same loading/error flow.
+
+## Search and AI
+
+Demo search and backend rules search share expected intents and result IDs in `tests/fixtures/search-contract.json`. Search combines a literal title fragment with requested filters. An absent budget is `maxPrice: null`. The backend performs filtering and ranking in PostgreSQL; the demo uses its fixed catalog.
+
+`useDiscovery` treats searches and manual filter changes as ordered operations. A late success or failure cannot replace a newer result. The detail module additionally checks game identity before exposing intelligence, preventing one game's delayed insight from appearing under another game.
+
+The homepage leads to `#player` or `#developer`. The selected route supplies the discovery view, while the parsed search `mode` remains a query hint and does not navigate. A keyed workspace session unmounts when returning home or changing perspective, invalidating its pending responses. Saved collections and language preference persist through their existing stores; unsaved form drafts and the current search session do not persist across that navigation. No homepage choice modifies account roles or bearer-token ownership.
+
+Both workspaces start in browsing with empty input and neutral search intent. The player view selects a recommendation; developer research starts with no selected game. Draft input does not change browsing; nonblank search or a filter change does. `resetBrowse` invalidates pending searches and restores each view's initial query/filter/selection state. Recommendation and research-reference ordering and overview aggregation are local reads of the full loaded catalog, without an AI request. Selected-game and collection insight loading continue through the existing hooks and providers.
+
+The backend's optional DeepSeek search provider normalizes output into the same search contract. The provider interprets intent; SQLAlchemy constructs the PostgreSQL filtering/ranking query. Responses retain `source: rules` or `source: deepseek`. Disabled AI uses rules directly. Provider errors use rules when fallback is enabled, or return HTTP 503 when fallback is disabled. Blank search is resolved by the rules parser without a provider request. A missing provider title constraint retains the rules parser's recognized title condition.
+
+Game and collection insight endpoints remain separate from search parsing. Current insight text is generated from metadata and aggregate statistics, not review source text. Collection intelligence requires the owning account. The interface preserves the supplied source and estimate labels. Recognized demo/rules content can be translated for display; external or unrecognized text is retained verbatim. Provider keys stay in backend configuration.
+
+Traceable review evidence and live-provider evaluation remain future work. No vector retrieval, review ingestion, or new AI provider is introduced by this module refactor.
+
+## Backend and Persistence
+
+FastAPI routes use SQLAlchemy models against PostgreSQL. Alembic migrations and the seed script provide reproducible setup. Collection and saved-game routes derive ownership from the authenticated account, reject missing/invalid sessions, and hide another account's collections. No server guest account is created by the browser demo.
+
+Accounts use PBKDF2 password hashing and signed bearer tokens. The browser stores its token under the configured API URL and checks `/auth/me` when entering a workspace. A transient verification failure retains the stored token for retry; an invalid/expired session requires authentication again. Logout clears the browser token and current account state. It does not revoke an already issued token at the server; the token remains subject to its expiry and the active-account check.
+
+Collection ownership is independent of the selected page perspective and never comes from a submitted user ID. Collection/save request bodies reject extra owner fields, and another user's collection returns 404. Saving the same game into the same collection is idempotent. Frontend account/revision guards keep late responses from restoring previous-account data or drafts.
+
+The modern backend retains route/service boundaries while its search contract includes nullable literal title and price constraints. Alembic migrations describe the PostgreSQL schema; the legacy SQL Server migrations live separately in the repository root `migrations/` directory.
+
+## Verification Seams
+
+Tests call the same catalog exports as application hooks; adapter internals are not a second testing interface. App tests exercise search ordering and the actual account/collection controls, while hook tests cover failure handling and account changes. Backend integration tests use isolated UUID-named PostgreSQL schemas. GitHub Actions runs backend tests with PostgreSQL, frontend tests, and a production build.
+
+Shared search fixtures check intent and results in the frontend parser and the PostgreSQL HTTP suite. UI coverage also exercises homepage navigation, recommendation and overview entry states, bilingual rendering, and provider/source presentation. Automated provider tests use controlled responses rather than a live paid service.
+
+See the [API workflow and delivery](verification/api-delivery-2026-09-15.md), [collection](verification/collections-2026-09-14.md), [search](verification/search-2026-09-14.md), and [module refactor](verification/modules-2026-09-15.md) records for executed checks and limitations. The [entry](verification/entry-2026-09-15.md), [recommendation](verification/recommendations-2026-09-15.md), [research overview](verification/research-overview-2026-09-15.md), and [bilingual](verification/bilingual-2026-09-15.md) records cover the subsequent interface work.
+
+## Legacy Coursework
 
 ```text
-React + TypeScript frontend
-    |
-    | HTTP API
-    v
-FastAPI backend API
-    |
-    | typed service layer
-    v
-PostgreSQL database
-    |
-    | normalized schema, migrations, seed data
-    v
-Game intelligence data model
-
-AI service layer
-    |
-    | structured extraction, summaries, recommendations
-    v
-Search, review intelligence, developer insights
+Java Swing UI -> JDBC -> SQL Server stored procedures and tables
+TypeScript population scripts -> CSV import -> SQL Server
+Playwright scraper -> CSV seed data
 ```
 
-The first modernization step is not to rewrite everything at once. The initial goal is to make the current project safe to publish, locally deployable, and clearly documented. After that, the backend API can be introduced between the UI and the database.
-
-## Database Direction
-
-The current schema is SQL Server/T-SQL heavy. It uses stored procedures, table-valued parameters, `GO` batch separators, `THROW`, `bit`, `money`, and SQL Server-specific grants.
-
-Short term:
-
-- Keep SQL Server as the legacy database target.
-- Run it locally or in a personally controlled cloud environment.
-- Keep migrations as historical database documentation.
-- Build new product features against PostgreSQL.
-
-Long term:
-
-- Use PostgreSQL with pgvector for vector search, embedding storage, and deeper analytics.
-- Avoid an immediate MySQL migration because it would require rewriting much of the T-SQL surface without adding much AI/product value.
-
-## AI Integration Points
-
-- **Natural-language game search:** Convert user text into structured filters for tags, price, release date, publisher, developer, and review availability.
-- **Review summarization:** Summarize player feedback into sentiment, praise, complaints, and recommendation signals.
-- **Developer copilot:** Explain revenue, review trends, catalog gaps, and tag performance.
-- **Data quality assistant:** Detect duplicate games, malformed dates, missing metadata, suspicious prices, and inconsistent publisher/developer records.
-- **Recommendation engine:** Recommend games from player inventory, preferred tags, reviews, and price behavior.
-
-## Modernization Principles
-
-- Keep the legacy project understandable before rewriting it.
-- Replace hardcoded infrastructure with environment variables.
-- Prefer personal local/cloud deployments over school-hosted resources.
-- Add AI only where it improves an existing workflow.
-- Keep database changes reproducible through migrations or documented schema scripts.
+The legacy application contains marketplace behavior including users, reviews, purchases, bundles, vouchers, and folders. Its SQL Server migrations and stored procedures remain historical implementation evidence. Running the modern demo does not depend on the original school database or running the Java application.

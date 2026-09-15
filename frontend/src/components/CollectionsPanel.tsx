@@ -1,0 +1,223 @@
+import { Folder, LineChart, Pencil, Plus, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import type { useCollections } from "../hooks/useCollections";
+import { useI18n } from "../i18n";
+import { hasOriginalInsightContent, localizeCollectionInsights } from "../i18n/content";
+import { ErrorNotice, Metric } from "./ui";
+
+const DEFAULT_COLLECTION_NAME = "Default Shortlist";
+
+interface CollectionsPanelProps {
+  state: ReturnType<typeof useCollections>;
+  sessionUserId: string | null;
+  selectedId: number | null;
+  onSelectGame: (id: number) => void;
+  view?: "player" | "developer";
+}
+
+export function CollectionsPanel({ state, sessionUserId, selectedId, onSelectGame, view = "player" }: CollectionsPanelProps) {
+  const { language, t, money, number, tag, collectionName } = useI18n();
+  const { collections, activeCollectionId, savedGamesByCollection, shortlistInsights } = state;
+  const collectionDisabled = sessionUserId === null || state.loading || state.busy
+    || (collections.length === 0 && Boolean(state.error));
+  const [isCreatingCollection, setIsCreatingCollection] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState("");
+  const [isEditingCollection, setIsEditingCollection] = useState(false);
+  const [editingCollectionName, setEditingCollectionName] = useState("");
+  const savedGames = useMemo(() => activeCollectionId === null ? [] : savedGamesByCollection[activeCollectionId] ?? [], [activeCollectionId, savedGamesByCollection]);
+  const localizedInsights = shortlistInsights ? localizeCollectionInsights(shortlistInsights, savedGames, language) : null;
+  const showOriginalBody = Boolean(shortlistInsights && localizedInsights
+    && hasOriginalInsightContent(shortlistInsights.strategy, localizedInsights.strategy, language)
+    && shortlistInsights.strategy.body === localizedInsights.strategy.body
+    && /[A-Za-z]/.test(localizedInsights.strategy.body)
+    && !/[\u3400-\u9fff]/.test(localizedInsights.strategy.body));
+  const selectedCollection = collections.find((collection) => collection.id === activeCollectionId) ?? null;
+  const isDefaultCollection = selectedCollection?.name === DEFAULT_COLLECTION_NAME;
+
+  async function clearShortlist() {
+    if (activeCollectionId !== null) await state.clear(activeCollectionId);
+  }
+  async function addCollection(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!newCollectionName.trim()) return;
+    if (await state.create(newCollectionName)) {
+      setNewCollectionName("");
+      setIsCreatingCollection(false);
+    }
+  }
+  function selectCollection(collectionId: number) {
+    state.setActiveCollectionId(collectionId);
+    setIsEditingCollection(false);
+    setEditingCollectionName("");
+  }
+  function startEditingCollection() {
+    if (!selectedCollection || isDefaultCollection) return;
+    setIsCreatingCollection(false);
+    setIsEditingCollection(true);
+    setEditingCollectionName(selectedCollection.name);
+  }
+  async function renameCollection(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedCollection || isDefaultCollection || !editingCollectionName.trim()) return;
+    if (await state.rename(selectedCollection.id, editingCollectionName)) {
+      setIsEditingCollection(false);
+      setEditingCollectionName("");
+    }
+  }
+  async function removeCollection() {
+    if (!selectedCollection || isDefaultCollection) return;
+    if (await state.deleteCollection(selectedCollection.id)) {
+      setIsEditingCollection(false);
+      setEditingCollectionName("");
+    }
+  }
+
+  return (
+    <>
+      <section className="tool-panel shortlist-panel">
+        <div className="section-heading">
+          <h2>
+            <Folder size={16} aria-hidden="true" />
+            {t("Collections", "收藏夹")}
+          </h2>
+          <div className="section-actions">
+            <span>{t(`${savedGames.length} saved`, `已收藏 ${savedGames.length} 款`)}</span>
+            {savedGames.length > 0 && (
+              <button
+                className="icon-button danger"
+                type="button"
+                onClick={() => void clearShortlist()}
+                title={t("Clear shortlist", "清空收藏")}
+                aria-label={t("Clear shortlist", "清空收藏")}
+                disabled={collectionDisabled}
+              >
+                <Trash2 size={15} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        </div>
+        {sessionUserId === null && <p className="mode-description">{t("Sign in to load and save your collections.", "登录后即可查看和保存收藏夹。")}</p>}
+        {state.loading && <p role="status" className="mode-description">{t("Loading collections…", "正在加载收藏夹…")}</p>}
+        {state.busy && <p role="status" className="mode-description">{t("Saving change…", "正在保存更改…")}</p>}
+        <div className="collection-controls">
+          <label className="field compact">
+            <span>{t("Collection", "收藏夹")}</span>
+            <select
+              value={activeCollectionId ?? ""}
+              onChange={(event) => selectCollection(Number(event.target.value))}
+              disabled={collectionDisabled || collections.length === 0}
+            >
+              {collections.map((collection) => (
+                <option key={collection.id} value={collection.id}>
+                  {collectionName(collection.name)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            className="icon-button"
+            type="button"
+            onClick={() => setIsCreatingCollection((current) => !current)}
+            title={t("New collection", "新建收藏夹")}
+            aria-label={t("New collection", "新建收藏夹")}
+            disabled={collectionDisabled}
+          >
+            <Plus size={15} aria-hidden="true" />
+          </button>
+          <button
+            className="icon-button"
+            type="button"
+            onClick={startEditingCollection}
+            title={t("Rename collection", "重命名收藏夹")}
+            aria-label={t("Rename collection", "重命名收藏夹")}
+            disabled={collectionDisabled || !selectedCollection || isDefaultCollection}
+          >
+            <Pencil size={15} aria-hidden="true" />
+          </button>
+          <button
+            className="icon-button danger"
+            type="button"
+            onClick={() => void removeCollection()}
+            title={t("Delete collection", "删除收藏夹")}
+            aria-label={t("Delete collection", "删除收藏夹")}
+            disabled={collectionDisabled || !selectedCollection || isDefaultCollection}
+          >
+            <Trash2 size={15} aria-hidden="true" />
+          </button>
+        </div>
+        {isCreatingCollection && (
+          <form className="collection-create" onSubmit={(event) => void addCollection(event)}>
+            <input
+              className="text-input"
+              aria-label={t("Collection name", "收藏夹名称")}
+              placeholder={t("Wishlist", "愿望单")}
+              value={newCollectionName}
+              onChange={(event) => setNewCollectionName(event.target.value)}
+              disabled={collectionDisabled}
+            />
+            <button className="small-button" type="submit" disabled={collectionDisabled || !newCollectionName.trim()}>
+              {t("Create", "创建")}
+            </button>
+          </form>
+        )}
+        {isEditingCollection && selectedCollection && (
+          <form className="collection-edit" onSubmit={(event) => void renameCollection(event)}>
+            <input
+              className="text-input"
+              aria-label={t("Rename collection", "重命名收藏夹")}
+              value={editingCollectionName}
+              onChange={(event) => setEditingCollectionName(event.target.value)}
+              disabled={collectionDisabled}
+            />
+            <button className="small-button" type="submit" disabled={collectionDisabled || !editingCollectionName.trim()}>
+              {t("Save", "保存")}
+            </button>
+          </form>
+        )}
+        {state.error && <ErrorNotice message={state.error} onRetry={state.retry} retryLabel={t("Reload collections", "重新加载收藏夹")} disabled={state.busy} />}
+        <div className="shortlist-list">
+          {savedGames.map((savedGame) => (
+            <button
+              key={`${savedGame.collectionId}-${savedGame.gameId}`}
+              className={`shortlist-item ${selectedId === savedGame.gameId ? "active" : ""}`}
+              type="button"
+              onClick={() => onSelectGame(savedGame.gameId)}
+            >
+              <span>{savedGame.game.name}</span>
+              <strong>{money(savedGame.game.price)}</strong>
+            </button>
+          ))}
+          {savedGames.length === 0 && !state.loading && !state.error && selectedCollection && <div className="empty-state compact">{t("No saved games in this collection.", "这个收藏夹还没有游戏。")}</div>}
+        </div>
+      </section>
+
+      {state.insightsError && <ErrorNotice message={state.insightsError} onRetry={state.retry} retryLabel={t("Retry collection intelligence", "重新获取收藏洞察")} disabled={state.busy} />}
+      {savedGames.length > 0 && shortlistInsights && localizedInsights && (
+        <details className="tool-panel shortlist-insight-panel collection-insight-disclosure">
+          <summary>
+            <LineChart size={16} aria-hidden="true" />
+            <span>{t("Collection insights", "收藏洞察")}</span>
+          </summary>
+          <p className="supporting-note">
+            {t("Source:", "来源：")} {shortlistInsights.source === "deepseek" ? "DeepSeek" : shortlistInsights.source === "mock" ? t("Demo rules", "演示规则") : t("Rules", "规则引擎")} · {t("Catalog estimates.", "游戏目录估算。")}
+            {" "}{shortlistInsights.source === "mock" ? t("Summary based on sample catalog metadata.", "摘要基于示例游戏目录元数据。") : t("Summary based on catalog metadata.", "摘要基于游戏目录元数据。")}
+          </p>
+          <div className="shortlist-insight-metrics">
+            <Metric label={t("Avg Price", "平均价格")} value={money(shortlistInsights.averagePrice)} />
+            <Metric label={t("Avg Rating", "平均评分")} value={shortlistInsights.averageRating.toFixed(1)} />
+          </div>
+          {showOriginalBody && <p className="supporting-note">{t("Original content", "原始内容")}</p>}
+          <p className="shortlist-summary">{localizedInsights.strategy.body}</p>
+          {shortlistInsights.topTags.length > 0 && (
+            <div className="tag-row shortlist-tags">
+              {shortlistInsights.topTags.map((tagName) => (
+                <span key={tagName}>{tag(tagName)}</span>
+              ))}
+            </div>
+          )}
+          {view === "developer" && <p className="supporting-note">{t(`Estimated catalog revenue: $${number(shortlistInsights.totalVisibleRevenue)}`, `目录估算营收：${number(shortlistInsights.totalVisibleRevenue)} 美元`)}</p>}
+        </details>
+      )}
+    </>
+  );
+}

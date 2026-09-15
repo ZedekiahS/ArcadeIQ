@@ -17,7 +17,8 @@ export interface Game {
 }
 
 export interface SearchIntent {
-  maxPrice: number;
+  titleQuery: string | null;
+  maxPrice: number | null;
   minRating: number;
   hasReviews: boolean;
   tags: string[];

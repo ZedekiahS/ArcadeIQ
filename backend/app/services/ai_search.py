@@ -19,25 +19,34 @@ class IntentParseResult:
     source: str
 
 
-def resolve_search_intent(query: str, available_tags: list[str], settings: Settings) -> IntentParseResult:
-    if not settings.ai_enabled or settings.ai_provider == "rules":
-        return parse_with_rules(query, available_tags)
+def resolve_search_intent(
+    query: str, available_tags: list[str], settings: Settings, available_titles: list[str] | None = None,
+) -> IntentParseResult:
+    rules = parse_with_rules(query, available_tags, available_titles)
+    if not query.strip() or not settings.ai_enabled or settings.ai_provider == "rules":
+        return rules
 
     try:
         if settings.ai_provider == "deepseek":
+            intent = parse_with_deepseek(query, available_tags, settings)
+            # Older/provider payloads must not silently erase literal title searches.
+            if intent["title_query"] is None:
+                intent["title_query"] = rules.intent["title_query"]
             return IntentParseResult(
-                intent=parse_with_deepseek(query, available_tags, settings),
+                intent=intent,
                 source="deepseek",
             )
         raise AIProviderError(f"Unsupported AI provider: {settings.ai_provider}")
     except AIProviderError:
         if settings.ai_fallback_to_rules:
-            return parse_with_rules(query, available_tags)
+            return rules
         raise
 
 
-def parse_with_rules(query: str, available_tags: list[str]) -> IntentParseResult:
-    return IntentParseResult(intent=parse_search_intent(query, available_tags), source="rules")
+def parse_with_rules(
+    query: str, available_tags: list[str], available_titles: list[str] | None = None,
+) -> IntentParseResult:
+    return IntentParseResult(intent=parse_search_intent(query, available_tags, available_titles), source="rules")
 
 
 def parse_with_deepseek(query: str, available_tags: list[str], settings: Settings) -> SearchIntent:
@@ -92,12 +101,15 @@ def build_intent_system_prompt(available_tags: list[str]) -> str:
     return (
         "You are ArcadeIQ's game search intent parser. Return json only. "
         "Use exactly this JSON shape: "
-        '{"maxPrice": number, "minRating": number, "hasReviews": boolean, "tags": string[], '
+        '{"titleQuery": null | string, "maxPrice": null | number, "minRating": number, "hasReviews": boolean, "tags": string[], '
         '"mode": "player" | "developer", "sortBy": null | "name" | "price" | "rating" | "review_count" | '
         '"release_year" | "revenue" | "ownership", "sortDirection": "asc" | "desc", "limit": null | number, "offset": number}. '
         "Use only these tags when tags are relevant: "
         f"{tags}. "
         "Use player mode for player discovery queries and developer mode for catalog, revenue, or market analysis queries. "
+        "Put a requested game title or unrecognized literal search text into titleQuery, in lowercase. "
+        "Do not interpret words within a game title as genre tags or ranking instructions. "
+        "Combine titleQuery with explicitly requested filters; use null for maxPrice when no budget is requested. "
         "For ranked queries such as second most expensive, use sortBy price, sortDirection desc, limit 1, and offset 1. "
-        "If the query does not imply a filter, use maxPrice 70, minRating 0, hasReviews false, an empty tags array, sortBy null, sortDirection asc, limit null, and offset 0."
+        "If no other filter is implied, use maxPrice null, minRating 0, hasReviews false, an empty tags array, sortBy null, sortDirection asc, limit null, and offset 0."
     )

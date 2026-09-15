@@ -1,7 +1,8 @@
 import type { Game, GameSignal, SearchIntent } from "../types";
 
 const defaultIntent: SearchIntent = {
-  maxPrice: 70,
+  titleQuery: null,
+  maxPrice: null,
   minRating: 0,
   hasReviews: false,
   tags: [],
@@ -11,6 +12,12 @@ const defaultIntent: SearchIntent = {
   limit: null,
   offset: 0,
 };
+
+const pricePatterns = [
+  /(?<![a-z0-9])(?:under|below|less than)\s+\$?(\d+(?:\.\d+)?)(?![\d.])/,
+  /(?<![\d.])(\d+(?:\.\d+)?)\s*美元\s*以下/,
+  /低于\s*\$?(\d+(?:\.\d+)?)(?![\d.])\s*(?:美元)?/,
+];
 
 const tagAliases: Record<string, string[]> = {
   Action: ["动作"],
@@ -37,62 +44,116 @@ const tagAliases: Record<string, string[]> = {
   "Survival Horror": ["恐怖", "生存恐怖"],
 };
 
-export function parseSearchIntent(query: string, availableTags: string[]): SearchIntent {
-  const text = query.toLowerCase();
+export function parseSearchIntent(query: string, availableTags: string[], availableTitles: string[] = []): SearchIntent {
+  const { title, remaining } = extractTitle(query, availableTitles);
+  const text = remaining.toLowerCase();
   const intent: SearchIntent = { ...defaultIntent, tags: [] };
 
-  const explicitPrice = text.match(/(?:under|below|less than)\s+\$?(\d+)/);
+  const explicitPrice = pricePatterns.map((pattern) => text.match(pattern)).find(Boolean);
   if (explicitPrice) {
     intent.maxPrice = Number(explicitPrice[1]);
   } else if (isBudgetPriceQuery(text)) {
     intent.maxPrice = 35;
   }
 
-  if (text.includes("highly rated") || text.includes("top rated")) {
+  if (hasAny(text, ["highly rated", "top rated", "高评分"])) {
     intent.minRating = 4.4;
     intent.hasReviews = true;
-  } else if (text.includes("good reviews")) {
-    intent.minRating = 0;
-    intent.hasReviews = true;
-  } else if (text.includes("review") || text.includes("rated")) {
+  } else if (hasAny(text, ["good reviews", "review", "reviews", "rated", "有评价"])) {
     intent.hasReviews = true;
   }
 
-  if (text.includes("developer") || text.includes("catalog") || text.includes("revenue")) {
+  if (hasAny(text, ["developer", "catalog", "revenue", "开发者"])) {
     intent.mode = "developer";
   }
 
   applyRankingIntent(text, intent);
 
   const tags = new Set<string>();
-  for (const tag of availableTags) {
-    const normalized = tag.toLowerCase();
-    const singleWord = !normalized.includes(" ");
-    if (text.includes(normalized) || (singleWord && text.includes(normalized.split(" ")[0]))) {
-      tags.add(tag);
-    }
-  }
+  for (const tag of availableTags) if (tagPattern(tag).test(text)) tags.add(tag);
 
-  if (text.includes("story")) tags.add("Story Rich");
-  if (text.includes("horror")) tags.add("Survival Horror");
-  if (text.includes("multiplayer")) tags.add("Multiplayer");
+  if (tagPattern("story").test(text) && availableTags.includes("Story Rich")) tags.add("Story Rich");
+  if (tagPattern("horror").test(text) && availableTags.includes("Survival Horror")) tags.add("Survival Horror");
 
   addAliasTags(text, tags, availableTags);
 
-  intent.tags = prioritizeTags([...tags], text);
+  intent.tags = prioritizeTags([...tags].sort(), text);
+  intent.titleQuery = normalizeTitle([title, remainingTitle(text, availableTags, intent)].filter(Boolean).join(" "));
   return intent;
 }
 
 export function filterGames(games: Game[], intent: SearchIntent): Game[] {
   const filteredGames = games.filter((game) => {
-    const priceMatch = game.price <= intent.maxPrice;
+    const titleMatch = !intent.titleQuery || game.name.toLowerCase().includes(intent.titleQuery.toLowerCase());
+    const priceMatch = intent.maxPrice === null || game.price <= intent.maxPrice;
     const ratingMatch = game.rating >= intent.minRating;
     const reviewMatch = !intent.hasReviews || game.reviewCount > 0;
     const tagMatch = intent.tags.length === 0 || intent.tags.every((tag) => game.tags.includes(tag));
-    return priceMatch && ratingMatch && reviewMatch && tagMatch;
+    return titleMatch && priceMatch && ratingMatch && reviewMatch && tagMatch;
   });
 
   return rankGames(filteredGames, intent);
+}
+
+function normalizeTitle(value: string | null): string | null {
+  return value?.trim().replace(/\s+/g, " ").toLowerCase() || null;
+}
+
+function escapePattern(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function tagPattern(value: string, global = false): RegExp {
+  // ASCII boundaries also recognize mixed queries such as 第二贵的FPSgame.
+  return new RegExp(`(?<![a-z0-9])${escapePattern(value)}(?=$|[^a-z0-9]|games?\\b)`, global ? "gi" : "i");
+}
+
+function extractTitle(query: string, availableTitles: string[]) {
+  const quoted = /"([^"\n]+)"|“([^”\n]+)”|(?<![a-z0-9])'([^'\n]+)'(?![a-z0-9])/i.exec(query);
+  if (quoted) {
+    return { title: quoted[1] ?? quoted[2] ?? quoted[3], remaining: query.replace(quoted[0], " ") };
+  }
+
+  for (const title of [...availableTitles].sort((first, second) => second.length - first.length || first.toLowerCase().localeCompare(second.toLowerCase()))) {
+    if (!title.trim()) continue;
+    const pattern = new RegExp(`(?<![a-z0-9])${escapePattern(title)}(?![a-z0-9])`, "i");
+    const match = pattern.exec(query);
+    if (match) {
+      // A title named "Expensive FPS" must not consume "most expensive FPS" ranking.
+      if (/\b(?:most|least|highest|lowest)\s+$/i.test(query.slice(0, match.index))) continue;
+      return { title: match[0], remaining: query.replace(pattern, " ") };
+    }
+  }
+  return { title: null, remaining: query };
+}
+
+function remainingTitle(text: string, availableTags: string[], intent: SearchIntent): string {
+  let remaining = text;
+  for (const pattern of pricePatterns) remaining = remaining.replace(new RegExp(pattern.source, "g"), " ");
+  for (const tag of [...availableTags].sort((first, second) => second.length - first.length)) {
+    remaining = remaining.replace(tagPattern(tag, true), " ");
+  }
+  for (const [canonical, aliases] of Object.entries(tagAliases)) {
+    if (!availableTags.includes(canonical)) continue;
+    for (const alias of [...aliases].sort((first, second) => second.length - first.length)) {
+      remaining = remaining.split(alias).join(" ");
+    }
+  }
+  if (availableTags.includes("Story Rich")) remaining = remaining.replace(tagPattern("story", true), " ");
+  if (availableTags.includes("Survival Horror")) remaining = remaining.replace(tagPattern("horror", true), " ");
+
+  remaining = remaining.replace(/(?<![a-z0-9])(?:most expensive|highest price|priciest|cheapest|lowest price|least expensive|highest rated|top rated|best rated|highly rated|most reviewed|review volume|most reviews|most recent|highest revenue|most revenue|top revenue|most owned|highest ownership|good reviews|cheap|deal|best|newest|latest|oldest|reviews?|rated)(?![a-z0-9])/g, " ");
+  remaining = remaining.replace(/\btop\s+\d{1,2}\b|\b(?:show|find|give me|list)\s+(?:the\s+)?\d{1,2}\b/g, " ");
+  remaining = remaining.replace(/\b(?:first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th)\b|第[一二三四五]\s*贵|最便宜|最贵|便宜|第[一二三四五]/g, " ");
+  if (intent.mode === "developer") remaining = remaining.replace(/\b(?:developer|catalog|revenue|market|analysis)\b|开发者|分析/g, " ");
+  if (intent.hasReviews) remaining = remaining.replace(/高评分|有评价/g, " ");
+
+  remaining = remaining.replace(/\b(?:show|find|give\s+me|list|all|the|a|an|me|games?|please|with|and|for|of|dollars?|usd|premium)\b/g, " ");
+  if (intent.tags.length > 0 || intent.sortBy !== null || intent.maxPrice !== null || intent.hasReviews || intent.mode === "developer") {
+    // Only consume connector segments separated by recognized conditions, preserving unknown words.
+    remaining = remaining.replace(/(^|\s)(?:找|为|且|的|类|游戏)+(?=\s|$)/g, " ");
+  }
+  return remaining.replace(/^[\s,;:!?，；：！？]+|[\s,;:!?，；：！？]+$/g, "");
 }
 
 export function getSignal(game: Game): GameSignal {
@@ -129,7 +190,7 @@ function applyRankingIntent(text: string, intent: SearchIntent) {
   } else if (hasAny(text, ["cheap", "deal"]) || text.includes("便宜")) {
     intent.sortBy = "price";
     intent.sortDirection = "asc";
-  } else if (hasAny(text, ["highest rated", "top rated", "best rated", "highly rated"]) || /\bbest\b/.test(text)) {
+  } else if (hasAny(text, ["highest rated", "top rated", "best rated", "highly rated", "高评分"]) || /\bbest\b/.test(text)) {
     intent.sortBy = "rating";
     intent.sortDirection = "desc";
   } else if (hasAny(text, ["most reviewed", "review volume", "most reviews"])) {
@@ -138,7 +199,7 @@ function applyRankingIntent(text: string, intent: SearchIntent) {
   } else if (hasAny(text, ["newest", "latest", "most recent"])) {
     intent.sortBy = "release_year";
     intent.sortDirection = "desc";
-  } else if (text.includes("oldest")) {
+  } else if (hasAny(text, ["oldest"])) {
     intent.sortBy = "release_year";
     intent.sortDirection = "asc";
   } else if (hasAny(text, ["highest revenue", "most revenue", "top revenue"])) {
@@ -245,7 +306,7 @@ function parseOrdinalRank(text: string) {
 }
 
 function hasAny(text: string, phrases: string[]) {
-  return phrases.some((phrase) => text.includes(phrase));
+  return phrases.some((phrase) => new RegExp(`(?<![a-z0-9])${escapePattern(phrase)}(?![a-z0-9])`).test(text));
 }
 
 function addAliasTags(text: string, tags: Set<string>, availableTags: string[]) {

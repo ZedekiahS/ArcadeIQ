@@ -1,10 +1,17 @@
 from __future__ import annotations
 
+import math
 import re
 from typing import Literal, TypedDict
 
 SearchSortBy = Literal["name", "price", "rating", "review_count", "release_year", "revenue", "ownership"]
 SearchSortDirection = Literal["asc", "desc"]
+
+PRICE_PATTERNS = [
+    r"(?<![a-z0-9])(?:under|below|less than)\s+\$?(\d+(?:\.\d+)?)(?![\d.])",
+    r"(?<![\d.])(\d+(?:\.\d+)?)\s*美元\s*以下",
+    r"低于\s*\$?(\d+(?:\.\d+)?)(?![\d.])\s*(?:美元)?",
+]
 
 TAG_ALIASES: dict[str, list[str]] = {
     "Action": ["动作"],
@@ -33,7 +40,8 @@ TAG_ALIASES: dict[str, list[str]] = {
 
 
 class SearchIntent(TypedDict):
-    max_price: float
+    title_query: str | None
+    max_price: float | None
     min_rating: float
     has_reviews: bool
     tags: list[str]
@@ -46,7 +54,8 @@ class SearchIntent(TypedDict):
 
 def default_search_intent() -> SearchIntent:
     return {
-        "max_price": 70,
+        "title_query": None,
+        "max_price": None,
         "min_rating": 0,
         "has_reviews": False,
         "tags": [],
@@ -58,54 +67,119 @@ def default_search_intent() -> SearchIntent:
     }
 
 
-def parse_search_intent(query: str, available_tags: list[str]) -> SearchIntent:
-    text = query.lower()
+def parse_search_intent(
+    query: str, available_tags: list[str], available_titles: list[str] | None = None,
+) -> SearchIntent:
+    title, remainder = extract_title(query, available_titles or [])
+    text = remainder.lower()
     intent = default_search_intent()
 
-    explicit_price = re.search(r"(?:under|below|less than)\s+\$?(\d+)", text)
+    explicit_price = next((match for pattern in PRICE_PATTERNS if (match := re.search(pattern, text))), None)
     if explicit_price:
-        intent["max_price"] = int(explicit_price.group(1))
+        intent["max_price"] = float(explicit_price.group(1))
+        for pattern in PRICE_PATTERNS:
+            remainder = re.sub(pattern, " ", remainder, flags=re.IGNORECASE)
     elif is_budget_price_query(text):
         intent["max_price"] = 35
 
-    if "highly rated" in text or "top rated" in text:
+    if has_any(text, ["highly rated", "top rated", "高评分"]):
         intent["min_rating"] = 4.4
         intent["has_reviews"] = True
-    elif "good reviews" in text:
-        intent["has_reviews"] = True
-    elif "review" in text or "rated" in text:
+    elif has_any(text, ["good reviews", "review", "reviews", "rated", "有评价"]):
         intent["has_reviews"] = True
 
-    if "developer" in text or "catalog" in text or "revenue" in text:
+    if has_any(text, ["developer", "catalog", "revenue", "开发者"]):
         intent["mode"] = "developer"
 
     apply_ranking_intent(text, intent)
 
     matched_tags: set[str] = set()
-    for tag in available_tags:
-        normalized = tag.lower()
-        single_word = " " not in normalized
-        if normalized in text or (single_word and normalized.split(" ")[0] in text):
+    for tag in sorted(available_tags, key=len, reverse=True):
+        pattern = phrase_pattern(tag, allow_game_suffix=True)
+        if re.search(pattern, text, re.IGNORECASE):
             matched_tags.add(tag)
+            remainder = re.sub(pattern, " ", remainder, flags=re.IGNORECASE)
 
-    if "story" in text:
-        matched_tags.add("Story Rich")
-    if "horror" in text:
-        matched_tags.add("Survival Horror")
-    if "multiplayer" in text:
-        matched_tags.add("Multiplayer")
+    available_tag_lookup = {tag.lower(): tag for tag in available_tags}
+    for word, canonical in (("story", "Story Rich"), ("horror", "Survival Horror")):
+        if canonical.lower() in available_tag_lookup and has_any(text, [word]):
+            matched_tags.add(available_tag_lookup[canonical.lower()])
+            remainder = re.sub(phrase_pattern(word), " ", remainder, flags=re.IGNORECASE)
 
-    add_alias_tags(text, matched_tags, available_tags)
+    for canonical, aliases in TAG_ALIASES.items():
+        tag = available_tag_lookup.get(canonical.lower())
+        if tag:
+            for alias in sorted(aliases, key=len, reverse=True):
+                if alias in text:
+                    matched_tags.add(tag)
+                    remainder = remainder.replace(alias, " ")
 
     intent["tags"] = prioritize_tags(sorted(matched_tags), text)
+    remainder = remove_filter_words(remainder, intent)
+    intent["title_query"] = normalize_title(f"{title or ''} {remainder}")
     return intent
+
+
+def phrase_pattern(phrase: str, *, allow_game_suffix: bool = False) -> str:
+    suffix = r"(?=$|[^a-z0-9]|games?(?![a-z0-9]))" if allow_game_suffix else r"(?![a-z0-9])"
+    return rf"(?<![a-z0-9]){re.escape(phrase)}{suffix}"
+
+
+def extract_title(query: str, available_titles: list[str]) -> tuple[str | None, str]:
+    # Protect titles before interpreting words such as Space, First, or Survival.
+    quoted = re.search(r'"([^"\n]+)"|“([^”\n]+)”|(?<![a-zA-Z0-9])\x27([^\x27\n]+)\x27(?![a-zA-Z0-9])', query)
+    if quoted:
+        title = normalize_title(next(group for group in quoted.groups() if group is not None))
+        return title, query[:quoted.start()] + " " + query[quoted.end():]
+    for title in sorted(available_titles, key=lambda value: (-len(value), value.lower())):
+        if not title.strip():
+            continue
+        match = re.search(phrase_pattern(title), query, flags=re.IGNORECASE)
+        if match:
+            # "most expensive FPS" is a ranking even if a title is "Expensive FPS".
+            if re.search(r"\b(?:most|least|highest|lowest)\s+$", query[:match.start()], re.IGNORECASE):
+                continue
+            return normalize_title(match.group()), query[:match.start()] + " " + query[match.end():]
+    return None, query
+
+
+def normalize_title(value: object | None) -> str | None:
+    if not isinstance(value, str):
+        return None
+    return " ".join(value.lower().split()) or None
+
+
+def remove_filter_words(text: str, intent: SearchIntent) -> str:
+    phrases = [
+        "most expensive", "highest price", "priciest", "cheapest", "lowest price", "least expensive",
+        "cheap", "deal", "highest rated", "top rated", "best rated", "highly rated", "best",
+        "most reviewed", "review volume", "most reviews", "newest", "latest", "most recent", "oldest",
+        "highest revenue", "most revenue", "top revenue", "most owned", "highest ownership",
+        "good reviews", "reviews", "review", "rated",
+    ]
+    for phrase in sorted(phrases, key=len, reverse=True):
+        text = re.sub(phrase_pattern(phrase), " ", text, flags=re.IGNORECASE)
+    text = re.sub(r"\btop\s+\d{1,2}\b|\b(?:show|find|give me|list)\s+(?:the\s+)?\d{1,2}\b", " ", text, flags=re.IGNORECASE)
+    text = re.sub(r"\b(?:first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th)\b", " ", text, flags=re.IGNORECASE)
+    if intent["mode"] == "developer":
+        text = re.sub(r"\b(?:developer|catalog|revenue|market|analysis)\b|开发者|分析", " ", text, flags=re.IGNORECASE)
+    if intent["has_reviews"]:
+        text = re.sub(r"高评分|有评价", " ", text)
+    text = re.sub(r"第[一二三四五]\s*贵|最便宜|最贵|便宜|第[一二三四五]", " ", text)
+    text = re.sub(r"\b(?:show|find|give\s+me|list|all|the|a|an|me|games?|please|with|and|for|of|dollars?|usd|premium)\b", " ", text, flags=re.IGNORECASE)
+    if intent["tags"] or intent["sort_by"] is not None or intent["max_price"] is not None or intent["has_reviews"] or intent["mode"] == "developer":
+        # Only consume connector segments separated by recognized conditions, preserving unknown words.
+        text = re.sub(r"(^|\s)(?:找|为|且|的|类|游戏)+(?=\s|$)", " ", text)
+    return text.strip(" \t\r\n,;:!?，；：！？")
 
 
 def normalize_search_intent(raw_intent: dict[str, object], available_tags: list[str]) -> SearchIntent:
     intent = default_search_intent()
     available_tag_lookup = {tag.lower(): tag for tag in available_tags}
 
-    intent["max_price"] = clamp_number(get_first(raw_intent, "maxPrice", "max_price"), default=70, minimum=0, maximum=500)
+    intent["title_query"] = normalize_title(get_first(raw_intent, "titleQuery", "title_query"))
+    raw_price = get_first(raw_intent, "maxPrice", "max_price")
+    intent["max_price"] = None if raw_price is None else clamp_number(raw_price, default=None, minimum=0, maximum=500)
     intent["min_rating"] = clamp_number(get_first(raw_intent, "minRating", "min_rating"), default=0, minimum=0, maximum=5)
     intent["has_reviews"] = coerce_bool(get_first(raw_intent, "hasReviews", "has_reviews"), default=False)
 
@@ -152,7 +226,7 @@ def apply_ranking_intent(text: str, intent: SearchIntent) -> None:
     elif has_any(text, ["cheap", "deal"]) or "便宜" in text:
         intent["sort_by"] = "price"
         intent["sort_direction"] = "asc"
-    elif has_any(text, ["highest rated", "top rated", "best rated", "highly rated"]) or re.search(r"\bbest\b", text):
+    elif has_any(text, ["highest rated", "top rated", "best rated", "highly rated", "高评分"]) or re.search(r"\bbest\b", text):
         intent["sort_by"] = "rating"
         intent["sort_direction"] = "desc"
     elif has_any(text, ["most reviewed", "review volume", "most reviews"]):
@@ -161,7 +235,7 @@ def apply_ranking_intent(text: str, intent: SearchIntent) -> None:
     elif has_any(text, ["newest", "latest", "most recent"]):
         intent["sort_by"] = "release_year"
         intent["sort_direction"] = "desc"
-    elif "oldest" in text:
+    elif has_any(text, ["oldest"]):
         intent["sort_by"] = "release_year"
         intent["sort_direction"] = "asc"
     elif has_any(text, ["highest revenue", "most revenue", "top revenue"]):
@@ -242,15 +316,7 @@ def parse_ordinal_rank(text: str) -> int | None:
 
 
 def has_any(text: str, phrases: list[str]) -> bool:
-    return any(phrase in text for phrase in phrases)
-
-
-def add_alias_tags(text: str, matched_tags: set[str], available_tags: list[str]) -> None:
-    available_tag_lookup = {tag.lower(): tag for tag in available_tags}
-    for canonical_tag, aliases in TAG_ALIASES.items():
-        tag = available_tag_lookup.get(canonical_tag.lower())
-        if tag and any(alias in text for alias in aliases):
-            matched_tags.add(tag)
+    return any(re.search(phrase_pattern(phrase), text, re.IGNORECASE) for phrase in phrases)
 
 
 def normalize_sort_by(value: object | None) -> SearchSortBy | None:
@@ -305,13 +371,13 @@ def get_first(values: dict[str, object], *keys: str) -> object | None:
     return None
 
 
-def clamp_number(value: object | None, *, default: float, minimum: float, maximum: float) -> float:
+def clamp_number(value: object | None, *, default: float | None, minimum: float, maximum: float) -> float | None:
     try:
         number = float(value)
     except (TypeError, ValueError):
         return default
 
-    return min(max(number, minimum), maximum)
+    return min(max(number, minimum), maximum) if math.isfinite(number) else default
 
 
 def clamp_integer(value: object | None, *, default: int | None, minimum: int, maximum: int) -> int | None:
@@ -319,7 +385,7 @@ def clamp_integer(value: object | None, *, default: int | None, minimum: int, ma
         return default
     try:
         number = int(float(value))
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return default
 
     return min(max(number, minimum), maximum)
