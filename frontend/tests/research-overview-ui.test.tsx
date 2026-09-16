@@ -7,7 +7,7 @@ import type { SearchResponse } from "../src/types";
 
 vi.mock("../src/services/runtime", () => ({ DATA_MODE: "demo", API_BASE_URL: "http://localhost:8000/api" }));
 
-const candidates = ["Stardew Valley", "Hades", "No Man's Sky", "Hollow Knight", "Deep Rock Galactic", "Slay the Spire"];
+const candidates = ["The Planet Crafter", "Hades II", "Assetto Corsa", "ELDEN RING", "Plague Inc: Evolved", "Titanfall 2"];
 const emptyResponse: SearchResponse = {
   intent: { titleQuery: "nonexistent", maxPrice: null, minRating: 0, hasReviews: false, tags: [], mode: "developer",
     sortBy: null, sortDirection: "asc", limit: null, offset: 0 },
@@ -28,7 +28,7 @@ afterEach(() => {
 
 async function enterResearch() {
   const view = render(<App />);
-  await screen.findByRole("button", { name: /^Stardew Valley / });
+  await screen.findByRole("button", { name: /^The Planet Crafter / });
   return view;
 }
 
@@ -54,7 +54,7 @@ describe("developer overview before research", () => {
 
     expect(screen.getByRole("heading", { name: "Research overview", exact: true })).toBeTruthy();
     const overview = screen.getByRole("region", { name: "Catalog overview", exact: true });
-    expect([...overview.querySelectorAll("dd")].map((value) => value.textContent)).toEqual(["24", "24", "US$25.62", "4.6 / 5"]);
+    expect([...overview.querySelectorAll("dd")].map((value) => value.textContent)).toEqual(["80", "75", "US$24.85", "4.4 / 5"]);
     expect(overview.textContent).toContain("Sample catalog");
     expect(cardTitles(container)).toEqual(candidates);
     expect(container.querySelectorAll(".game-card img")).toHaveLength(6);
@@ -88,19 +88,19 @@ describe("developer overview before research", () => {
     const save = vi.spyOn(catalog, "saveGame");
     const { container } = await enterResearch();
 
-    fireEvent.click(screen.getByRole("button", { name: /^Hollow Knight / }));
-    await screen.findByRole("heading", { level: 2, name: "Hollow Knight" });
-    await waitFor(() => expect(container.querySelector(".insight-verdict")?.textContent).toContain("Team Cherry"));
+    fireEvent.click(screen.getByRole("button", { name: /^The Planet Crafter / }));
+    await screen.findByRole("heading", { level: 2, name: "The Planet Crafter" });
+    await waitFor(() => expect(container.querySelector(".insight-verdict")?.textContent).toContain("Miju Games"));
     expect(screen.getByRole("heading", { name: "Catalog analysis", exact: true })).toBeTruthy();
     expect(screen.getByRole("region", { name: "Research metrics" }).textContent).toContain("Estimated ownership");
     expect(screen.getByRole("region", { name: "Research metrics" }).textContent).toContain("estimates for demonstration");
     expect(insights).toHaveBeenCalledTimes(1);
-    expect(insights).toHaveBeenCalledWith(expect.objectContaining({ name: "Hollow Knight" }));
+    expect(insights).toHaveBeenCalledWith(expect.objectContaining({ name: "The Planet Crafter" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Save", exact: true }).hasAttribute("disabled")).toBe(false));
     fireEvent.click(screen.getByRole("button", { name: "Save", exact: true }));
     fireEvent.click(screen.getByRole("button", { name: "Default Shortlist Save" }));
     await screen.findByRole("button", { name: "Saved (1)", exact: true });
-    expect(save).toHaveBeenCalledWith(expect.objectContaining({ name: "Hollow Knight" }), expect.any(Array), "demo-user", 1);
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({ name: "The Planet Crafter" }), expect.any(Array), "demo-user", 1);
     expect(screen.getByRole("heading", { name: "Research overview", exact: true })).toBeTruthy();
     expect(cardTitles(container)).toEqual(candidates);
     expect(search).not.toHaveBeenCalled();
@@ -109,8 +109,8 @@ describe("developer overview before research", () => {
   it("opens blank search on demand and returns a blank submission to an unselected overview", async () => {
     const search = vi.spyOn(catalog, "searchCatalog");
     const { container } = await enterResearch();
-    fireEvent.click(screen.getByRole("button", { name: /^Hades / }));
-    await screen.findByRole("heading", { level: 2, name: "Hades" });
+    fireEvent.click(screen.getByRole("button", { name: /^Hades II / }));
+    await screen.findByRole("heading", { level: 2, name: "Hades II" });
     openSearch();
 
     expect((screen.getByRole("textbox", { name: "Research the catalog" }) as HTMLTextAreaElement).value).toBe("");
@@ -196,14 +196,14 @@ describe("developer overview before research", () => {
     expect(screen.getByRole("region", { name: "目录概况", exact: true })).toBeTruthy();
     expect(screen.getByRole("button", { name: "研究多人", exact: true })).toBeTruthy();
     expect(insights).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: /^Hades / }));
-    await screen.findByRole("heading", { level: 2, name: "Hades" });
+    fireEvent.click(screen.getByRole("button", { name: /^Hades II / }));
+    await screen.findByRole("heading", { level: 2, name: "Hades II" });
     await waitFor(() => expect(insights).toHaveBeenCalledTimes(1));
     fireEvent.click(screen.getByRole("button", { name: "搜索游戏库", exact: true }));
-    fireEvent.change(screen.getByRole("textbox", { name: "搜索研究对象" }), { target: { value: "Hades under 24.99" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "搜索研究对象" }), { target: { value: "Hades II under 29.99" } });
     fireEvent.click(screen.getByRole("button", { name: "English", exact: true }));
-    expect((screen.getByRole("textbox", { name: "Research the catalog" }) as HTMLTextAreaElement).value).toBe("Hades under 24.99");
-    expect(screen.getByRole("heading", { level: 2, name: "Hades" })).toBeTruthy();
+    expect((screen.getByRole("textbox", { name: "Research the catalog" }) as HTMLTextAreaElement).value).toBe("Hades II under 29.99");
+    expect(screen.getByRole("heading", { level: 2, name: "Hades II" })).toBeTruthy();
     expect(cardTitles(container)).toEqual(candidates);
     expect(insights).toHaveBeenCalledTimes(1);
     expect(search).not.toHaveBeenCalled();

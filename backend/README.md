@@ -22,7 +22,7 @@ http://localhost:8000/docs
 
 ## API Preview
 
-List seeded games:
+List the 80 seeded demo games:
 
 ```text
 GET /api/games

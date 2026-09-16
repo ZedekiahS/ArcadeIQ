@@ -19,7 +19,8 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: game-discovery-lens-backend
     environment:
       GDL_DATABASE_URL: postgresql+psycopg://${GDL_POSTGRES_USER:-gdl}:${GDL_POSTGRES_PASSWORD:-gdl_dev_password}@postgres:5432/${GDL_POSTGRES_DB:-gdl}

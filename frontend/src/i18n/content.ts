@@ -1,35 +1,13 @@
 import type { Game, GameInsights, InsightPanelContent, SavedGame, ShortlistInsights } from "../types";
+import catalog from "../../../catalog/demo-catalog.json";
 import { translateTag } from "./tags";
 
 type Language = "en" | "zh";
 
 // Exact text keys keep changed API descriptions and external content intact.
-const summaries: Record<string, string> = {
-  "A survival crafting title with strong multiplayer fit and clear collection mechanics.": "一款生存建造游戏，适合多人同乐，收集机制清晰。",
-  "A precision platformer with exceptional review quality and lasting catalog value.": "一款讲究精准操作的平台跳跃游戏，评价出色，具有持久的游戏库价值。",
-  "A high-sentiment horror game with strong narrative identity and review consistency.": "一款口碑出色的恐怖游戏，叙事风格鲜明，评价稳定。",
-  "A premium puzzle adventure with clear niche appeal and strong discovery potential.": "一款定位高端的解谜冒险游戏，受众明确，值得发掘。",
-  "A free-to-play aim trainer with broad acquisition value and competitive positioning.": "一款免费瞄准训练游戏，具备广泛的获客价值，定位竞技玩家。",
-  "A management sim with survival hooks and a clear strategy audience.": "一款融入生存要素的经营模拟游戏，面向策略游戏玩家。",
-  "A premium space RPG with strong genre alignment and high-value positioning.": "一款定位高端的太空角色扮演游戏，类型特色鲜明，注重高价值体验。",
-  "A compact exploration game with unusually strong sentiment and discovery momentum.": "一款小而精的探索游戏，口碑格外出色，关注度持续增长。",
-  "A co-op survival sandbox with strong discovery fit for players who want long-form crafting loops.": "一款合作生存沙盒游戏，适合喜欢长线制作与建造体验的玩家。",
-  "A co-op shooter with unusually durable retention signals and clear squad-based appeal.": "一款合作射击游戏，留存表现持久，组队特色鲜明。",
-  "A systems-heavy survival game with strong multiplayer watchlist potential and long-tail demand.": "一款系统丰富的生存游戏，值得多人游戏爱好者关注，具有长尾需求。",
-  "A cozy survival crafting title with strong collection value for exploration-led recommendations.": "一款轻松惬意的生存建造游戏，适合以探索体验为核心的推荐与收藏。",
-  "A high-sentiment survival exploration game with strong atmospheric positioning.": "一款口碑出色的生存探索游戏，以独特氛围见长。",
-  "A discovery-driven mystery game with exceptional sentiment and strong recommendation confidence.": "一款以探索发现为驱动的悬疑游戏，评价出色，推荐依据充分。",
-  "A polished action roguelike with rare crossover strength between story and repeatable combat.": "一款打磨精良的动作肉鸽游戏，兼具出色叙事与值得反复体验的战斗。",
-  "A low-price high-sentiment metroidvania with excellent value and evergreen discovery demand.": "一款价格亲民、口碑出色的类银河战士恶魔城游戏，性价比高，长期受到新玩家关注。",
-  "A strategy deckbuilder with deep replay value and strong fit for analytical recommendations.": "一款策略牌组构筑游戏，重玩价值丰富，适合偏重策略分析的推荐。",
-  "A compact card roguelike with exceptional price-to-sentiment performance.": "一款小而精的卡牌肉鸽游戏，价格与口碑之间的表现格外突出。",
-  "A cozy farming sim with broad audience reach and strong multiplayer-adjacent appeal.": "一款轻松的农场模拟游戏，受众广泛，也适合关注多人体验的玩家。",
-  "A settlement strategy game with survival pressure and strong developer-side category signals.": "一款带有生存压力的聚落策略游戏，可为开发者提供清晰的品类参考。",
-  "An atmospheric adventure with strong hook clarity and approachable premium pricing.": "一款氛围鲜明的冒险游戏，核心吸引力清晰，付费定价易于接受。",
-  "A narrative RPG with standout writing signals and strong story-rich recommendation fit.": "一款叙事角色扮演游戏，文本表现突出，适合推荐给重视剧情的玩家。",
-  "A premium exploration sandbox with broad tag coverage and useful developer comparison signals.": "一款定位高端的探索沙盒游戏，涵盖多种类型，可为开发者提供比较参考。",
-  "A low-price co-op horror title with strong social discovery and shortlist value.": "一款价格亲民的合作恐怖游戏，适合通过好友发掘，也值得加入收藏。",
-};
+const summaries: Record<string, string> = Object.fromEntries(
+  catalog.map((record) => [record.summary, record.summaryZh]),
+);
 
 export function localizeGameSummary(game: Game, language: Language): string {
   return language === "zh" ? summaries[game.summary] ?? game.summary : game.summary;

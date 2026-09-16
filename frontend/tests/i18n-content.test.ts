@@ -14,7 +14,7 @@ function saved(game: Game, id: number): SavedGame {
 describe("bilingual catalog content", () => {
   it("translates every shipped game summary without changing catalog data or English content", () => {
     const originalCatalog = JSON.stringify(games);
-    expect(games).toHaveLength(24);
+    expect(games).toHaveLength(80);
     for (const game of games) {
       expect(localizeGameSummary(game, "zh"), game.name).toMatch(/[\u4e00-\u9fff]/);
       expect(localizeGameSummary(game, "zh"), game.name).not.toBe(game.summary);

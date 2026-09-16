@@ -17,7 +17,7 @@ Open [the demo](http://localhost:5173/?mode=demo). Demo is the default when no m
 
 | Mode | Data and saves | Accounts and AI |
 | --- | --- | --- |
-| `?mode=demo` | Bundled catalog; collections and saves stay in this browser. No backend requests. | No server account is created. Search and insight panels use local sample/rule logic. |
+| `?mode=demo` | Bundled 80-game catalog; collections and saves stay in this browser. No backend requests. | No server account is created. Search and insight panels use local sample/rule logic. |
 | `?mode=api` | FastAPI catalog and PostgreSQL saves. API failures are shown and can be retried. | Register or sign in to access account collections. Search uses the backend rules or configured AI provider. |
 
 API mode never changes a failed API request into a local save or sample-data success. Account collections and browser-demo collections are separate. Switching modes loads the page again. Invalid or expired authentication requires signing in again.

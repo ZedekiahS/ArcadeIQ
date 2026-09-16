@@ -1,0 +1,11 @@
+**
+!backend/
+!backend/Dockerfile
+!backend/requirements.txt
+!backend/alembic.ini
+!backend/alembic/
+!backend/alembic/**
+!backend/app/
+!backend/app/**
+!catalog/
+!catalog/demo-catalog.json

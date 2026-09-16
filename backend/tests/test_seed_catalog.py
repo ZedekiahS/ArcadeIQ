@@ -7,7 +7,7 @@ from app.scripts.seed import SEED_GAMES
 
 class SeedCatalogTests(unittest.TestCase):
     def test_seed_catalog_has_demo_depth(self) -> None:
-        self.assertGreaterEqual(len(SEED_GAMES), 24)
+        self.assertEqual(len(SEED_GAMES), 80)
 
     def test_seed_catalog_ids_and_names_are_unique(self) -> None:
         ids = [game["id"] for game in SEED_GAMES]
@@ -15,6 +15,7 @@ class SeedCatalogTests(unittest.TestCase):
 
         self.assertEqual(len(ids), len(set(ids)))
         self.assertEqual(len(names), len(set(names)))
+        self.assertEqual(ids, list(range(1, 81)))
 
     def test_seed_catalog_entries_have_searchable_tags(self) -> None:
         for game in SEED_GAMES:

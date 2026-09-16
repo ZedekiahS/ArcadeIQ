@@ -2,7 +2,7 @@
 
 **Discover your next game. Research the games behind your next idea.**
 
-Game Discovery Lens is a bilingual game-discovery portfolio application built with React, TypeScript, FastAPI, and PostgreSQL. It demonstrates reliable software behavior through account-owned collections, explicit persistence modes, recoverable failures, and an optional AI search provider.
+Game Discovery Lens is a bilingual game-discovery portfolio application built with React, TypeScript, FastAPI, and PostgreSQL. Its 80-game sample catalog demonstrates reliable software behavior through account-owned collections, explicit persistence modes, recoverable failures, and an optional AI search provider.
 
 The project began as group coursework using Java Swing and SQL Server. The modern web application is a subsequent refactor; the original implementation remains in the repository as project history. The modern app runs independently of the original school database.
 
@@ -50,7 +50,7 @@ Open [Game Discovery Lens demo](http://127.0.0.1:5173/?mode=demo). No database o
 
 | Mode | Catalog and search | Collections |
 | --- | --- | --- |
-| `?mode=demo` | Bundled sample catalog and local rules; no backend requests. | Saved in this browser only. |
+| `?mode=demo` | Bundled 80-game sample catalog and local rules; no backend requests. | Saved in this browser only. |
 | `?mode=api` | FastAPI/PostgreSQL and the configured search provider. | Saved to the signed-in account. |
 
 The header identifies the active mode. An API failure remains visible with recovery controls; it never becomes a sample result or a browser-only save. Demo and account collections are separate.
@@ -113,6 +113,7 @@ Each database suite creates and removes only its own UUID-named schema. Existing
 
 Verification records separate the executed checks from their limitations:
 
+- [80-game catalog expansion and artwork provenance](docs/verification/catalog-expansion-2026-09-16.md)
 - [API workflow and delivery](docs/verification/api-delivery-2026-09-15.md)
 - [Search contract fixes, live rerun, and independent follow-up](docs/verification/search-fixes-2026-09-16.md)
 - [Original live AI baseline and expanded test catalog](docs/verification/ai-evaluation-2026-09-15.md)
@@ -125,6 +126,7 @@ Verification records separate the executed checks from their limitations:
 
 | Path | Purpose |
 | --- | --- |
+| `catalog/` | Shared 80-game demo catalog used by the frontend and backend seed. |
 | `frontend/` | Current React/TypeScript application, API/demo adapters, and UI tests. |
 | `backend/` | FastAPI routes, SQLAlchemy models, Alembic migrations, and backend tests. |
 | `tests/fixtures/` | Shared search contract and an independent synthetic boundary catalog for evaluation. |

@@ -18,7 +18,10 @@ flowchart TD
     Discovery --> Catalog[catalog: select configured adapter]
     Details --> Catalog
     Collections --> Catalog
-    Catalog --> Demo[demo: bundled games, browser storage, rules]
+    SharedCatalog[Shared 80-game JSON catalog] --> Demo[demo: bundled games, browser storage, rules]
+    SharedCatalog --> Seed[backend seed adapter]
+    Seed --> Database
+    Catalog --> Demo
     Catalog --> API[api: HTTP requests]
     API --> FastAPI[FastAPI routes]
     Users --> FastAPI
@@ -26,7 +29,7 @@ flowchart TD
     FastAPI --> AI[Search intent: rules or optional DeepSeek]
 ```
 
-The data mode is selected at page load by `?mode=demo` / `?mode=api`, or the frontend environment when no URL override is present. Switching modes reloads the page. An API failure stays an error and never switches the adapter or writes to demo storage.
+The data mode is selected at page load by `?mode=demo` / `?mode=api`, or the frontend environment when no URL override is present. Switching modes reloads the page. An API failure stays an error and never switches the adapter or writes to demo storage. The frontend demo adapter and backend seed both load `catalog/demo-catalog.json`, preventing their sample records from drifting independently.
 
 The homepage has no catalog, account, collection, or insight effects. Entering a workspace mounts those behaviors; returning home unmounts them. Language preference, page perspective, and data mode are separate concerns. The player/developer choice does not grant account permissions.
 

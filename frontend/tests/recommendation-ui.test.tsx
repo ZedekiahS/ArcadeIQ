@@ -7,7 +7,7 @@ import type { SearchResponse } from "../src/types";
 
 vi.mock("../src/services/runtime", () => ({ DATA_MODE: "demo", API_BASE_URL: "http://localhost:8000/api" }));
 
-const recommendations = ["Stardew Valley", "Hollow Knight", "Balatro", "Hades", "Deep Rock Galactic", "Slay the Spire"];
+const recommendations = ["Ready or Not", "Elite Dangerous", "Stardew Valley", "Hollow Knight", "Balatro", "Sun Haven"];
 const emptyResponse: SearchResponse = {
   intent: { titleQuery: "nonexistent", maxPrice: null, minRating: 0, hasReviews: false, tags: [], mode: "player",
     sortBy: null, sortDirection: "asc", limit: null, offset: 0 },
@@ -28,7 +28,7 @@ afterEach(() => {
 
 async function enterPlayer() {
   const view = render(<App />);
-  await screen.findByRole("heading", { level: 2, name: "Stardew Valley" });
+  await screen.findByRole("heading", { level: 2, name: "Ready or Not" });
   return view;
 }
 
@@ -104,7 +104,7 @@ describe("player recommendations before search", () => {
     fireEvent.change(screen.getByRole("slider"), { target: { value: "0" } });
     expect(screen.getByText("No games match these filters.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Back to recommendations", exact: true }));
-    await screen.findByRole("heading", { level: 2, name: "Stardew Valley" });
+    await screen.findByRole("heading", { level: 2, name: "Ready or Not" });
     expect(cardTitles(container)).toEqual(recommendations);
     expect(screen.queryByRole("textbox", { name: "Search games" })).toBeNull();
     expect(screen.queryByText("No games match these filters.")).toBeNull();
@@ -118,7 +118,7 @@ describe("player recommendations before search", () => {
     submitSearch("nonexistent");
     await screen.findByText("No games match these filters.");
     fireEvent.click(screen.getByRole("button", { name: "Back to recommendations", exact: true }));
-    await screen.findByRole("heading", { level: 2, name: "Stardew Valley" });
+    await screen.findByRole("heading", { level: 2, name: "Ready or Not" });
     expect(cardTitles(container)).toEqual(recommendations);
     expect(search).toHaveBeenCalledTimes(2);
   });
@@ -162,11 +162,11 @@ describe("player recommendations before search", () => {
   it("keeps recommendation selection and the browse/search controls consistent across languages", async () => {
     const search = vi.spyOn(catalog, "searchCatalog");
     await enterPlayer();
-    fireEvent.click(screen.getByRole("button", { name: /^Hades / }));
-    await screen.findByRole("heading", { level: 2, name: "Hades" });
+    fireEvent.click(screen.getByRole("button", { name: /^Balatro / }));
+    await screen.findByRole("heading", { level: 2, name: "Balatro" });
     fireEvent.click(screen.getByRole("button", { name: "中文", exact: true }));
     expect(screen.getByRole("heading", { name: "精选推荐", exact: true })).toBeTruthy();
-    expect(screen.getByRole("heading", { level: 2, name: "Hades" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 2, name: "Balatro" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "搜索游戏", exact: true }));
     expect((screen.getByRole("textbox", { name: "搜索游戏" }) as HTMLTextAreaElement).value).toBe("");
     expect(screen.getByRole("button", { name: "返回推荐", exact: true })).toBeTruthy();
