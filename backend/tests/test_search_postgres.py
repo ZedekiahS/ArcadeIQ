@@ -23,6 +23,8 @@ from app.schemas import GameOut
 class SearchPostgresTests(unittest.TestCase):
     """Execute the shared search contract through HTTP against an isolated schema."""
 
+    fixture_filename = "search-contract.json"
+
     @classmethod
     def setUpClass(cls) -> None:
         database_url = os.getenv("ARCADEIQ_TEST_DATABASE_URL")
@@ -41,7 +43,7 @@ class SearchPostgresTests(unittest.TestCase):
         cls.addClassCleanup(cls.engine.dispose)
         Game.__table__.create(cls.engine)
         cls.session_factory = sessionmaker(bind=cls.engine)
-        cls.fixture = json.loads((Path(__file__).resolve().parents[2] / "tests/fixtures/search-contract.json").read_text(encoding="utf-8"))
+        cls.fixture = json.loads((Path(__file__).resolve().parents[2] / "tests/fixtures" / cls.fixture_filename).read_text(encoding="utf-8"))
         with cls.session_factory.begin() as db:
             for game in cls.fixture["games"]:
                 db.add(Game(**GameOut.model_validate(game).model_dump()))
@@ -78,3 +80,11 @@ class SearchPostgresTests(unittest.TestCase):
                 for key, expected in case["expected"].items():
                     self.assertEqual(result["intent"][key], expected, key)
                 self.assertEqual([game["id"] for game in result["games"]], case["gameIds"])
+
+
+class BoundarySearchPostgresTests(SearchPostgresTests):
+    fixture_filename = "search-evaluation-boundaries.json"
+
+
+class IndependentSearchPostgresTests(SearchPostgresTests):
+    fixture_filename = "search-evaluation-unseen.json"

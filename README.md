@@ -78,11 +78,11 @@ The frontend defaults to `http://localhost:8000/api`. To change it, copy `fronte
 
 ## AI Behavior and Boundaries
 
-Natural-language search supports a local rules parser and an optional DeepSeek provider. Provider output is normalized into the same search contract; PostgreSQL executes the resulting filters and ranking. Search responses identify their source as `rules` or `deepseek`. Configured fallback returns rules results when the provider fails; disabling fallback exposes the provider error.
+Natural-language search supports a local rules parser and an optional DeepSeek provider. Provider output is normalized into the same search contract, with recognized product price/rating/review conditions enforced in code; PostgreSQL executes the resulting filters and ranking. Free games have a zero-price ceiling, `cheap` defaults to US$35 unless a budget is specified, and `highly rated` requires a rating of at least 4.4 and a positive review count. Known and quoted titles are separated from those conditions. Search responses identify their source as `rules` or `deepseek`. Configured fallback returns rules results when the provider fails; disabling fallback exposes the provider error.
 
 Game and collection insight text currently uses catalog metadata and aggregate statistics. It is not a summary of review source text, and recommendations are not personalized or live-trending claims. Source labels and estimate notes stay visible. The Chinese interface translates recognized sample/rule content and preserves unrecognized provider text with an original-content note.
 
-See the [optional provider configuration](backend/README.md#optional-ai-provider). Provider keys stay in backend environment variables, never in `VITE_*` variables or Git. A [first live evaluation](docs/verification/ai-evaluation-2026-09-15.md) ran 31 nonblank queries against the real provider and PostgreSQL: rules met both checked intent and ordered-result expectations in 30/31 cases, versus 24/31 for the DeepSeek integration. The report separates model responses, rule fallback, and product-contract gaps. Broader held-out evaluation and traceable review evidence remain future work.
+See the [optional provider configuration](backend/README.md#optional-ai-provider). Provider keys stay in backend environment variables, never in `VITE_*` variables or Git. The preserved [first live evaluation](docs/verification/ai-evaluation-2026-09-15.md) found 24/31 DeepSeek integration cases meeting both intent and ordered-result expectations. After the contract fixes, a [new live pass](docs/verification/search-fixes-2026-09-16.md) met both in 31/31 on the same queries, with no observed fallbacks. These are application-integration results, including deterministic constraints, not raw model accuracy. Eight independently formulated follow-up queries have a separately documented fixture correction and offline rescore; broader held-out evaluation and traceable review evidence remain future work.
 
 ## Verification
 
@@ -112,7 +112,8 @@ Each database suite creates and removes only its own UUID-named schema. Existing
 Verification records separate the executed checks from their limitations:
 
 - [API workflow and delivery](docs/verification/api-delivery-2026-09-15.md)
-- [Live AI comparison and expanded test catalog](docs/verification/ai-evaluation-2026-09-15.md)
+- [Search contract fixes, live rerun, and independent follow-up](docs/verification/search-fixes-2026-09-16.md)
+- [Original live AI baseline and expanded test catalog](docs/verification/ai-evaluation-2026-09-15.md)
 - [Collection persistence and isolation](docs/verification/collections-2026-09-14.md)
 - [Search contract and response ordering](docs/verification/search-2026-09-14.md)
 - [Module refactor](docs/verification/modules-2026-09-15.md)

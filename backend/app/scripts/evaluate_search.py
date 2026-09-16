@@ -221,7 +221,7 @@ def main() -> None:
             "max_output_tokens": 1024,
             "thinking": "disabled",
             "max_calls": args.max_calls,
-            "notes": ["Single pass on a regression fixture, not an independent benchmark.", "Provider integration includes normalization and a rules-based title guard.", "Latency measures intent resolution, excluding SQL/browser rendering.", "Usage and actual billing were not collected.", "Only expected fields are scored; tag order is ignored, result ID order is strict."],
+            "notes": ["Single pass on a selected fixture, not a general model benchmark.", "Provider integration includes normalization, recognized product constraints and a rules-based title guard.", "The prompt includes catalog titles as well as available tags.", "Latency measures intent resolution, excluding SQL/browser rendering.", "Usage and actual billing were not collected.", "Only expected fields are scored; tag order is ignored, result ID order is strict."],
         }
         with fixture_database(database_url, fixture["games"]) as engine:
             report.update(evaluate(fixture, settings, engine, live=args.live, max_calls=args.max_calls))

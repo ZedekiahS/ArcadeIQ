@@ -7,6 +7,10 @@ from typing import Literal, TypedDict
 SearchSortBy = Literal["name", "price", "rating", "review_count", "release_year", "revenue", "ownership"]
 SearchSortDirection = Literal["asc", "desc"]
 
+BUDGET_PRICE = 35
+HIGH_RATING = 4.4
+FREE_PRICE_PATTERN = r"(?<![a-z0-9])free(?:-to-play|\s+to\s+play)?(?![a-z0-9])|免费"
+
 PRICE_PATTERNS = [
     r"(?<![a-z0-9])(?:under|below|less than)\s+\$?(\d+(?:\.\d+)?)(?![\d.])",
     r"(?<![\d.])(\d+(?:\.\d+)?)\s*美元\s*以下",
@@ -74,19 +78,9 @@ def parse_search_intent(
     text = remainder.lower()
     intent = default_search_intent()
 
-    explicit_price = next((match for pattern in PRICE_PATTERNS if (match := re.search(pattern, text))), None)
-    if explicit_price:
-        intent["max_price"] = float(explicit_price.group(1))
-        for pattern in PRICE_PATTERNS:
-            remainder = re.sub(pattern, " ", remainder, flags=re.IGNORECASE)
-    elif is_budget_price_query(text):
-        intent["max_price"] = 35
-
-    if has_any(text, ["highly rated", "top rated", "高评分"]):
-        intent["min_rating"] = 4.4
-        intent["has_reviews"] = True
-    elif has_any(text, ["good reviews", "review", "reviews", "rated", "有评价"]):
-        intent["has_reviews"] = True
+    apply_product_constraints(text, intent)
+    for pattern in PRICE_PATTERNS:
+        remainder = re.sub(pattern, " ", remainder, flags=re.IGNORECASE)
 
     if has_any(text, ["developer", "catalog", "revenue", "开发者"]):
         intent["mode"] = "developer"
@@ -120,6 +114,23 @@ def parse_search_intent(
     return intent
 
 
+def apply_product_constraints(text: str, intent: SearchIntent) -> None:
+    """Apply recognized product conditions to text with quoted/known titles removed."""
+    explicit_price = next((match for pattern in PRICE_PATTERNS if (match := re.search(pattern, text))), None)
+    if re.search(FREE_PRICE_PATTERN, text, re.IGNORECASE):
+        intent["max_price"] = 0
+    elif explicit_price:
+        intent["max_price"] = float(explicit_price.group(1))
+    elif is_budget_price_query(text):
+        intent["max_price"] = BUDGET_PRICE
+
+    if has_any(text, ["highly rated", "top rated", "高评分"]):
+        intent["min_rating"] = HIGH_RATING
+        intent["has_reviews"] = True
+    elif has_any(text, ["good reviews", "review", "reviews", "rated", "有评价"]):
+        intent["has_reviews"] = True
+
+
 def phrase_pattern(phrase: str, *, allow_game_suffix: bool = False) -> str:
     suffix = r"(?=$|[^a-z0-9]|games?(?![a-z0-9]))" if allow_game_suffix else r"(?![a-z0-9])"
     return rf"(?<![a-z0-9]){re.escape(phrase)}{suffix}"
@@ -150,6 +161,7 @@ def normalize_title(value: object | None) -> str | None:
 
 
 def remove_filter_words(text: str, intent: SearchIntent) -> str:
+    text = re.sub(FREE_PRICE_PATTERN, " ", text, flags=re.IGNORECASE)
     phrases = [
         "most expensive", "highest price", "priciest", "cheapest", "lowest price", "least expensive",
         "cheap", "deal", "highest rated", "top rated", "best rated", "highly rated", "best",

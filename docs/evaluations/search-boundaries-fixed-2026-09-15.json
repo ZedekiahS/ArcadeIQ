@@ -1,0 +1,824 @@
+{
+  "recorded_at_utc": "2026-09-16T03:42:29.184571+00:00",
+  "base_commit": "91243f31aceaa99166aa278f7c8dc2c1b4a30b63",
+  "fixture": "tests/fixtures/search-evaluation-boundaries.json",
+  "game_count": 16,
+  "provider_mode": "live",
+  "model_requested": "deepseek-flash",
+  "timeout_seconds": 8.0,
+  "max_output_tokens": 1024,
+  "thinking": "disabled",
+  "max_calls": 10,
+  "notes": [
+    "Single pass on a selected fixture, not a general model benchmark.",
+    "Provider integration includes normalization, recognized product constraints and a rules-based title guard.",
+    "The prompt includes catalog titles as well as available tags.",
+    "Latency measures intent resolution, excluding SQL/browser rendering.",
+    "Usage and actual billing were not collected.",
+    "Only expected fields are scored; tag order is ignored, result ID order is strict."
+  ],
+  "actual_catalog_tags": [
+    "FPS",
+    "Multiplayer",
+    "Puzzle",
+    "Simulation",
+    "Story Rich",
+    "Strategy"
+  ],
+  "rules": {
+    "count": 10,
+    "intent_pass": 10,
+    "results_pass": 10,
+    "both_pass": 10,
+    "latency_ms": {
+      "median": 0.951,
+      "p95_nearest_rank": 7.098
+    }
+  },
+  "deepseek_integration": {
+    "count": 10,
+    "intent_pass": 10,
+    "results_pass": 10,
+    "both_pass": 10,
+    "latency_ms": {
+      "median": 951.412,
+      "p95_nearest_rank": 1212.018
+    }
+  },
+  "live_product_including_fallback": {
+    "count": 10,
+    "intent_pass": 10,
+    "results_pass": 10,
+    "both_pass": 10,
+    "latency_ms": {
+      "median": 951.412,
+      "p95_nearest_rank": 1212.018
+    }
+  },
+  "provider_calls": 10,
+  "fallback_count": 0,
+  "blank_bypasses": 0,
+  "not_run": 0,
+  "stopped_reason": null,
+  "cases": [
+    {
+      "case": 1,
+      "query": "Find free FPS games",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": 0,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [
+          "FPS"
+        ],
+        "mode": "player",
+        "sortBy": null,
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "expected_game_ids": [
+        101
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 7.098,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": 0.0,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          101
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1190.391,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": 0.0,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          101
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 2,
+      "query": "找20美元以下的FPS游戏",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": 20,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [
+          "FPS"
+        ],
+        "mode": "player",
+        "sortBy": null,
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "expected_game_ids": [
+        102,
+        103,
+        101
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1.849,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": 20.0,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          102,
+          103,
+          101
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1212.018,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": 20.0,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          102,
+          103,
+          101
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 3,
+      "query": "Find the second most expensive FPS game",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": null,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [
+          "FPS"
+        ],
+        "mode": "player",
+        "sortBy": "price",
+        "sortDirection": "desc",
+        "limit": 1,
+        "offset": 1
+      },
+      "expected_game_ids": [
+        106
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.919,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": "price",
+          "sortDirection": "desc",
+          "limit": 1,
+          "offset": 1
+        },
+        "game_ids": [
+          106
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 996.408,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": "price",
+          "sortDirection": "desc",
+          "limit": 1,
+          "offset": 1
+        },
+        "game_ids": [
+          106
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 4,
+      "query": "找20美元以下的高评分剧情游戏",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": 20,
+        "minRating": 4.4,
+        "hasReviews": true,
+        "tags": [
+          "Story Rich"
+        ],
+        "mode": "player",
+        "sortBy": "rating",
+        "sortDirection": "desc",
+        "limit": null,
+        "offset": 0
+      },
+      "expected_game_ids": [
+        110,
+        108
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.661,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": 20.0,
+          "minRating": 4.4,
+          "hasReviews": true,
+          "tags": [
+            "Story Rich"
+          ],
+          "mode": "player",
+          "sortBy": "rating",
+          "sortDirection": "desc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          110,
+          108
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 742.749,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": 20.0,
+          "minRating": 4.4,
+          "hasReviews": true,
+          "tags": [
+            "Story Rich"
+          ],
+          "mode": "player",
+          "sortBy": "rating",
+          "sortDirection": "desc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          110,
+          108
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 5,
+      "query": "Find top 3 games with most reviews",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": null,
+        "minRating": 0,
+        "hasReviews": true,
+        "tags": [],
+        "mode": "player",
+        "sortBy": "review_count",
+        "sortDirection": "desc",
+        "limit": 3,
+        "offset": 0
+      },
+      "expected_game_ids": [
+        116,
+        109,
+        106
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 2.073,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": true,
+          "tags": [],
+          "mode": "player",
+          "sortBy": "review_count",
+          "sortDirection": "desc",
+          "limit": 3,
+          "offset": 0
+        },
+        "game_ids": [
+          116,
+          109,
+          106
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 906.416,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": true,
+          "tags": [],
+          "mode": "player",
+          "sortBy": "review_count",
+          "sortDirection": "desc",
+          "limit": 3,
+          "offset": 0
+        },
+        "game_ids": [
+          116,
+          109,
+          106
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 6,
+      "query": "Developer catalog top 3 games with highest revenue",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": null,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [],
+        "mode": "developer",
+        "sortBy": "revenue",
+        "sortDirection": "desc",
+        "limit": 3,
+        "offset": 0
+      },
+      "expected_game_ids": [
+        115,
+        116,
+        106
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.983,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "developer",
+          "sortBy": "revenue",
+          "sortDirection": "desc",
+          "limit": 3,
+          "offset": 0
+        },
+        "game_ids": [
+          115,
+          116,
+          106
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1194.496,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "developer",
+          "sortBy": "revenue",
+          "sortDirection": "desc",
+          "limit": 3,
+          "offset": 0
+        },
+        "game_ids": [
+          115,
+          116,
+          106
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 7,
+      "query": "\"Fixture 100%_Quest\"",
+      "expected": {
+        "titleQuery": "fixture 100%_quest",
+        "maxPrice": null,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [],
+        "mode": "player",
+        "sortBy": null,
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "expected_game_ids": [
+        111
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1.432,
+        "intent": {
+          "titleQuery": "fixture 100%_quest",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          111
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 819.646,
+        "intent": {
+          "titleQuery": "fixture 100%_quest",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          111
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 8,
+      "query": "\"Fixture Orbit Echo\"",
+      "expected": {
+        "titleQuery": "fixture orbit echo",
+        "maxPrice": null,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [],
+        "mode": "player",
+        "sortBy": null,
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "expected_game_ids": [
+        114
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.831,
+        "intent": {
+          "titleQuery": "fixture orbit echo",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          114
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 832.383,
+        "intent": {
+          "titleQuery": "fixture orbit echo",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          114
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 9,
+      "query": "Fixture Orbit",
+      "expected": {
+        "titleQuery": "fixture orbit",
+        "maxPrice": null,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [],
+        "mode": "player",
+        "sortBy": null,
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "expected_game_ids": [
+        113,
+        114
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.421,
+        "intent": {
+          "titleQuery": "fixture orbit",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          113,
+          114
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1005.417,
+        "intent": {
+          "titleQuery": "fixture orbit",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          113,
+          114
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 10,
+      "query": "找20美元以下的FPS游戏 未知边界",
+      "expected": {
+        "titleQuery": "未知边界",
+        "maxPrice": 20,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [
+          "FPS"
+        ],
+        "mode": "player",
+        "sortBy": null,
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "expected_game_ids": [],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.543,
+        "intent": {
+          "titleQuery": "未知边界",
+          "maxPrice": 20.0,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 786.546,
+        "intent": {
+          "titleQuery": "未知边界",
+          "maxPrice": 20.0,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    }
+  ],
+  "isolated_schema_removed": true
+}

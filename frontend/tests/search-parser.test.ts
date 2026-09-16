@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { games } from "../src/data/games";
 import { filterGames, parseSearchIntent } from "../src/lib/search";
 import contract from "../../tests/fixtures/search-contract.json";
+import boundaries from "../../tests/fixtures/search-evaluation-boundaries.json";
+import unseen from "../../tests/fixtures/search-evaluation-unseen.json";
 
 const tags = [...new Set(games.flatMap((game) => game.tags))];
 
@@ -29,6 +31,61 @@ describe("shared frontend and API search contract", () => {
     const intent = parseSearchIntent(query, contract.availableTags, contract.games.map((game) => game.name));
     expect(intent).toMatchObject(expected);
     expect(filterGames(contract.games, intent).map((game) => game.id)).toEqual(gameIds);
+  });
+});
+
+describe("evaluation boundary contract", () => {
+  it.each(boundaries.cases)("$id: $query", ({ query, expected, gameIds }) => {
+    const intent = parseSearchIntent(query, boundaries.availableTags, boundaries.games.map((game) => game.name));
+    expect(intent).toEqual(expected);
+    expect(filterGames(boundaries.games, intent).map((game) => game.id)).toEqual(gameIds);
+  });
+});
+
+describe("unseen evaluation contract", () => {
+  it.each(unseen.cases)("$id: $query", ({ query, expected, gameIds }) => {
+    const intent = parseSearchIntent(query, unseen.availableTags, unseen.games.map((game) => game.name));
+    expect(intent).toEqual(expected);
+    expect(filterGames(unseen.games, intent).map((game) => game.id)).toEqual(gameIds);
+  });
+});
+
+describe("free-price conditions and literal titles", () => {
+  it.each([
+    "Find free FPS games",
+    "Find FREE FPS games",
+    "Find free-to-play FPS games",
+    "Find free to play FPS games",
+    "找免费的FPS游戏",
+    "免费FPS游戏",
+    "Find free FPS games under 20",
+    "找20美元以下的免费FPS游戏",
+  ])("treats free as a zero-price ceiling without leaving title text: %s", (query) => {
+    const intent = parseSearchIntent(query, boundaries.availableTags);
+    expect(intent).toEqual({
+      titleQuery: null, maxPrice: 0, minRating: 0, hasReviews: false,
+      tags: ["FPS"], mode: "player", sortBy: null, sortDirection: "asc", limit: null, offset: 0,
+    });
+    expect(filterGames(boundaries.games, intent).map((game) => game.id)).toEqual([101]);
+  });
+
+  it.each(["Freeport", "Free to Play", "Fixture Free FPS", "免费之城"])("protects a complete known or quoted title: %s", (name) => {
+    const paidGame = { ...games[0], name, price: 20 };
+    for (const [query, titles] of [[name, [name]], [`"${name}"`, []]] as const) {
+      const intent = parseSearchIntent(query, boundaries.availableTags, [...titles]);
+      expect(intent).toMatchObject({ titleQuery: name.toLowerCase(), maxPrice: null, tags: [] });
+      expect(filterGames([paidGame], intent)).toEqual([paidGame]);
+    }
+  });
+
+  it("applies conditions outside a protected title", () => {
+    expect(parseSearchIntent('Find "Free to Play" free under 20', [])).toMatchObject({
+      titleQuery: "free to play", maxPrice: 0, tags: [],
+    });
+  });
+
+  it.each(["Freeport", "Carefree", "Free2Play"])("does not infer free prices from part of an unknown word: %s", (query) => {
+    expect(parseSearchIntent(query, [])).toMatchObject({ titleQuery: query.toLowerCase(), maxPrice: null });
   });
 });
 

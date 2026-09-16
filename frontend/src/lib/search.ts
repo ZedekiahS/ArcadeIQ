@@ -19,6 +19,8 @@ const pricePatterns = [
   /低于\s*\$?(\d+(?:\.\d+)?)(?![\d.])\s*(?:美元)?/,
 ];
 
+const freePricePattern = /(?<![a-z0-9])free(?:-to-play|\s+to\s+play)?(?![a-z0-9])|免费/;
+
 const tagAliases: Record<string, string[]> = {
   Action: ["动作"],
   Adventure: ["冒险"],
@@ -50,7 +52,9 @@ export function parseSearchIntent(query: string, availableTags: string[], availa
   const intent: SearchIntent = { ...defaultIntent, tags: [] };
 
   const explicitPrice = pricePatterns.map((pattern) => text.match(pattern)).find(Boolean);
-  if (explicitPrice) {
+  if (freePricePattern.test(text)) {
+    intent.maxPrice = 0;
+  } else if (explicitPrice) {
     intent.maxPrice = Number(explicitPrice[1]);
   } else if (isBudgetPriceQuery(text)) {
     intent.maxPrice = 35;
@@ -128,7 +132,7 @@ function extractTitle(query: string, availableTitles: string[]) {
 }
 
 function remainingTitle(text: string, availableTags: string[], intent: SearchIntent): string {
-  let remaining = text;
+  let remaining = text.replace(new RegExp(freePricePattern.source, "g"), " ");
   for (const pattern of pricePatterns) remaining = remaining.replace(new RegExp(pattern.source, "g"), " ");
   for (const tag of [...availableTags].sort((first, second) => second.length - first.length)) {
     remaining = remaining.replace(tagPattern(tag, true), " ");

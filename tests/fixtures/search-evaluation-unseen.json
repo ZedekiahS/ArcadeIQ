@@ -1,0 +1,476 @@
+{
+  "description": "Synthetic evaluation-only catalog, not real games or market data. The sixteen boundary games are reused unchanged; two extra games prevent accidental success caused by title vocabulary. Eight new query formulations and complete expected intents/result IDs were specified independently from the existing fixtures and documented search semantics, before inspecting the repair implementation or its output. This small task-specific independent formulation set is not a research-grade held-out benchmark. maxPrice is inclusive; unspecified sorting is case-insensitive name ascending. Highly/top rated means rating >= 4.4, a positive review count, and rating descending. An explicit budget overrides the cheap default. Complete known titles and quoted title phrases protect their internal vocabulary from filter interpretation. No product demo data is expanded. Correction on 2026-09-16: cheap with an explicit budget retains the pre-existing price-ascending sort; its original null-sort expectation was an authoring error. Original live results remain preserved for audit.",
+  "availableTags": [
+    "FPS",
+    "Multiplayer",
+    "Puzzle",
+    "Simulation",
+    "Story Rich",
+    "Strategy"
+  ],
+  "games": [
+    {
+      "id": 101,
+      "name": "Fixture Free FPS",
+      "price": 0,
+      "rating": 4.5,
+      "reviewCount": 500,
+      "releaseYear": 2020,
+      "developer": "Fixture",
+      "publisher": "Fixture",
+      "tags": [
+        "FPS",
+        "Multiplayer"
+      ],
+      "summary": "Synthetic boundary fixture: zero price.",
+      "revenue": 0,
+      "ownership": 500
+    },
+    {
+      "id": 102,
+      "name": "Fixture Below Budget",
+      "price": 19.99,
+      "rating": 4.6,
+      "reviewCount": 100,
+      "releaseYear": 2021,
+      "developer": "Fixture",
+      "publisher": "Fixture",
+      "tags": [
+        "FPS"
+      ],
+      "summary": "Synthetic boundary fixture: one cent below a 20 dollar ceiling.",
+      "revenue": 1999,
+      "ownership": 100
+    },
+    {
+      "id": 103,
+      "name": "Fixture Exact Budget",
+      "price": 20,
+      "rating": 4.7,
+      "reviewCount": 80,
+      "releaseYear": 2022,
+      "developer": "Fixture",
+      "publisher": "Fixture",
+      "tags": [
+        "FPS",
+        "Multiplayer"
+      ],
+      "summary": "Synthetic boundary fixture: exactly at a 20 dollar ceiling.",
+      "revenue": 1600,
+      "ownership": 80
+    },
+    {
+      "id": 104,
+      "name": "Fixture Freeport",
+      "price": 20.01,
+      "rating": 4.8,
+      "reviewCount": 200,
+      "releaseYear": 2023,
+      "developer": "Fixture",
+      "publisher": "Fixture",
+      "tags": [
+        "FPS"
+      ],
+      "summary": "Synthetic boundary fixture: one cent above a 20 dollar ceiling; a paid title containing free is not a free game.",
+      "revenue": 4002,
+      "ownership": 200
+    },
+    {
+      "id": 105,
+      "name": "Fixture Alpha Tie",
+      "price": 30,
+      "rating": 4.4,
+      "reviewCount": 70,
+      "releaseYear": 2020,
+      "developer": "Fixture",
+      "publisher": "Fixture",
+      "tags": [
+        "FPS"
+      ],
+      "summary": "Synthetic boundary fixture: equal price, alphabetically first.",
+      "revenue": 2100,
+      "ownership": 70
+    },
+    {
+      "id": 106,
+      "name": "Fixture Beta Tie",
+      "price": 30,
+      "rating": 4.4,
+      "reviewCount": 700,
+      "releaseYear": 2024,
+      "developer": "Fixture",
+      "publisher": "Fixture",
+      "tags": [
+        "FPS",
+        "Multiplayer"
+      ],
+      "summary": "Synthetic boundary fixture: equal price, alphabetically second.",
+      "revenue": 21000,
+      "ownership": 700
+    },
+    {
+      "id": 107,
+      "name": "Fixture No Reviews",
+      "price": 15,
+      "rating": 5,
+      "reviewCount": 0,
+      "releaseYear": 2025,
+      "developer": "Fixture",
+      "publisher": "Fixture",
+      "tags": [
+        "Story Rich"
+      ],
+      "summary": "Synthetic boundary fixture: deliberately inconsistent maximum rating with zero reviews, to test eligibility.",
+      "revenue": 0,
+      "ownership": 0
+    },
+    {
+      "id": 108,
+      "name": "Fixture Story Anchor",
+      "price": 20,
+      "rating": 4.4,
+      "reviewCount": 100,
+      "releaseYear": 2023,
+      "developer": "Fixture",
+      "publisher": "Fixture",
+      "tags": [
+        "Story Rich",
+        "Puzzle"
+      ],
+      "summary": "Synthetic boundary fixture: exactly at both the rating threshold and price ceiling.",
+      "revenue": 2000,
+      "ownership": 100
+    },
+    {
+      "id": 109,
+      "name": "Fixture Story Bronze",
+      "price": 19.99,
+      "rating": 4.39,
+      "reviewCount": 1000,
+      "releaseYear": 2021,
+      "developer": "Fixture",
+      "publisher": "Fixture",
+      "tags": [
+        "Story Rich"
+      ],
+      "summary": "Synthetic boundary fixture: just below the 4.4 rating threshold despite many reviews.",
+      "revenue": 19990,
+      "ownership": 1000
+    },
+    {
+      "id": 110,
+      "name": "Fixture Story Silver",
+      "price": 20,
+      "rating": 4.9,
+      "reviewCount": 20,
+      "releaseYear": 2022,
+      "developer": "Fixture",
+      "publisher": "Fixture",
+      "tags": [
+        "Story Rich"
+      ],
+      "summary": "Synthetic boundary fixture: high rating with a small positive review count.",
+      "revenue": 400,
+      "ownership": 20
+    },
+    {
+      "id": 111,
+      "name": "Fixture 100%_Quest",
+      "price": 12,
+      "rating": 4.2,
+      "reviewCount": 30,
+      "releaseYear": 2019,
+      "developer": "Fixture",
+      "publisher": "Fixture",
+      "tags": [
+        "Puzzle"
+      ],
+      "summary": "Synthetic boundary fixture: percent and underscore are literal title characters.",
+      "revenue": 360,
+      "ownership": 30
+    },
+    {
+      "id": 112,
+      "name": "Fixture 100XXQuest",
+      "price": 12,
+      "rating": 4.2,
+      "reviewCount": 300,
+      "releaseYear": 2019,
+      "developer": "Fixture",
+      "publisher": "Fixture",
+      "tags": [
+        "Puzzle"
+      ],
+      "summary": "Synthetic boundary fixture: a distractor that would match unescaped SQL wildcard characters.",
+      "revenue": 3600,
+      "ownership": 300
+    },
+    {
+      "id": 113,
+      "name": "Fixture Orbit",
+      "price": 8,
+      "rating": 4.1,
+      "reviewCount": 60,
+      "releaseYear": 2018,
+      "developer": "Fixture",
+      "publisher": "Fixture",
+      "tags": [
+        "Simulation"
+      ],
+      "summary": "Synthetic boundary fixture: the shorter of two similar titles.",
+      "revenue": 480,
+      "ownership": 60
+    },
+    {
+      "id": 114,
+      "name": "Fixture Orbit Echo",
+      "price": 9,
+      "rating": 4.2,
+      "reviewCount": 600,
+      "releaseYear": 2025,
+      "developer": "Fixture",
+      "publisher": "Fixture",
+      "tags": [
+        "Simulation"
+      ],
+      "summary": "Synthetic boundary fixture: the longer title contains the complete shorter title.",
+      "revenue": 5400,
+      "ownership": 600
+    },
+    {
+      "id": 115,
+      "name": "Fixture Revenue Leader",
+      "price": 60,
+      "rating": 3.8,
+      "reviewCount": 10,
+      "releaseYear": 2024,
+      "developer": "Fixture",
+      "publisher": "Fixture",
+      "tags": [
+        "Strategy"
+      ],
+      "summary": "Synthetic boundary fixture: highest revenue but not highest rating, reviews or ownership.",
+      "revenue": 9000000,
+      "ownership": 150000
+    },
+    {
+      "id": 116,
+      "name": "Fixture Owners Leader",
+      "price": 5,
+      "rating": 3.9,
+      "reviewCount": 50000,
+      "releaseYear": 2017,
+      "developer": "Fixture",
+      "publisher": "Fixture",
+      "tags": [
+        "Strategy"
+      ],
+      "summary": "Synthetic boundary fixture: highest review count and ownership, second highest revenue.",
+      "revenue": 2000000,
+      "ownership": 400000
+    },
+    {
+      "id": 117,
+      "name": "Fixture Open Arena",
+      "price": 0,
+      "rating": 4.25,
+      "reviewCount": 40,
+      "releaseYear": 2024,
+      "developer": "Fixture",
+      "publisher": "Fixture",
+      "tags": [
+        "FPS"
+      ],
+      "summary": "Synthetic independent formulation fixture: zero-price FPS without free in its name, so free-price detection cannot pass through literal title matching.",
+      "revenue": 0,
+      "ownership": 40
+    },
+    {
+      "id": 118,
+      "name": "Fixture Highly Rated",
+      "price": 14,
+      "rating": 3.8,
+      "reviewCount": 15,
+      "releaseYear": 2024,
+      "developer": "Fixture",
+      "publisher": "Fixture",
+      "tags": [
+        "Puzzle"
+      ],
+      "summary": "Synthetic independent formulation fixture: a paid title containing rating vocabulary despite a rating below the high-rating threshold; complete and quoted titles must remain title searches.",
+      "revenue": 210,
+      "ownership": 15
+    }
+  ],
+  "cases": [
+    {
+      "id": "unseen-free-to-play-fps",
+      "query": "Show free-to-play FPS games",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": 0,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [
+          "FPS"
+        ],
+        "mode": "player",
+        "sortBy": null,
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "gameIds": [
+        101,
+        117
+      ]
+    },
+    {
+      "id": "unseen-free-fps-zh",
+      "query": "免费FPS",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": 0,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [
+          "FPS"
+        ],
+        "mode": "player",
+        "sortBy": null,
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "gameIds": [
+        101,
+        117
+      ]
+    },
+    {
+      "id": "unseen-cheap-explicit-budget",
+      "query": "Show cheap FPS games under 20 dollars",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": 20,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [
+          "FPS"
+        ],
+        "mode": "player",
+        "sortBy": "price",
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "gameIds": [
+        101,
+        117,
+        102,
+        103
+      ]
+    },
+    {
+      "id": "unseen-highly-rated-review-eligibility",
+      "query": "Find highly rated Story Rich games",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": null,
+        "minRating": 4.4,
+        "hasReviews": true,
+        "tags": [
+          "Story Rich"
+        ],
+        "mode": "player",
+        "sortBy": "rating",
+        "sortDirection": "desc",
+        "limit": null,
+        "offset": 0
+      },
+      "gameIds": [
+        110,
+        108
+      ]
+    },
+    {
+      "id": "unseen-top-rated-budget",
+      "query": "Show top rated Story Rich games under $20",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": 20,
+        "minRating": 4.4,
+        "hasReviews": true,
+        "tags": [
+          "Story Rich"
+        ],
+        "mode": "player",
+        "sortBy": "rating",
+        "sortDirection": "desc",
+        "limit": null,
+        "offset": 0
+      },
+      "gameIds": [
+        110,
+        108
+      ]
+    },
+    {
+      "id": "unseen-quoted-price-and-tag-title",
+      "query": "\"Fixture Free FPS\"",
+      "expected": {
+        "titleQuery": "fixture free fps",
+        "maxPrice": null,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [],
+        "mode": "player",
+        "sortBy": null,
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "gameIds": [
+        101
+      ]
+    },
+    {
+      "id": "unseen-known-rating-title",
+      "query": "Fixture Highly Rated",
+      "expected": {
+        "titleQuery": "fixture highly rated",
+        "maxPrice": null,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [],
+        "mode": "player",
+        "sortBy": null,
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "gameIds": [
+        118
+      ]
+    },
+    {
+      "id": "unseen-quoted-rating-title",
+      "query": "\"Fixture Highly Rated\"",
+      "expected": {
+        "titleQuery": "fixture highly rated",
+        "maxPrice": null,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [],
+        "mode": "player",
+        "sortBy": null,
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "gameIds": [
+        118
+      ]
+    }
+  ]
+}

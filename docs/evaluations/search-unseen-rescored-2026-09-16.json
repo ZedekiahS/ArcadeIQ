@@ -1,0 +1,651 @@
+{
+  "recorded_at_utc": "2026-09-16T04:57:45.154076+00:00",
+  "provider_mode": "recorded-response-rescore",
+  "source_report": "docs/evaluations/search-unseen-fixed-2026-09-15.json",
+  "source_recorded_at_utc": "2026-09-16T03:42:39.294934+00:00",
+  "source_base_commit": "91243f31aceaa99166aa278f7c8dc2c1b4a30b63",
+  "fixture": "tests/fixtures/search-evaluation-unseen.json",
+  "game_count": 18,
+  "provider_calls": 0,
+  "original_provider_calls": 8,
+  "original_fallback_count": 0,
+  "notes": [
+    "Offline rescoring of already recorded integration intents and ordered SQL results; no provider or database calls were made.",
+    "The original live report is preserved unchanged at 7/8 for both paths.",
+    "One authoring error was corrected using the search contract that pre-dated these fixes; this is not a new live 8/8 run.",
+    "No new latency observations are reported. Original latency and provider metadata remain in the source report.",
+    "This small independently formulated set is not a general model benchmark; the AI path includes application constraints and normalization."
+  ],
+  "corrections": [
+    {
+      "case": 3,
+      "query": "Show cheap FPS games under 20 dollars",
+      "original_expected": {
+        "titleQuery": null,
+        "maxPrice": 20,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [
+          "FPS"
+        ],
+        "mode": "player",
+        "sortBy": null,
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "corrected_expected": {
+        "titleQuery": null,
+        "maxPrice": 20,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [
+          "FPS"
+        ],
+        "mode": "player",
+        "sortBy": "price",
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "original_expected_game_ids": [
+        102,
+        103,
+        101,
+        117
+      ],
+      "corrected_expected_game_ids": [
+        101,
+        117,
+        102,
+        103
+      ],
+      "reason": "The fixture author omitted the pre-existing price-ascending sort for cheap. An explicit budget changes the ceiling but not that ordering. Verified against commit 91243f3: backend/app/services/search_intent.py and backend/tests/test_search_intent.py, with matching frontend behavior."
+    }
+  ],
+  "cases": [
+    {
+      "case": 1,
+      "query": "Show free-to-play FPS games",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": 0,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [
+          "FPS"
+        ],
+        "mode": "player",
+        "sortBy": null,
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "expected_game_ids": [
+        101,
+        117
+      ],
+      "rules": {
+        "source": "rules",
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": 0.0,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          101,
+          117
+        ],
+        "original_both_pass": true,
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": 0.0,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          101,
+          117
+        ],
+        "original_both_pass": true,
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 2,
+      "query": "免费FPS",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": 0,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [
+          "FPS"
+        ],
+        "mode": "player",
+        "sortBy": null,
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "expected_game_ids": [
+        101,
+        117
+      ],
+      "rules": {
+        "source": "rules",
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": 0.0,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          101,
+          117
+        ],
+        "original_both_pass": true,
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": 0.0,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          101,
+          117
+        ],
+        "original_both_pass": true,
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 3,
+      "query": "Show cheap FPS games under 20 dollars",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": 20,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [
+          "FPS"
+        ],
+        "mode": "player",
+        "sortBy": "price",
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "expected_game_ids": [
+        101,
+        117,
+        102,
+        103
+      ],
+      "rules": {
+        "source": "rules",
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": 20.0,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": "price",
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          101,
+          117,
+          102,
+          103
+        ],
+        "original_both_pass": false,
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": 20.0,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": "price",
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          101,
+          117,
+          102,
+          103
+        ],
+        "original_both_pass": false,
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 4,
+      "query": "Find highly rated Story Rich games",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": null,
+        "minRating": 4.4,
+        "hasReviews": true,
+        "tags": [
+          "Story Rich"
+        ],
+        "mode": "player",
+        "sortBy": "rating",
+        "sortDirection": "desc",
+        "limit": null,
+        "offset": 0
+      },
+      "expected_game_ids": [
+        110,
+        108
+      ],
+      "rules": {
+        "source": "rules",
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": null,
+          "minRating": 4.4,
+          "hasReviews": true,
+          "tags": [
+            "Story Rich"
+          ],
+          "mode": "player",
+          "sortBy": "rating",
+          "sortDirection": "desc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          110,
+          108
+        ],
+        "original_both_pass": true,
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": null,
+          "minRating": 4.4,
+          "hasReviews": true,
+          "tags": [
+            "Story Rich"
+          ],
+          "mode": "player",
+          "sortBy": "rating",
+          "sortDirection": "desc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          110,
+          108
+        ],
+        "original_both_pass": true,
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 5,
+      "query": "Show top rated Story Rich games under $20",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": 20,
+        "minRating": 4.4,
+        "hasReviews": true,
+        "tags": [
+          "Story Rich"
+        ],
+        "mode": "player",
+        "sortBy": "rating",
+        "sortDirection": "desc",
+        "limit": null,
+        "offset": 0
+      },
+      "expected_game_ids": [
+        110,
+        108
+      ],
+      "rules": {
+        "source": "rules",
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": 20.0,
+          "minRating": 4.4,
+          "hasReviews": true,
+          "tags": [
+            "Story Rich"
+          ],
+          "mode": "player",
+          "sortBy": "rating",
+          "sortDirection": "desc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          110,
+          108
+        ],
+        "original_both_pass": true,
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": 20.0,
+          "minRating": 4.4,
+          "hasReviews": true,
+          "tags": [
+            "Story Rich"
+          ],
+          "mode": "player",
+          "sortBy": "rating",
+          "sortDirection": "desc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          110,
+          108
+        ],
+        "original_both_pass": true,
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 6,
+      "query": "\"Fixture Free FPS\"",
+      "expected": {
+        "titleQuery": "fixture free fps",
+        "maxPrice": null,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [],
+        "mode": "player",
+        "sortBy": null,
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "expected_game_ids": [
+        101
+      ],
+      "rules": {
+        "source": "rules",
+        "intent": {
+          "titleQuery": "fixture free fps",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          101
+        ],
+        "original_both_pass": true,
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "intent": {
+          "titleQuery": "fixture free fps",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          101
+        ],
+        "original_both_pass": true,
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 7,
+      "query": "Fixture Highly Rated",
+      "expected": {
+        "titleQuery": "fixture highly rated",
+        "maxPrice": null,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [],
+        "mode": "player",
+        "sortBy": null,
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "expected_game_ids": [
+        118
+      ],
+      "rules": {
+        "source": "rules",
+        "intent": {
+          "titleQuery": "fixture highly rated",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          118
+        ],
+        "original_both_pass": true,
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "intent": {
+          "titleQuery": "fixture highly rated",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          118
+        ],
+        "original_both_pass": true,
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 8,
+      "query": "\"Fixture Highly Rated\"",
+      "expected": {
+        "titleQuery": "fixture highly rated",
+        "maxPrice": null,
+        "minRating": 0,
+        "hasReviews": false,
+        "tags": [],
+        "mode": "player",
+        "sortBy": null,
+        "sortDirection": "asc",
+        "limit": null,
+        "offset": 0
+      },
+      "expected_game_ids": [
+        118
+      ],
+      "rules": {
+        "source": "rules",
+        "intent": {
+          "titleQuery": "fixture highly rated",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          118
+        ],
+        "original_both_pass": true,
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "intent": {
+          "titleQuery": "fixture highly rated",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          118
+        ],
+        "original_both_pass": true,
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    }
+  ],
+  "rules": {
+    "count": 8,
+    "intent_pass": 8,
+    "results_pass": 8,
+    "both_pass": 8
+  },
+  "deepseek_integration": {
+    "count": 8,
+    "intent_pass": 8,
+    "results_pass": 8,
+    "both_pass": 8
+  }
+}

@@ -90,6 +90,17 @@ The search endpoint defaults to the local rules-based intent parser. The optiona
 
 `titleQuery` is nullable and matches game names case-insensitively as literal text. `maxPrice: null` means there is no price limit; a supplied decimal budget is retained. Title, tags, budget, rating, and review filters combine with AND before sorting and limiting results. For example, `Celeste Story Rich under $20.99` applies all three constraints. Blank queries leave the catalog unfiltered, and unknown titles return an empty `games` array.
 
+Recognized conditions outside a known or quoted title follow these product conventions:
+
+| Condition | Contract |
+| --- | --- |
+| `free`, `free-to-play`, `free to play`, `免费` | `maxPrice: 0`, including when an explicit budget is also present. |
+| `cheap`, `deal`, `便宜` | Default `maxPrice: 35` and price-ascending order; an explicit budget replaces 35 without removing that ordering. |
+| `highly rated`, `top rated`, `高评分` | `minRating: 4.4`, `hasReviews: true`, and rating-descending order. |
+| Review conditions such as `good reviews`, `most reviews`, `有评价` | A positive review count is required; the phrase alone does not imply a minimum rating. |
+
+Price ceilings are inclusive. Cheapest/most-expensive ranking does not imply a budget. The provider prompt includes these conventions and catalog titles. After provider normalization, code applies recognized price/rating/review constraints to the query with known/quoted titles removed, then preserves the rules title guard. Thus the final `deepseek` intent includes application enforcement rather than being a raw model output.
+
 Known full titles are protected before parsing tag or ranking words. Quote ambiguous titles, such as `"First"` or `"100% Fun"`; `%` and `_` are literal title characters rather than SQL wildcards. Unrecognized residual words remain part of the title, so `Celeste bananas` cannot silently become a Celeste-only search. The frontend accepts results only from the latest submitted search or manual filter change, preventing late responses from restoring old results or selection.
 
 Both parsers and the PostgreSQL HTTP tests consume [the shared search contract fixtures](../tests/fixtures/search-contract.json). The response's `source` continues to identify `rules` or `deepseek`; the title-search change does not remove the provider or the game/collection insight features.
@@ -111,7 +122,7 @@ If the provider is disabled, missing a key, or returns an invalid payload, `/api
 
 ### Search Provider Evaluation
 
-The [live evaluation report](../docs/verification/ai-evaluation-2026-09-15.md) records the current rules/DeepSeek comparison, per-case evidence, known search gaps, and reproduction commands. The CLI defaults to rules only and requires an explicit local `ARCADEIQ_TEST_DATABASE_URL`; it creates and removes its own PostgreSQL schema.
+The [original live evaluation](../docs/verification/ai-evaluation-2026-09-15.md) preserves the pre-fix comparison and observed gaps. The [contract-fix record](../docs/verification/search-fixes-2026-09-16.md) documents the subsequent 31/31 live integration pass on the same queries, the eight-query independent follow-up, and its separately preserved expectation correction/offline rescore. These are selected application-contract checks, not raw model accuracy. The CLI defaults to rules only and requires an explicit local `ARCADEIQ_TEST_DATABASE_URL`; it creates and removes its own PostgreSQL schema.
 
 ```powershell
 # From backend; no AI request unless --live is provided.

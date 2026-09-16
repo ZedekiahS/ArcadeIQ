@@ -28,7 +28,7 @@ export function SearchControls({ discovery, onReturnToBrowse }: { discovery: Ret
   };
   const activeFilters = [
     ...(intent.titleQuery ? [t(`Title: ${intent.titleQuery}`, `名称：${intent.titleQuery}`)] : []),
-    intent.maxPrice === null ? t("Any price", "不限价格") : t(`Up to ${money(intent.maxPrice)}`, `不超过 ${money(intent.maxPrice)}`),
+    intent.maxPrice === null ? t("Any price", "不限价格") : intent.maxPrice === 0 ? t("Free only", "仅免费") : t(`Up to ${money(intent.maxPrice)}`, `不超过 ${money(intent.maxPrice)}`),
     ...intent.tags.map(tag),
     ...(intent.minRating > 0 ? [t(`Rated ${intent.minRating}+`, `评分 ${intent.minRating}+`)] : []),
     ...(intent.hasReviews ? [t("Has reviews", "有玩家评价")] : []),
