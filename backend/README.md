@@ -103,11 +103,23 @@ ARCADEIQ_AI_ENABLED=true
 ARCADEIQ_AI_PROVIDER=deepseek
 ARCADEIQ_AI_FALLBACK_TO_RULES=true
 DEEPSEEK_BASE_URL=https://api.deepseek.com
-DEEPSEEK_MODEL=deepseek-v4-flash
+DEEPSEEK_MODEL=deepseek-flash
 DEEPSEEK_API_KEY=your-local-key
 ```
 
 If the provider is disabled, missing a key, or returns an invalid payload, `/api/search` falls back to the local rules parser when `ARCADEIQ_AI_FALLBACK_TO_RULES=true`.
+
+### Search Provider Evaluation
+
+The [live evaluation report](../docs/verification/ai-evaluation-2026-09-15.md) records the current rules/DeepSeek comparison, per-case evidence, known search gaps, and reproduction commands. The CLI defaults to rules only and requires an explicit local `ARCADEIQ_TEST_DATABASE_URL`; it creates and removes its own PostgreSQL schema.
+
+```powershell
+# From backend; no AI request unless --live is provided.
+python -m app.scripts.evaluate_search --output ../docs/evaluations/rules-new.json
+python -m app.scripts.evaluate_search --live --model deepseek-flash --max-calls 21 --output ../docs/evaluations/live-new.json
+```
+
+`--fixture ../tests/fixtures/search-evaluation-boundaries.json` selects the independent 16-game/10-query boundary set. Live runs are opt-in and are not part of CI. Requests have a 1,024-token output cap, thinking disabled, the configured timeout, and no evaluator retries. Existing local `.env` model overrides remain effective; `--model` changes only the evaluation run. The report records requested model and observed latency, not billing or general model accuracy.
 
 ### Local PostgreSQL + Python virtual environment
 

@@ -69,6 +69,8 @@ class AISearchTests(unittest.TestCase):
         self.assertEqual(result.intent["tags"], ["Story Rich"])
         payload = json.loads(provider.call_args.args[0].data)
         self.assertIn('"titleQuery": null | string', payload["messages"][0]["content"])
+        self.assertEqual(payload["max_tokens"], 1024)
+        self.assertEqual(payload["thinking"], {"type": "disabled"})
 
     def test_deepseek_missing_or_blank_title_cannot_erase_literal_query(self) -> None:
         for raw in ({}, {"titleQuery": None}, {"titleQuery": "  "}):

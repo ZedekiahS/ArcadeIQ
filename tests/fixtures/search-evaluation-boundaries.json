@@ -1,0 +1,84 @@
+{
+  "description": "Synthetic evaluation-only catalog, not real games or market data. Every game and company is explicitly named Fixture. These ten manually specified cases exercise inclusive maxPrice boundaries, review eligibility, deterministic name tie-breaking, ranking, literal title matching and no-result behavior. As in the existing API contract, maxPrice is inclusive and titleQuery is a case-insensitive literal substring. The free-price case intentionally expects the natural-language meaning even though the current rules parser does not recognize 'free'. This fixture does not expand or replace the product demo catalog.",
+  "availableTags": ["FPS", "Multiplayer", "Puzzle", "Simulation", "Story Rich", "Strategy"],
+  "games": [
+    {"id": 101, "name": "Fixture Free FPS", "price": 0, "rating": 4.5, "reviewCount": 500, "releaseYear": 2020, "developer": "Fixture", "publisher": "Fixture", "tags": ["FPS", "Multiplayer"], "summary": "Synthetic boundary fixture: zero price.", "revenue": 0, "ownership": 500},
+    {"id": 102, "name": "Fixture Below Budget", "price": 19.99, "rating": 4.6, "reviewCount": 100, "releaseYear": 2021, "developer": "Fixture", "publisher": "Fixture", "tags": ["FPS"], "summary": "Synthetic boundary fixture: one cent below a 20 dollar ceiling.", "revenue": 1999, "ownership": 100},
+    {"id": 103, "name": "Fixture Exact Budget", "price": 20, "rating": 4.7, "reviewCount": 80, "releaseYear": 2022, "developer": "Fixture", "publisher": "Fixture", "tags": ["FPS", "Multiplayer"], "summary": "Synthetic boundary fixture: exactly at a 20 dollar ceiling.", "revenue": 1600, "ownership": 80},
+    {"id": 104, "name": "Fixture Freeport", "price": 20.01, "rating": 4.8, "reviewCount": 200, "releaseYear": 2023, "developer": "Fixture", "publisher": "Fixture", "tags": ["FPS"], "summary": "Synthetic boundary fixture: one cent above a 20 dollar ceiling; a paid title containing free is not a free game.", "revenue": 4002, "ownership": 200},
+    {"id": 105, "name": "Fixture Alpha Tie", "price": 30, "rating": 4.4, "reviewCount": 70, "releaseYear": 2020, "developer": "Fixture", "publisher": "Fixture", "tags": ["FPS"], "summary": "Synthetic boundary fixture: equal price, alphabetically first.", "revenue": 2100, "ownership": 70},
+    {"id": 106, "name": "Fixture Beta Tie", "price": 30, "rating": 4.4, "reviewCount": 700, "releaseYear": 2024, "developer": "Fixture", "publisher": "Fixture", "tags": ["FPS", "Multiplayer"], "summary": "Synthetic boundary fixture: equal price, alphabetically second.", "revenue": 21000, "ownership": 700},
+    {"id": 107, "name": "Fixture No Reviews", "price": 15, "rating": 5, "reviewCount": 0, "releaseYear": 2025, "developer": "Fixture", "publisher": "Fixture", "tags": ["Story Rich"], "summary": "Synthetic boundary fixture: deliberately inconsistent maximum rating with zero reviews, to test eligibility.", "revenue": 0, "ownership": 0},
+    {"id": 108, "name": "Fixture Story Anchor", "price": 20, "rating": 4.4, "reviewCount": 100, "releaseYear": 2023, "developer": "Fixture", "publisher": "Fixture", "tags": ["Story Rich", "Puzzle"], "summary": "Synthetic boundary fixture: exactly at both the rating threshold and price ceiling.", "revenue": 2000, "ownership": 100},
+    {"id": 109, "name": "Fixture Story Bronze", "price": 19.99, "rating": 4.39, "reviewCount": 1000, "releaseYear": 2021, "developer": "Fixture", "publisher": "Fixture", "tags": ["Story Rich"], "summary": "Synthetic boundary fixture: just below the 4.4 rating threshold despite many reviews.", "revenue": 19990, "ownership": 1000},
+    {"id": 110, "name": "Fixture Story Silver", "price": 20, "rating": 4.9, "reviewCount": 20, "releaseYear": 2022, "developer": "Fixture", "publisher": "Fixture", "tags": ["Story Rich"], "summary": "Synthetic boundary fixture: high rating with a small positive review count.", "revenue": 400, "ownership": 20},
+    {"id": 111, "name": "Fixture 100%_Quest", "price": 12, "rating": 4.2, "reviewCount": 30, "releaseYear": 2019, "developer": "Fixture", "publisher": "Fixture", "tags": ["Puzzle"], "summary": "Synthetic boundary fixture: percent and underscore are literal title characters.", "revenue": 360, "ownership": 30},
+    {"id": 112, "name": "Fixture 100XXQuest", "price": 12, "rating": 4.2, "reviewCount": 300, "releaseYear": 2019, "developer": "Fixture", "publisher": "Fixture", "tags": ["Puzzle"], "summary": "Synthetic boundary fixture: a distractor that would match unescaped SQL wildcard characters.", "revenue": 3600, "ownership": 300},
+    {"id": 113, "name": "Fixture Orbit", "price": 8, "rating": 4.1, "reviewCount": 60, "releaseYear": 2018, "developer": "Fixture", "publisher": "Fixture", "tags": ["Simulation"], "summary": "Synthetic boundary fixture: the shorter of two similar titles.", "revenue": 480, "ownership": 60},
+    {"id": 114, "name": "Fixture Orbit Echo", "price": 9, "rating": 4.2, "reviewCount": 600, "releaseYear": 2025, "developer": "Fixture", "publisher": "Fixture", "tags": ["Simulation"], "summary": "Synthetic boundary fixture: the longer title contains the complete shorter title.", "revenue": 5400, "ownership": 600},
+    {"id": 115, "name": "Fixture Revenue Leader", "price": 60, "rating": 3.8, "reviewCount": 10, "releaseYear": 2024, "developer": "Fixture", "publisher": "Fixture", "tags": ["Strategy"], "summary": "Synthetic boundary fixture: highest revenue but not highest rating, reviews or ownership.", "revenue": 9000000, "ownership": 150000},
+    {"id": 116, "name": "Fixture Owners Leader", "price": 5, "rating": 3.9, "reviewCount": 50000, "releaseYear": 2017, "developer": "Fixture", "publisher": "Fixture", "tags": ["Strategy"], "summary": "Synthetic boundary fixture: highest review count and ownership, second highest revenue.", "revenue": 2000000, "ownership": 400000}
+  ],
+  "cases": [
+    {
+      "id": "free-price-language",
+      "query": "Find free FPS games",
+      "expected": {"titleQuery": null, "maxPrice": 0, "minRating": 0, "hasReviews": false, "tags": ["FPS"], "mode": "player", "sortBy": null, "sortDirection": "asc", "limit": null, "offset": 0},
+      "gameIds": [101]
+    },
+    {
+      "id": "inclusive-budget-zh",
+      "query": "找20美元以下的FPS游戏",
+      "expected": {"titleQuery": null, "maxPrice": 20, "minRating": 0, "hasReviews": false, "tags": ["FPS"], "mode": "player", "sortBy": null, "sortDirection": "asc", "limit": null, "offset": 0},
+      "gameIds": [102, 103, 101]
+    },
+    {
+      "id": "price-tie-ordinal",
+      "query": "Find the second most expensive FPS game",
+      "expected": {"titleQuery": null, "maxPrice": null, "minRating": 0, "hasReviews": false, "tags": ["FPS"], "mode": "player", "sortBy": "price", "sortDirection": "desc", "limit": 1, "offset": 1},
+      "gameIds": [106]
+    },
+    {
+      "id": "rating-and-review-eligibility-zh",
+      "query": "找20美元以下的高评分剧情游戏",
+      "expected": {"titleQuery": null, "maxPrice": 20, "minRating": 4.4, "hasReviews": true, "tags": ["Story Rich"], "mode": "player", "sortBy": "rating", "sortDirection": "desc", "limit": null, "offset": 0},
+      "gameIds": [110, 108]
+    },
+    {
+      "id": "review-count-ranking",
+      "query": "Find top 3 games with most reviews",
+      "expected": {"titleQuery": null, "maxPrice": null, "minRating": 0, "hasReviews": true, "tags": [], "mode": "player", "sortBy": "review_count", "sortDirection": "desc", "limit": 3, "offset": 0},
+      "gameIds": [116, 109, 106]
+    },
+    {
+      "id": "developer-revenue-ranking",
+      "query": "Developer catalog top 3 games with highest revenue",
+      "expected": {"titleQuery": null, "maxPrice": null, "minRating": 0, "hasReviews": false, "tags": [], "mode": "developer", "sortBy": "revenue", "sortDirection": "desc", "limit": 3, "offset": 0},
+      "gameIds": [115, 116, 106]
+    },
+    {
+      "id": "literal-percent-underscore-title",
+      "query": "\"Fixture 100%_Quest\"",
+      "expected": {"titleQuery": "fixture 100%_quest", "maxPrice": null, "minRating": 0, "hasReviews": false, "tags": [], "mode": "player", "sortBy": null, "sortDirection": "asc", "limit": null, "offset": 0},
+      "gameIds": [111]
+    },
+    {
+      "id": "longer-similar-title",
+      "query": "\"Fixture Orbit Echo\"",
+      "expected": {"titleQuery": "fixture orbit echo", "maxPrice": null, "minRating": 0, "hasReviews": false, "tags": [], "mode": "player", "sortBy": null, "sortDirection": "asc", "limit": null, "offset": 0},
+      "gameIds": [114]
+    },
+    {
+      "id": "shorter-title-substring",
+      "query": "Fixture Orbit",
+      "expected": {"titleQuery": "fixture orbit", "maxPrice": null, "minRating": 0, "hasReviews": false, "tags": [], "mode": "player", "sortBy": null, "sortDirection": "asc", "limit": null, "offset": 0},
+      "gameIds": [113, 114]
+    },
+    {
+      "id": "unknown-title-with-budget-zh",
+      "query": "找20美元以下的FPS游戏 未知边界",
+      "expected": {"titleQuery": "未知边界", "maxPrice": 20, "minRating": 0, "hasReviews": false, "tags": ["FPS"], "mode": "player", "sortBy": null, "sortDirection": "asc", "limit": null, "offset": 0},
+      "gameIds": []
+    }
+  ]
+}

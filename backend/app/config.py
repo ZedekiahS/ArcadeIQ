@@ -25,7 +25,7 @@ class Settings:
         self.ai_timeout_seconds = float(os.getenv("ARCADEIQ_AI_TIMEOUT_SECONDS", "8"))
         self.deepseek_api_key = os.getenv("DEEPSEEK_API_KEY", "")
         self.deepseek_base_url = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
-        self.deepseek_model = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash")
+        self.deepseek_model = os.getenv("DEEPSEEK_MODEL", "deepseek-flash")
         self.admin_user_id = os.getenv("ARCADEIQ_ADMIN_USER_ID", "local-admin").strip()
         self.admin_email = os.getenv("ARCADEIQ_ADMIN_EMAIL", "admin@arcadeiq.local").strip()
         self.admin_display_name = os.getenv("ARCADEIQ_ADMIN_DISPLAY_NAME", "Local Admin").strip()

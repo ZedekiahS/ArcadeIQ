@@ -6,6 +6,8 @@ ArcadeIQ is a bilingual game-discovery portfolio application built with React, T
 
 The project began as group coursework using Java Swing and SQL Server. The modern web application is a subsequent refactor; the original implementation remains in the repository as project history. The modern app runs independently of the original school database.
 
+Read the [engineering case study](docs/case-study.md) for the problems, decisions, verification evidence, and remaining limits behind the refactor.
+
 ## Two Ways to Explore
 
 The homepage offers player and developer entry points. Each opens a distinct browsing experience before the user starts a search.
@@ -80,7 +82,7 @@ Natural-language search supports a local rules parser and an optional DeepSeek p
 
 Game and collection insight text currently uses catalog metadata and aggregate statistics. It is not a summary of review source text, and recommendations are not personalized or live-trending claims. Source labels and estimate notes stay visible. The Chinese interface translates recognized sample/rule content and preserves unrecognized provider text with an original-content note.
 
-See the [optional provider configuration](backend/README.md#optional-ai-provider). Provider keys stay in backend environment variables, never in `VITE_*` variables or Git. Live-provider quality evaluation and traceable review evidence are future work; the [delivery verification record](docs/verification/api-delivery-2026-09-15.md) states which real and controlled paths were exercised.
+See the [optional provider configuration](backend/README.md#optional-ai-provider). Provider keys stay in backend environment variables, never in `VITE_*` variables or Git. A [first live evaluation](docs/verification/ai-evaluation-2026-09-15.md) ran 31 nonblank queries against the real provider and PostgreSQL: rules met both checked intent and ordered-result expectations in 30/31 cases, versus 24/31 for the DeepSeek integration. The report separates model responses, rule fallback, and product-contract gaps. Broader held-out evaluation and traceable review evidence remain future work.
 
 ## Verification
 
@@ -110,6 +112,7 @@ Each database suite creates and removes only its own UUID-named schema. Existing
 Verification records separate the executed checks from their limitations:
 
 - [API workflow and delivery](docs/verification/api-delivery-2026-09-15.md)
+- [Live AI comparison and expanded test catalog](docs/verification/ai-evaluation-2026-09-15.md)
 - [Collection persistence and isolation](docs/verification/collections-2026-09-14.md)
 - [Search contract and response ordering](docs/verification/search-2026-09-14.md)
 - [Module refactor](docs/verification/modules-2026-09-15.md)
@@ -121,7 +124,7 @@ Verification records separate the executed checks from their limitations:
 | --- | --- |
 | `frontend/` | Current React/TypeScript application, API/demo adapters, and UI tests. |
 | `backend/` | FastAPI routes, SQLAlchemy models, Alembic migrations, and backend tests. |
-| `tests/fixtures/` | Search cases shared across frontend and backend. |
+| `tests/fixtures/` | Shared search contract and an independent synthetic boundary catalog for evaluation. |
 | `docs/` | Architecture, setup guides, verification records, and screenshots. |
 | `scripts/` | Local frontend, backend, and database setup helpers. |
 | `UI/`, `migrations/`, `Views/` | Original Java Swing/SQL Server application and database logic. |

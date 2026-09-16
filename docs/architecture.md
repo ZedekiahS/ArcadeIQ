@@ -72,7 +72,7 @@ The backend's optional DeepSeek search provider normalizes output into the same 
 
 Game and collection insight endpoints remain separate from search parsing. Current insight text is generated from metadata and aggregate statistics, not review source text. Collection intelligence requires the owning account. The interface preserves the supplied source and estimate labels. Recognized demo/rules content can be translated for display; external or unrecognized text is retained verbatim. Provider keys stay in backend configuration.
 
-Traceable review evidence and live-provider evaluation remain future work. No vector retrieval, review ingestion, or new AI provider is introduced by this module refactor.
+The [first live provider evaluation](verification/ai-evaluation-2026-09-15.md) compares the existing integration and rules against fixed contracts and an independent synthetic boundary catalog. It exposes missing product thresholds in the prompt and the title guard's handling of `free`; these known gaps remain visible in the baseline report. The evaluation CLI uses the production resolver and SQL builder with isolated PostgreSQL schemas, separates fallbacks from model successes, and caps explicit paid attempts. Search requests now cap output at 1,024 tokens and disable thinking. Traceable review evidence and broader held-out evaluation remain future work.
 
 ## Backend and Persistence
 

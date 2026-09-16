@@ -66,6 +66,9 @@ def parse_with_deepseek(query: str, available_tags: list[str], settings: Setting
             },
         ],
         "response_format": {"type": "json_object"},
+        # Search returns one small JSON object; bound output and avoid reasoning latency.
+        "max_tokens": 1024,
+        "thinking": {"type": "disabled"},
         "temperature": 0,
     }
     request = urllib.request.Request(

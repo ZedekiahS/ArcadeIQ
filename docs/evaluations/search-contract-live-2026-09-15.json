@@ -1,0 +1,1552 @@
+{
+  "recorded_at_utc": "2026-09-16T03:14:55.557437+00:00",
+  "base_commit": "514276bf73e6d0058db23cdd193f8b7f8459c24c",
+  "fixture": "tests/fixtures/search-contract.json",
+  "game_count": 7,
+  "provider_mode": "live",
+  "model_requested": "deepseek-flash",
+  "timeout_seconds": 8.0,
+  "max_output_tokens": 1024,
+  "thinking": "disabled",
+  "max_calls": 21,
+  "notes": [
+    "Single pass on a regression fixture, not an independent benchmark.",
+    "Provider integration includes normalization and a rules-based title guard.",
+    "Latency measures intent resolution, excluding SQL/browser rendering.",
+    "Usage and actual billing were not collected.",
+    "Only expected fields are scored; tag order is ignored, result ID order is strict."
+  ],
+  "actual_catalog_tags": [
+    "FPS",
+    "Multiplayer",
+    "Platformer",
+    "Puzzle",
+    "Simulation",
+    "Story Rich"
+  ],
+  "rules": {
+    "count": 22,
+    "intent_pass": 22,
+    "results_pass": 22,
+    "both_pass": 22,
+    "latency_ms": {
+      "median": 0.775,
+      "p95_nearest_rank": 2.107
+    }
+  },
+  "deepseek_integration": {
+    "count": 21,
+    "intent_pass": 17,
+    "results_pass": 20,
+    "both_pass": 17,
+    "latency_ms": {
+      "median": 1120.977,
+      "p95_nearest_rank": 1326.281
+    }
+  },
+  "live_product_including_fallback": {
+    "count": 22,
+    "intent_pass": 18,
+    "results_pass": 21,
+    "both_pass": 18,
+    "latency_ms": {
+      "median": 1117.973,
+      "p95_nearest_rank": 1326.281
+    }
+  },
+  "provider_calls": 21,
+  "fallback_count": 0,
+  "blank_bypasses": 1,
+  "not_run": 0,
+  "stopped_reason": null,
+  "cases": [
+    {
+      "case": 1,
+      "query": "Celeste",
+      "expected": {
+        "titleQuery": "celeste",
+        "maxPrice": null,
+        "tags": []
+      },
+      "expected_game_ids": [
+        1
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 20.592,
+        "intent": {
+          "titleQuery": "celeste",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          1
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1011.261,
+        "intent": {
+          "titleQuery": "celeste",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          1
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 2,
+      "query": "cElEsTe",
+      "expected": {
+        "titleQuery": "celeste",
+        "maxPrice": null,
+        "tags": []
+      },
+      "expected_game_ids": [
+        1
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.476,
+        "intent": {
+          "titleQuery": "celeste",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          1
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1033.31,
+        "intent": {
+          "titleQuery": "celeste",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          1
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 3,
+      "query": "Find Celeste under 25 dollars",
+      "expected": {
+        "titleQuery": "celeste",
+        "maxPrice": 25,
+        "tags": []
+      },
+      "expected_game_ids": [
+        1
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1.294,
+        "intent": {
+          "titleQuery": "celeste",
+          "maxPrice": 25.0,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          1
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 831.175,
+        "intent": {
+          "titleQuery": "celeste",
+          "maxPrice": 25.0,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          1
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 4,
+      "query": "Celeste under $19.50",
+      "expected": {
+        "titleQuery": "celeste",
+        "maxPrice": 19.5
+      },
+      "expected_game_ids": [],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.805,
+        "intent": {
+          "titleQuery": "celeste",
+          "maxPrice": 19.5,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1028.824,
+        "intent": {
+          "titleQuery": "celeste",
+          "maxPrice": 19.5,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 5,
+      "query": "Celeste Story Rich under $20.99",
+      "expected": {
+        "titleQuery": "celeste",
+        "maxPrice": 20.99,
+        "tags": [
+          "Story Rich"
+        ]
+      },
+      "expected_game_ids": [
+        1
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.445,
+        "intent": {
+          "titleQuery": "celeste",
+          "maxPrice": 20.99,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "Story Rich"
+          ],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          1
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1159.011,
+        "intent": {
+          "titleQuery": "celeste",
+          "maxPrice": 20.99,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "Story Rich"
+          ],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          1
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 6,
+      "query": "DefinitelyNotARealGame",
+      "expected": {
+        "titleQuery": "definitelynotarealgame",
+        "maxPrice": null,
+        "tags": []
+      },
+      "expected_game_ids": [],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.859,
+        "intent": {
+          "titleQuery": "definitelynotarealgame",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1213.037,
+        "intent": {
+          "titleQuery": "definitelynotarealgame",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 7,
+      "query": "Celeste bananas",
+      "expected": {
+        "titleQuery": "celeste bananas",
+        "maxPrice": null,
+        "tags": []
+      },
+      "expected_game_ids": [],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.813,
+        "intent": {
+          "titleQuery": "celeste bananas",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1040.694,
+        "intent": {
+          "titleQuery": "celeste bananas",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 8,
+      "query": "transaction",
+      "expected": {
+        "titleQuery": "transaction",
+        "tags": []
+      },
+      "expected_game_ids": [],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.396,
+        "intent": {
+          "titleQuery": "transaction",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1410.584,
+        "intent": {
+          "titleQuery": "transaction",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 9,
+      "query": "Find Space Haven",
+      "expected": {
+        "titleQuery": "space haven",
+        "tags": [],
+        "maxPrice": null
+      },
+      "expected_game_ids": [
+        2
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.391,
+        "intent": {
+          "titleQuery": "space haven",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          2
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1154.676,
+        "intent": {
+          "titleQuery": "space haven",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          2
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 10,
+      "query": "First",
+      "expected": {
+        "titleQuery": "first",
+        "limit": null,
+        "offset": 0
+      },
+      "expected_game_ids": [
+        3
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.352,
+        "intent": {
+          "titleQuery": "first",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          3
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1170.577,
+        "intent": {
+          "titleQuery": "first",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          3
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 11,
+      "query": "Find the second most expensive FPS game",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": null,
+        "tags": [
+          "FPS"
+        ],
+        "sortBy": "price",
+        "sortDirection": "desc",
+        "limit": 1,
+        "offset": 1
+      },
+      "expected_game_ids": [
+        5
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.638,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": "price",
+          "sortDirection": "desc",
+          "limit": 1,
+          "offset": 1
+        },
+        "game_ids": [
+          5
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1034.918,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": "price",
+          "sortDirection": "desc",
+          "limit": 1,
+          "offset": 1
+        },
+        "game_ids": [
+          5
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 12,
+      "query": "Find all FPS games",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": null,
+        "tags": [
+          "FPS"
+        ],
+        "limit": null
+      },
+      "expected_game_ids": [
+        5,
+        4,
+        3
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.46,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          5,
+          4,
+          3
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1200.885,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          5,
+          4,
+          3
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 13,
+      "query": "第二贵的FPSgame",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": null,
+        "tags": [
+          "FPS"
+        ],
+        "sortBy": "price",
+        "sortDirection": "desc",
+        "limit": 1,
+        "offset": 1
+      },
+      "expected_game_ids": [
+        5
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.745,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": "price",
+          "sortDirection": "desc",
+          "limit": 1,
+          "offset": 1
+        },
+        "game_ids": [
+          5
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1245.659,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": "price",
+          "sortDirection": "desc",
+          "limit": 1,
+          "offset": 1
+        },
+        "game_ids": [
+          5
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 14,
+      "query": "Find cheap multiplayer FPS games with good reviews",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": 35,
+        "tags": [
+          "Multiplayer",
+          "FPS"
+        ],
+        "hasReviews": true
+      },
+      "expected_game_ids": [
+        5
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1.433,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": 35.0,
+          "minRating": 0.0,
+          "hasReviews": true,
+          "tags": [
+            "Multiplayer",
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": "price",
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          5
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1251.319,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": null,
+          "minRating": 4.0,
+          "hasReviews": true,
+          "tags": [
+            "Multiplayer",
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": "price",
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          5,
+          4
+        ],
+        "intent_pass": false,
+        "results_pass": false,
+        "both_pass": false,
+        "mismatches": {
+          "maxPrice": {
+            "expected": 35,
+            "actual": null
+          }
+        }
+      }
+    },
+    {
+      "case": 15,
+      "query": "Show highly rated story rich games under 25 dollars",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": 25,
+        "tags": [
+          "Story Rich"
+        ],
+        "minRating": 4.4
+      },
+      "expected_game_ids": [
+        1
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1.019,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": 25.0,
+          "minRating": 4.4,
+          "hasReviews": true,
+          "tags": [
+            "Story Rich"
+          ],
+          "mode": "player",
+          "sortBy": "rating",
+          "sortDirection": "desc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          1
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1326.281,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": 25.0,
+          "minRating": 4.5,
+          "hasReviews": false,
+          "tags": [
+            "Story Rich"
+          ],
+          "mode": "player",
+          "sortBy": "rating",
+          "sortDirection": "desc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          1
+        ],
+        "intent_pass": false,
+        "results_pass": true,
+        "both_pass": false,
+        "mismatches": {
+          "minRating": {
+            "expected": 4.4,
+            "actual": 4.5
+          }
+        }
+      }
+    },
+    {
+      "case": 16,
+      "query": "\"100% Fun\"",
+      "expected": {
+        "titleQuery": "100% fun",
+        "maxPrice": null,
+        "tags": []
+      },
+      "expected_game_ids": [
+        6
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1.35,
+        "intent": {
+          "titleQuery": "100% fun",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          6
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1120.977,
+        "intent": {
+          "titleQuery": "100% fun",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          6
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 17,
+      "query": "   ",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": null,
+        "tags": []
+      },
+      "expected_game_ids": [
+        6,
+        7,
+        5,
+        1,
+        4,
+        3,
+        2
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.701,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          6,
+          7,
+          5,
+          1,
+          4,
+          3,
+          2
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.649,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          6,
+          7,
+          5,
+          1,
+          4,
+          3,
+          2
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 18,
+      "query": "找第二贵的FPS游戏",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": null,
+        "tags": [
+          "FPS"
+        ],
+        "sortBy": "price",
+        "sortDirection": "desc",
+        "limit": 1,
+        "offset": 1
+      },
+      "expected_game_ids": [
+        5
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.829,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": "price",
+          "sortDirection": "desc",
+          "limit": 1,
+          "offset": 1
+        },
+        "game_ids": [
+          5
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 947.953,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [
+            "FPS"
+          ],
+          "mode": "player",
+          "sortBy": "price",
+          "sortDirection": "desc",
+          "limit": 1,
+          "offset": 1
+        },
+        "game_ids": [
+          5
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 19,
+      "query": "找25美元以下的高评分剧情游戏",
+      "expected": {
+        "titleQuery": null,
+        "maxPrice": 25,
+        "tags": [
+          "Story Rich"
+        ],
+        "minRating": 4.4,
+        "hasReviews": true,
+        "sortBy": "rating",
+        "sortDirection": "desc"
+      },
+      "expected_game_ids": [
+        1
+      ],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.431,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": 25.0,
+          "minRating": 4.4,
+          "hasReviews": true,
+          "tags": [
+            "Story Rich"
+          ],
+          "mode": "player",
+          "sortBy": "rating",
+          "sortDirection": "desc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          1
+        ],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1121.029,
+        "intent": {
+          "titleQuery": null,
+          "maxPrice": 25.0,
+          "minRating": 4.5,
+          "hasReviews": true,
+          "tags": [
+            "Story Rich"
+          ],
+          "mode": "player",
+          "sortBy": "rating",
+          "sortDirection": "desc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [
+          1
+        ],
+        "intent_pass": false,
+        "results_pass": true,
+        "both_pass": false,
+        "mismatches": {
+          "minRating": {
+            "expected": 4.4,
+            "actual": 4.5
+          }
+        }
+      }
+    },
+    {
+      "case": 20,
+      "query": "Celeste 低于19.50美元",
+      "expected": {
+        "titleQuery": "celeste",
+        "maxPrice": 19.5,
+        "tags": []
+      },
+      "expected_game_ids": [],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 2.107,
+        "intent": {
+          "titleQuery": "celeste",
+          "maxPrice": 19.5,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1114.969,
+        "intent": {
+          "titleQuery": "celeste",
+          "maxPrice": 19.5,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    },
+    {
+      "case": 21,
+      "query": "找20.99美元以下的高评分剧情游戏 未知的星球",
+      "expected": {
+        "titleQuery": "未知的星球",
+        "maxPrice": 20.99,
+        "tags": [
+          "Story Rich"
+        ],
+        "minRating": 4.4,
+        "hasReviews": true
+      },
+      "expected_game_ids": [],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.898,
+        "intent": {
+          "titleQuery": "未知的星球",
+          "maxPrice": 20.99,
+          "minRating": 4.4,
+          "hasReviews": true,
+          "tags": [
+            "Story Rich"
+          ],
+          "mode": "player",
+          "sortBy": "rating",
+          "sortDirection": "desc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 1017.585,
+        "intent": {
+          "titleQuery": "未知的星球",
+          "maxPrice": 20.99,
+          "minRating": 4.5,
+          "hasReviews": true,
+          "tags": [
+            "Story Rich"
+          ],
+          "mode": "player",
+          "sortBy": "rating",
+          "sortDirection": "desc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [],
+        "intent_pass": false,
+        "results_pass": true,
+        "both_pass": false,
+        "mismatches": {
+          "minRating": {
+            "expected": 4.4,
+            "actual": 4.5
+          }
+        }
+      }
+    },
+    {
+      "case": 22,
+      "query": "找一个未知的游戏",
+      "expected": {
+        "titleQuery": "找一个未知的游戏",
+        "maxPrice": null,
+        "tags": []
+      },
+      "expected_game_ids": [],
+      "rules": {
+        "source": "rules",
+        "provider_attempted": false,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 0.478,
+        "intent": {
+          "titleQuery": "找一个未知的游戏",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      },
+      "deepseek": {
+        "source": "deepseek",
+        "provider_attempted": true,
+        "fallback": false,
+        "error": null,
+        "latency_ms": 916.702,
+        "intent": {
+          "titleQuery": "找一个未知的游戏",
+          "maxPrice": null,
+          "minRating": 0.0,
+          "hasReviews": false,
+          "tags": [],
+          "mode": "player",
+          "sortBy": null,
+          "sortDirection": "asc",
+          "limit": null,
+          "offset": 0
+        },
+        "game_ids": [],
+        "intent_pass": true,
+        "results_pass": true,
+        "both_pass": true,
+        "mismatches": {}
+      }
+    }
+  ],
+  "isolated_schema_removed": true
+}
