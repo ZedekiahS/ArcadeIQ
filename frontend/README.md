@@ -1,4 +1,4 @@
-# ArcadeIQ Frontend
+# Game Discovery Lens Frontend
 
 React + TypeScript portfolio application with explicit fixed-data and API modes.
 
@@ -59,7 +59,7 @@ Artwork for the 24 sample games is bundled locally, matched by normalized exact 
 
 ## English and Chinese
 
-The header's **中文 / EN** controls switch the interface without reloading or changing discovery/account state. The preference is stored separately in `arcadeiq.ui.language`; otherwise the browser's language selects Chinese (`zh-*`) or English. If browser storage is blocked, the switch still works for the current session. Document language and title follow the selection.
+The header's **中文 / EN** controls switch the interface without reloading or changing discovery/account state. The preference is stored separately in `game-discovery-lens.ui.language`; otherwise the browser's language selects Chinese (`zh-*`) or English. If browser storage is blocked, the switch still works for the current session. Document language and title follow the selection.
 
 Search, account/collection controls, error recovery, tag labels, sample game summaries, and recognized demo/backend-rule insights have Chinese translations. Game/developer names and user-created collection names remain unchanged. Filters, stored collection names, and API payloads retain canonical values. Prices remain USD; the Chinese interface uses `US$` to avoid implying currency conversion.
 

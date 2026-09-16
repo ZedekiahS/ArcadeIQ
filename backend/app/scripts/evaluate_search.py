@@ -76,7 +76,7 @@ def fixture_database(database_url: str, games: list[dict]):
     url = make_url(database_url)
     if url.drivername != "postgresql+psycopg" or url.host not in {"localhost", "127.0.0.1", "::1"} or url.query:
         raise ValueError("Use a loopback postgresql+psycopg test URL with no query parameters")
-    schema = f"arcadeiq_eval_{uuid4().hex}"
+    schema = f"gdl_eval_{uuid4().hex}"
     admin = create_engine(url)
     engine = None
     created = False
@@ -191,9 +191,9 @@ def main() -> None:
         parser.error("--max-calls must be between 1 and 50")
     if args.output.exists():
         parser.error("Output already exists; choose a new evidence path")
-    database_url = os.environ.get("ARCADEIQ_TEST_DATABASE_URL")
+    database_url = os.environ.get("GDL_TEST_DATABASE_URL")
     if not database_url:
-        parser.error("Set ARCADEIQ_TEST_DATABASE_URL to a local PostgreSQL database; the evaluator isolates its own schema")
+        parser.error("Set GDL_TEST_DATABASE_URL to a local PostgreSQL database; the evaluator isolates its own schema")
     settings = get_settings()
     settings = copy(settings)
     if args.model:

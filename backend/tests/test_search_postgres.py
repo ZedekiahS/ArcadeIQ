@@ -27,13 +27,13 @@ class SearchPostgresTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        database_url = os.getenv("ARCADEIQ_TEST_DATABASE_URL")
+        database_url = os.getenv("GDL_TEST_DATABASE_URL")
         if not database_url:
-            raise unittest.SkipTest("Set ARCADEIQ_TEST_DATABASE_URL to run PostgreSQL integration tests")
+            raise unittest.SkipTest("Set GDL_TEST_DATABASE_URL to run PostgreSQL integration tests")
         url = make_url(database_url)
         if url.drivername != "postgresql+psycopg" or url.host not in {"localhost", "127.0.0.1", "::1"} or url.query:
             raise ValueError("Search integration tests require a local postgresql+psycopg URL without query parameters")
-        cls.schema_name = f"arcadeiq_search_test_{uuid4().hex}"
+        cls.schema_name = f"gdl_search_test_{uuid4().hex}"
         cls.admin_engine = create_engine(url)
         cls.addClassCleanup(cls.admin_engine.dispose)
         with cls.admin_engine.begin() as connection:

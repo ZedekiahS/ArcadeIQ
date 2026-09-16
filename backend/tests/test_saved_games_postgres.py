@@ -23,9 +23,9 @@ class SavedGamesPostgresTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        database_url = os.getenv("ARCADEIQ_TEST_DATABASE_URL")
+        database_url = os.getenv("GDL_TEST_DATABASE_URL")
         if not database_url:
-            raise unittest.SkipTest("Set ARCADEIQ_TEST_DATABASE_URL to run PostgreSQL integration tests")
+            raise unittest.SkipTest("Set GDL_TEST_DATABASE_URL to run PostgreSQL integration tests")
         url = make_url(database_url)
         if url.drivername != "postgresql+psycopg" or url.host not in {"localhost", "127.0.0.1", "::1"}:
             raise ValueError("Integration tests require a local postgresql+psycopg URL")
@@ -34,7 +34,7 @@ class SavedGamesPostgresTests(unittest.TestCase):
         cls.database_url = url
 
     def setUp(self) -> None:
-        self.schema_name = f"arcadeiq_test_{uuid4().hex}"
+        self.schema_name = f"gdl_test_{uuid4().hex}"
         self.admin_engine = create_engine(self.database_url)
         self.addCleanup(self.admin_engine.dispose)
         with self.admin_engine.begin() as connection:

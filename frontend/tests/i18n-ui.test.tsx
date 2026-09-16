@@ -65,7 +65,7 @@ describe("language switching in the actual application", () => {
     expect(screen.getByRole("option", { name: "周末 Co-op" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Saved (1)", exact: true })).toBeTruthy();
     expect((screen.getByLabelText("Search games") as HTMLTextAreaElement).value).toBe("Hades under 24.99");
-    const persisted = window.localStorage.getItem("arcadeiq.demo.collections.demo-user") ?? "";
+    const persisted = window.localStorage.getItem("game-discovery-lens.demo.collections.demo-user") ?? "";
     expect(persisted).toContain("周末 Co-op");
     expect(persisted).not.toContain("默认收藏夹");
 
@@ -109,6 +109,16 @@ describe("language switching in the actual application", () => {
     fireEvent.click(screen.getByRole("button", { name: "中文" }));
     expect(screen.getByRole("button", { name: "English" })).toBeTruthy();
     expect(document.documentElement.lang).toBe("en");
+  });
+
+  it("reads the language preference saved before the product rename", () => {
+    vi.spyOn(navigator, "language", "get").mockReturnValue("en-US");
+    window.localStorage.setItem("arcadeiq.ui.language", "zh");
+
+    render(<LanguageProvider><LanguageProbe /></LanguageProvider>);
+
+    expect(screen.getByRole("button", { name: "中文" })).toBeTruthy();
+    expect(document.documentElement.lang).toBe("zh-CN");
   });
 
   it("localizes recovery instructions and status codes without discarding unknown error details", () => {

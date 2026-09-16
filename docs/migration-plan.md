@@ -1,6 +1,6 @@
-# ArcadeIQ Migration Plan
+# Game Discovery Lens Migration Plan
 
-This plan moves ArcadeIQ from a copied course project into a personally maintained and deployable AI/data product.
+This plan moves Game Discovery Lens from a copied course project into a personally maintained and deployable AI/data product.
 
 ## Phase 1: Public Repository Baseline
 
@@ -8,7 +8,7 @@ Goal: make the repository safe and understandable.
 
 - Add a professional README.
 - Remove school-hosted database assumptions from app configuration.
-- Move database settings to `ARCADEIQ_DB_*` environment variables.
+- Move database settings to `GDL_DB_*` environment variables.
 - Ignore local secrets, generated JavaScript, `node_modules`, temporary Office files, and personal-looking seed user data.
 - Keep the legacy code intact enough to preserve project history.
 
@@ -18,8 +18,8 @@ Status: in progress.
 
 Goal: run the existing application without the school server.
 
-- Create a personal SQL Server database named `ArcadeIQ`.
-- Create a personal app login/user named `ArcadeIQApp`.
+- Retain the legacy SQL Server database name `ArcadeIQ` so the historical migrations remain replayable.
+- Retain the legacy app principal `ArcadeIQApp`; it is a technical compatibility identifier, not the current product brand.
 - Apply the legacy SQL migrations or rebuild a clean schema from them.
 - Load safe seed data from `data/gamedata.csv` and `data/reviews.csv`.
 - Create a sanitized replacement for `data/userdata.csv`.
@@ -41,7 +41,7 @@ Recommended local options:
 Goal: make the current Java and SQL system easier to reason about.
 
 - Fix visible text encoding issues in the Java UI.
-- Replace old package/window names with ArcadeIQ naming.
+- Replace old package/window names with Game Discovery Lens naming.
 - Add scripts for local database setup.
 - Add screenshots and ER diagram exports.
 - Consolidate duplicate or superseded stored procedure migrations.

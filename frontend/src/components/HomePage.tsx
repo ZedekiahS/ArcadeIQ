@@ -17,7 +17,7 @@ export function HomePage() {
         <div className="home-orbit" />
         <figure className="home-art home-art-back"><GameArtwork name="Outer Wilds" priority /><figcaption>OUTER WILDS</figcaption></figure>
         <figure className="home-art home-art-front"><GameArtwork name="Hades" priority /><figcaption>HADES <ArrowUpRight size={16} /></figcaption></figure>
-        <span className="home-stage-label">EXPLORE WHAT'S NEXT / ARCADEIQ</span>
+        <span className="home-stage-label">EXPLORE WHAT'S NEXT / GAME DISCOVERY LENS</span>
       </div>
     </section>
 

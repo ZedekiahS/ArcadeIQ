@@ -1,6 +1,6 @@
-# ArcadeIQ Architecture
+# Game Discovery Lens Architecture
 
-ArcadeIQ is a portfolio application demonstrating reliable search, account collections, and explicit AI integration. The current React/FastAPI/PostgreSQL application evolved from group coursework using Java Swing and SQL Server. The original implementation remains as project history.
+Game Discovery Lens is a portfolio application demonstrating reliable search, account collections, and explicit AI integration. The current React/FastAPI/PostgreSQL application evolved from group coursework using Java Swing and SQL Server. The original implementation remains as project history.
 
 ## Current Application
 

@@ -13,11 +13,11 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
 public class Main extends JFrame {
-    private static final String DB_SERVER = getEnvOrDefault("ARCADEIQ_DB_SERVER", "localhost");
-    private static final String DB_PORT = getEnvOrDefault("ARCADEIQ_DB_PORT", "1433");
-    private static final String DB_NAME = getEnvOrDefault("ARCADEIQ_DB_NAME", "ArcadeIQ");
-    private static final String DB_USER = getEnvOrDefault("ARCADEIQ_DB_USER", "ArcadeIQApp");
-    private static final String DB_PASSWORD = System.getenv("ARCADEIQ_DB_PASSWORD");
+    private static final String DB_SERVER = getEnvOrDefault("GDL_DB_SERVER", "localhost");
+    private static final String DB_PORT = getEnvOrDefault("GDL_DB_PORT", "1433");
+    private static final String DB_NAME = getEnvOrDefault("GDL_DB_NAME", "ArcadeIQ");
+    private static final String DB_USER = getEnvOrDefault("GDL_DB_USER", "ArcadeIQApp");
+    private static final String DB_PASSWORD = System.getenv("GDL_DB_PASSWORD");
     private static final String DB_URL = String.format(
             "jdbc:sqlserver://%s:%s;databaseName=%s;encrypt=false;",
             DB_SERVER, DB_PORT, DB_NAME);
@@ -29,7 +29,7 @@ public class Main extends JFrame {
     public Main() {
         if (DB_PASSWORD == null || DB_PASSWORD.isBlank()) {
             JOptionPane.showMessageDialog(null,
-                    "Missing ARCADEIQ_DB_PASSWORD environment variable.");
+                    "Missing GDL_DB_PASSWORD environment variable.");
             this.dispose();
             System.exit(0);
         }

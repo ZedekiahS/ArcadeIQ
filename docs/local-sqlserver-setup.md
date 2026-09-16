@@ -1,6 +1,6 @@
 # Local SQL Server Setup
 
-This guide sets up ArcadeIQ on a personally controlled SQL Server instance. The project no longer uses the original school-hosted database server.
+This guide sets up Game Discovery Lens on a personally controlled SQL Server instance. The project no longer uses the original school-hosted database server.
 
 ## Option A: Docker SQL Server
 
@@ -18,12 +18,12 @@ Copy-Item .env.example .env
 Edit `.env` and set strong local passwords:
 
 ```text
-ARCADEIQ_DB_SERVER=localhost
-ARCADEIQ_DB_PORT=1433
-ARCADEIQ_DB_NAME=ArcadeIQ
-ARCADEIQ_DB_USER=ArcadeIQApp
-ARCADEIQ_DB_PASSWORD=<app-user-password>
-ARCADEIQ_SA_PASSWORD=<strong-sa-password>
+GDL_DB_SERVER=localhost
+GDL_DB_PORT=1433
+GDL_DB_NAME=ArcadeIQ
+GDL_DB_USER=ArcadeIQApp
+GDL_DB_PASSWORD=<app-user-password>
+GDL_SA_PASSWORD=<strong-sa-password>
 ```
 
 Start SQL Server:
@@ -67,13 +67,13 @@ sqlcmd -S localhost -U sa -P "<sa-password>" -C `
 The Java UI and TypeScript population scripts read these values:
 
 ```text
-ARCADEIQ_DB_SERVER=localhost
-ARCADEIQ_DB_PORT=1433
-ARCADEIQ_DB_NAME=ArcadeIQ
-ARCADEIQ_DB_USER=ArcadeIQApp
-ARCADEIQ_DB_PASSWORD=<app-user-password>
-ARCADEIQ_DB_ENCRYPT=false
-ARCADEIQ_DB_TRUST_CERT=true
+GDL_DB_SERVER=localhost
+GDL_DB_PORT=1433
+GDL_DB_NAME=ArcadeIQ
+GDL_DB_USER=ArcadeIQApp
+GDL_DB_PASSWORD=<app-user-password>
+GDL_DB_ENCRYPT=false
+GDL_DB_TRUST_CERT=true
 ```
 
 ## Seed Data

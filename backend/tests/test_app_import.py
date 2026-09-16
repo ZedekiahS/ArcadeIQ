@@ -7,7 +7,7 @@ class AppImportTests(unittest.TestCase):
     def test_fastapi_app_imports(self) -> None:
         from app.main import app
 
-        self.assertEqual(app.title, "ArcadeIQ API")
+        self.assertEqual(app.title, "Game Discovery Lens API")
 
     def test_clear_saved_games_route_is_registered(self) -> None:
         from app.main import app

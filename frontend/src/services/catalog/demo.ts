@@ -5,8 +5,10 @@ import type { CatalogService } from "./contract";
 
 const DEFAULT_COLLECTION_ID = 1;
 const DEFAULT_COLLECTION_NAME = "Default Shortlist";
-const COLLECTION_STORAGE_KEY = "arcadeiq.demo.collections";
-const SAVED_COLLECTION_STORAGE_KEY = "arcadeiq.demo.savedCollectionGameIds";
+const COLLECTION_STORAGE_KEY = "game-discovery-lens.demo.collections";
+const SAVED_COLLECTION_STORAGE_KEY = "game-discovery-lens.demo.savedCollectionGameIds";
+const LEGACY_COLLECTION_STORAGE_KEY = "arcadeiq.demo.collections";
+const LEGACY_SAVED_COLLECTION_STORAGE_KEY = "arcadeiq.demo.savedCollectionGameIds";
 
 export const demoCatalog: CatalogService = {
   async getCatalog() {
@@ -152,7 +154,7 @@ function buildDefaultCollection(userId: string): GameCollection {
 
 function getLocalCollections(userId: string): GameCollection[] {
   const defaultCollection = buildDefaultCollection(userId);
-  const rawValue = window.localStorage.getItem(getUserStorageKey(COLLECTION_STORAGE_KEY, userId));
+  const rawValue = readBrandedStorage(COLLECTION_STORAGE_KEY, LEGACY_COLLECTION_STORAGE_KEY, userId);
   if (rawValue === null) return [defaultCollection];
   const parsed = JSON.parse(rawValue);
   if (!Array.isArray(parsed)) throw new Error("Saved demo collections are not a valid list.");
@@ -251,7 +253,7 @@ function writeLocalSavedIds(userId: string, collectionId: number | undefined, ga
 }
 
 function readLocalSavedMap(userId: string): Record<string, number[]> {
-  const rawValue = window.localStorage.getItem(getUserStorageKey(SAVED_COLLECTION_STORAGE_KEY, userId));
+  const rawValue = readBrandedStorage(SAVED_COLLECTION_STORAGE_KEY, LEGACY_SAVED_COLLECTION_STORAGE_KEY, userId);
   if (rawValue === null) return {};
   const parsed = JSON.parse(rawValue);
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
@@ -266,6 +268,14 @@ function readLocalSavedMap(userId: string): Record<string, number[]> {
 
 function getUserStorageKey(baseKey: string, userId: string) {
   return `${baseKey}.${userId}`;
+}
+
+function readBrandedStorage(currentBaseKey: string, legacyBaseKey: string, userId: string) {
+  const currentKey = getUserStorageKey(currentBaseKey, userId);
+  const currentValue = window.localStorage.getItem(currentKey);
+  if (currentValue !== null) return currentValue;
+
+  return window.localStorage.getItem(getUserStorageKey(legacyBaseKey, userId));
 }
 
 function buildMockShortlistInsights(savedGames: SavedGame[], userId: string): ShortlistInsights {

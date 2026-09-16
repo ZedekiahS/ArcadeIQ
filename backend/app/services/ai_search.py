@@ -109,7 +109,7 @@ def parse_with_deepseek(
 def build_intent_system_prompt(available_tags: list[str], available_titles: list[str] | None = None) -> str:
     tags = ", ".join(available_tags)
     return (
-        "You are ArcadeIQ's game search intent parser. Return json only. "
+        "You parse game search intent for Game Discovery Lens. Return JSON only. "
         "Use exactly this JSON shape: "
         '{"titleQuery": null | string, "maxPrice": null | number, "minRating": number, "hasReviews": boolean, "tags": string[], '
         '"mode": "player" | "developer", "sortBy": null | "name" | "price" | "rating" | "review_count" | '

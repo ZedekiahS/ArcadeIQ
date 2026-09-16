@@ -360,7 +360,7 @@ def seed_games(db: Session) -> None:
 def seed_users(db: Session) -> None:
     settings = get_settings()
     admin_user_id = settings.admin_user_id or "local-admin"
-    admin_email = settings.admin_email or "admin@arcadeiq.local"
+    admin_email = settings.admin_email or "admin@game-discovery-lens.local"
     admin_display_name = settings.admin_display_name or "Local Admin"
     admin_password = settings.admin_password
 

@@ -1,6 +1,6 @@
-# ArcadeIQ Local Demo
+# Game Discovery Lens Local Demo
 
-This is a database-free product demo for ArcadeIQ. It uses a small in-browser dataset to demonstrate the intended user experience before the legacy SQL Server application is fully redeployed locally.
+This is a database-free product demo for Game Discovery Lens. It uses a small in-browser dataset to demonstrate the intended user experience before the legacy SQL Server application is fully redeployed locally.
 
 ## Run
 

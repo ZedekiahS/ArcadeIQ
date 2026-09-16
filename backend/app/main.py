@@ -12,8 +12,8 @@ from app.config import get_settings
 settings = get_settings()
 
 app = FastAPI(
-    title="ArcadeIQ API",
-    description="Backend API for ArcadeIQ game intelligence.",
+    title="Game Discovery Lens API",
+    description="Backend API for Game Discovery Lens game intelligence.",
     version="0.1.0",
 )
 

@@ -1,10 +1,12 @@
-# ArcadeIQ
+# Game Discovery Lens
 
 **Discover your next game. Research the games behind your next idea.**
 
-ArcadeIQ is a bilingual game-discovery portfolio application built with React, TypeScript, FastAPI, and PostgreSQL. It demonstrates reliable software behavior through account-owned collections, explicit persistence modes, recoverable failures, and an optional AI search provider.
+Game Discovery Lens is a bilingual game-discovery portfolio application built with React, TypeScript, FastAPI, and PostgreSQL. It demonstrates reliable software behavior through account-owned collections, explicit persistence modes, recoverable failures, and an optional AI search provider.
 
 The project began as group coursework using Java Swing and SQL Server. The modern web application is a subsequent refactor; the original implementation remains in the repository as project history. The modern app runs independently of the original school database.
+
+The portfolio was renamed from ArcadeIQ to Game Discovery Lens. Historical verification records retain the names and configuration identifiers used when those checks were captured.
 
 Read the [engineering case study](docs/case-study.md) for the problems, decisions, verification evidence, and remaining limits behind the refactor.
 
@@ -44,7 +46,7 @@ npm ci
 npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
-Open [ArcadeIQ demo](http://127.0.0.1:5173/?mode=demo). No database or AI key is required.
+Open [Game Discovery Lens demo](http://127.0.0.1:5173/?mode=demo). No database or AI key is required.
 
 | Mode | Catalog and search | Collections |
 | --- | --- | --- |
@@ -65,7 +67,7 @@ docker compose exec backend python -m app.scripts.seed
 
 Open [API mode](http://127.0.0.1:5173/?mode=api), choose a perspective, and register or sign in to save games. API documentation is available at [localhost:8000/docs](http://localhost:8000/docs). For an existing local PostgreSQL installation, use the [native Python setup](backend/README.md#local-postgresql--python-virtual-environment).
 
-The frontend defaults to `http://localhost:8000/api`. To change it, copy `frontend/.env.example` to `frontend/.env.local` and set `VITE_API_BASE_URL`; restart Vite afterward. The URL's `mode` overrides `VITE_DATA_MODE`. Backend settings belong in the repository root `.env`; for a different frontend host or port, include its exact origin in `ARCADEIQ_CORS_ORIGINS`. See the [frontend](frontend/README.md) and [backend](backend/README.md) configuration guides.
+The frontend defaults to `http://localhost:8000/api`. To change it, copy `frontend/.env.example` to `frontend/.env.local` and set `VITE_API_BASE_URL`; restart Vite afterward. The URL's `mode` overrides `VITE_DATA_MODE`. Backend settings belong in the repository root `.env`; for a different frontend host or port, include its exact origin in `GDL_CORS_ORIGINS`. See the [frontend](frontend/README.md) and [backend](backend/README.md) configuration guides.
 
 ## Engineering Focus
 
@@ -103,7 +105,7 @@ python -m unittest discover -s backend/tests -t backend
 To include PostgreSQL persistence, ownership, and search checks, set a local test database URL before running the same backend command:
 
 ```powershell
-$env:ARCADEIQ_TEST_DATABASE_URL="postgresql+psycopg://arcadeiq:arcadeiq_dev_password@localhost:5432/arcadeiq"
+$env:GDL_TEST_DATABASE_URL="postgresql+psycopg://gdl:gdl_dev_password@localhost:5432/gdl"
 python -m unittest discover -s backend/tests -t backend
 ```
 
@@ -136,4 +138,4 @@ Read the [architecture guide](docs/architecture.md) for the current module and d
 
 The retained coursework includes marketplace workflows such as purchasing, reviews, bundles, vouchers, and folders. These are historical features, not claims about the current web interface. See the [SQL Server setup](docs/local-sqlserver-setup.md), [legacy migrations](migrations/README.md), and [migration plan](docs/migration-plan.md).
 
-ArcadeIQ is a portfolio application. Further work centers on traceable AI evidence and evaluated provider behavior; a public production deployment is outside the current demonstration scope.
+Game Discovery Lens is a portfolio application. Further work centers on traceable AI evidence and evaluated provider behavior; a public production deployment is outside the current demonstration scope.

@@ -1,17 +1,17 @@
 services:
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: arcadeiq-postgres
+    container_name: game-discovery-lens-postgres
     environment:
-      POSTGRES_DB: ${ARCADEIQ_POSTGRES_DB:-arcadeiq}
-      POSTGRES_USER: ${ARCADEIQ_POSTGRES_USER:-arcadeiq}
-      POSTGRES_PASSWORD: ${ARCADEIQ_POSTGRES_PASSWORD:-arcadeiq_dev_password}
+      POSTGRES_DB: ${GDL_POSTGRES_DB:-gdl}
+      POSTGRES_USER: ${GDL_POSTGRES_USER:-gdl}
+      POSTGRES_PASSWORD: ${GDL_POSTGRES_PASSWORD:-gdl_dev_password}
     ports:
       - "5432:5432"
     volumes:
-      - arcadeiq-postgres-data:/var/lib/postgresql/data
+      - game-discovery-lens-postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${ARCADEIQ_POSTGRES_USER:-arcadeiq} -d ${ARCADEIQ_POSTGRES_DB:-arcadeiq}"]
+      test: ["CMD-SHELL", "pg_isready -U ${GDL_POSTGRES_USER:-gdl} -d ${GDL_POSTGRES_DB:-gdl}"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -20,10 +20,10 @@ services:
   backend:
     build:
       context: ./backend
-    container_name: arcadeiq-backend
+    container_name: game-discovery-lens-backend
     environment:
-      ARCADEIQ_DATABASE_URL: postgresql+psycopg://${ARCADEIQ_POSTGRES_USER:-arcadeiq}:${ARCADEIQ_POSTGRES_PASSWORD:-arcadeiq_dev_password}@postgres:5432/${ARCADEIQ_POSTGRES_DB:-arcadeiq}
-      ARCADEIQ_CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      GDL_DATABASE_URL: postgresql+psycopg://${GDL_POSTGRES_USER:-gdl}:${GDL_POSTGRES_PASSWORD:-gdl_dev_password}@postgres:5432/${GDL_POSTGRES_DB:-gdl}
+      GDL_CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
     ports:
       - "8000:8000"
     depends_on:
@@ -32,20 +32,20 @@ services:
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: arcadeiq-sqlserver
+    container_name: game-discovery-lens-sqlserver
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_PID: Developer
-      SA_PASSWORD: ${ARCADEIQ_SA_PASSWORD:-LocalOnly_Password123!}
+      SA_PASSWORD: ${GDL_SA_PASSWORD:-LocalOnly_Password123!}
     ports:
       - "1433:1433"
     volumes:
-      - arcadeiq-sqlserver-data:/var/opt/mssql
+      - game-discovery-lens-sqlserver-data:/var/opt/mssql
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"${ARCADEIQ_SA_PASSWORD:-LocalOnly_Password123!}\" -C -Q \"SELECT 1\" || exit 1"
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"${GDL_SA_PASSWORD:-LocalOnly_Password123!}\" -C -Q \"SELECT 1\" || exit 1"
         ]
       interval: 10s
       timeout: 5s
@@ -53,5 +53,5 @@ services:
       start_period: 20s
 
 volumes:
-  arcadeiq-postgres-data:
-  arcadeiq-sqlserver-data:
+  game-discovery-lens-postgres-data:
+  game-discovery-lens-sqlserver-data:

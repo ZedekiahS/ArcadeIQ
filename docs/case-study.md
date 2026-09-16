@@ -1,6 +1,6 @@
-# ArcadeIQ: Making a Game-Discovery Application Reliable
+# Game Discovery Lens: Making a Game-Discovery Application Reliable
 
-ArcadeIQ began as group coursework built with Java Swing and SQL Server. This case study covers the subsequent React/TypeScript, FastAPI, and PostgreSQL refactor. The original application remains as project history; its group authorship is distinct from the modern implementation described here.
+Game Discovery Lens began as group coursework built with Java Swing and SQL Server. This case study covers the subsequent React/TypeScript, FastAPI, and PostgreSQL refactor. The original application remains as project history; its group authorship is distinct from the modern implementation described here.
 
 The goal is a portfolio application with inspectable engineering decisions: predictable search, account-owned collections, honest failure states, and bounded AI integration. The web application runs independently of the original school database.
 

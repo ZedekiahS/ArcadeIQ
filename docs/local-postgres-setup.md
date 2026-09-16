@@ -1,6 +1,6 @@
 # Local PostgreSQL Setup
 
-This guide runs the modern ArcadeIQ backend with PostgreSQL. This is the recommended database path for the web app and future AI features.
+This guide runs the modern Game Discovery Lens backend with PostgreSQL. This is the recommended database path for the web app and future AI features.
 
 ## Prerequisites
 
@@ -19,10 +19,10 @@ Copy-Item .env.example .env
 The default local PostgreSQL values are:
 
 ```text
-ARCADEIQ_POSTGRES_DB=arcadeiq
-ARCADEIQ_POSTGRES_USER=arcadeiq
-ARCADEIQ_POSTGRES_PASSWORD=arcadeiq_dev_password
-ARCADEIQ_DATABASE_URL=postgresql+psycopg://arcadeiq:arcadeiq_dev_password@localhost:5432/arcadeiq
+GDL_POSTGRES_DB=gdl
+GDL_POSTGRES_USER=gdl
+GDL_POSTGRES_PASSWORD=gdl_dev_password
+GDL_DATABASE_URL=postgresql+psycopg://gdl:gdl_dev_password@localhost:5432/gdl
 ```
 
 Frontend settings are separate: copy `frontend/.env.example` to `frontend/.env.local` if you need a different `VITE_DATA_MODE` or `VITE_API_BASE_URL`. The Vite project does not read the repository root `.env`.
@@ -32,11 +32,11 @@ Frontend settings are separate: copy `frontend/.env.example` to `frontend/.env.l
 ### Option A: Installed PostgreSQL
 
 ```powershell
-psql -U postgres -d postgres -c "CREATE ROLE arcadeiq LOGIN PASSWORD 'arcadeiq_dev_password';"
-createdb -U postgres --owner arcadeiq arcadeiq
+psql -U postgres -d postgres -c "CREATE ROLE gdl LOGIN PASSWORD 'gdl_dev_password';"
+createdb -U postgres --owner gdl gdl
 ```
 
-If the role or database already exists, keep the existing objects and make sure the password matches `ARCADEIQ_DATABASE_URL`.
+If the role or database already exists, keep the existing objects and make sure the password matches `GDL_DATABASE_URL`.
 
 ### Option B: Docker PostgreSQL
 

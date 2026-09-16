@@ -13,10 +13,10 @@ import { HomePage } from "./components/HomePage";
 import { usePage, type WorkspaceView } from "./hooks/usePage";
 
 export default function App() {
-  return <LanguageProvider><ArcadeApp /></LanguageProvider>;
+  return <LanguageProvider><GameDiscoveryApp /></LanguageProvider>;
 }
 
-function ArcadeApp() {
+function GameDiscoveryApp() {
   const { language, setLanguage, t } = useI18n();
   const page = usePage();
   const pageContent = useRef<HTMLDivElement>(null);
@@ -35,7 +35,7 @@ function ArcadeApp() {
       <header className="app-header">
         <div className="brand">
           <div className="brand-mark"><Gamepad2 size={22} aria-hidden="true" /></div>
-          <div><h1>Arcade<span>IQ</span></h1><p>{t("Discover games. Find your perspective.", "探索游戏，发现你的视角")}</p></div>
+          <div><h1>Game Discovery <span>Lens</span></h1><p>{t("Discover games. Read the signals.", "发现游戏，读懂信号")}</p></div>
         </div>
         <div className="runtime-info">
           <div className="language-switch" role="group" aria-label={t("Interface language", "界面语言")}>

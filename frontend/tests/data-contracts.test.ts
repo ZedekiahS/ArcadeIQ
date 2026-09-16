@@ -174,6 +174,17 @@ describe("explicit demo mode", () => {
     expect(window.localStorage.getItem("arcadeiq.savedCollectionGameIds.demo-user")).toBe(JSON.stringify({ 1: [games[0].id] }));
   });
 
+  it("keeps collections and saves from the previous brand storage keys", async () => {
+    vi.stubEnv("VITE_DATA_MODE", "demo");
+    const legacyCollection = { id: 2, userId: "demo-user", name: "Keep", description: "", createdAt: "2026-01-01" };
+    window.localStorage.setItem("arcadeiq.demo.collections.demo-user", JSON.stringify([legacyCollection]));
+    window.localStorage.setItem("arcadeiq.demo.savedCollectionGameIds.demo-user", JSON.stringify({ 2: [games[0].id] }));
+    const catalog = await import("../src/services/catalog");
+
+    await expect(catalog.getCollections("demo-user")).resolves.toContainEqual(legacyCollection);
+    await expect(catalog.getSavedGames(games, "demo-user", 2)).resolves.toMatchObject([{ gameId: games[0].id }]);
+  });
+
   it("uses the explicit URL mode over the environment and does not change mid-page", async () => {
     window.history.replaceState({}, "", "/?mode=demo");
     const runtime = await import("../src/services/runtime");
@@ -219,5 +230,13 @@ describe("authentication persistence", () => {
     secondBackend.clearStoredAuthToken();
     expect(firstBackend.getStoredAuthToken()).toBe("first-backend-token");
     expect(window.localStorage.getItem("arcadeiq.authToken")).toBe("legacy-token");
+  });
+
+  it("moves a backend-scoped token from the previous brand key", async () => {
+    window.localStorage.setItem("arcadeiq.api.http%3A%2F%2Flocalhost%3A8000%2Fapi.authToken", "legacy-token");
+    const users = await import("../src/services/users");
+
+    expect(users.getStoredAuthToken()).toBe("legacy-token");
+    expect(window.localStorage.getItem("game-discovery-lens.api.http%3A%2F%2Flocalhost%3A8000%2Fapi.authToken")).toBe("legacy-token");
   });
 });

@@ -1,6 +1,6 @@
-# ArcadeIQ Backend
+# Game Discovery Lens Backend
 
-FastAPI backend for the modern ArcadeIQ web app.
+FastAPI backend for the modern Game Discovery Lens web app.
 
 ## Run Locally
 
@@ -64,12 +64,12 @@ The anonymous `POST /api/users/session` endpoint has been removed. Use `/api/aut
 The seed script also creates a local admin placeholder account. Configure these values through local environment variables only:
 
 ```env
-ARCADEIQ_ADMIN_USER_ID=local-admin
-ARCADEIQ_ADMIN_EMAIL=admin@arcadeiq.local
-ARCADEIQ_ADMIN_DISPLAY_NAME=Local Admin
-ARCADEIQ_ADMIN_PASSWORD=change-this-local-admin-password
-ARCADEIQ_AUTH_SECRET=local-only-change-this-auth-secret
-ARCADEIQ_AUTH_TOKEN_TTL_SECONDS=43200
+GDL_ADMIN_USER_ID=local-admin
+GDL_ADMIN_EMAIL=admin@game-discovery-lens.local
+GDL_ADMIN_DISPLAY_NAME=Local Admin
+GDL_ADMIN_PASSWORD=change-this-local-admin-password
+GDL_AUTH_SECRET=local-only-change-this-auth-secret
+GDL_AUTH_TOKEN_TTL_SECONDS=43200
 ```
 
 The password is hashed before storage. `/api/auth/login` returns a bearer token for the signed-in account; use deployment secrets for real environments. Choosing a player or developer page does not change the account's permissions.
@@ -107,22 +107,22 @@ Both parsers and the PostgreSQL HTTP tests consume [the shared search contract f
 
 ### Optional AI Provider
 
-ArcadeIQ defaults to the free local rules parser. To enable the existing DeepSeek-backed parser, configure these values in your local `.env` or deployment secrets:
+Game Discovery Lens defaults to the free local rules parser. To enable the existing DeepSeek-backed parser, configure these values in your local `.env` or deployment secrets:
 
 ```env
-ARCADEIQ_AI_ENABLED=true
-ARCADEIQ_AI_PROVIDER=deepseek
-ARCADEIQ_AI_FALLBACK_TO_RULES=true
+GDL_AI_ENABLED=true
+GDL_AI_PROVIDER=deepseek
+GDL_AI_FALLBACK_TO_RULES=true
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 DEEPSEEK_MODEL=deepseek-flash
 DEEPSEEK_API_KEY=your-local-key
 ```
 
-If the provider is disabled, missing a key, or returns an invalid payload, `/api/search` falls back to the local rules parser when `ARCADEIQ_AI_FALLBACK_TO_RULES=true`.
+If the provider is disabled, missing a key, or returns an invalid payload, `/api/search` falls back to the local rules parser when `GDL_AI_FALLBACK_TO_RULES=true`.
 
 ### Search Provider Evaluation
 
-The [original live evaluation](../docs/verification/ai-evaluation-2026-09-15.md) preserves the pre-fix comparison and observed gaps. The [contract-fix record](../docs/verification/search-fixes-2026-09-16.md) documents the subsequent 31/31 live integration pass on the same queries, the eight-query independent follow-up, and its separately preserved expectation correction/offline rescore. These are selected application-contract checks, not raw model accuracy. The CLI defaults to rules only and requires an explicit local `ARCADEIQ_TEST_DATABASE_URL`; it creates and removes its own PostgreSQL schema.
+The [original live evaluation](../docs/verification/ai-evaluation-2026-09-15.md) preserves the pre-fix comparison and observed gaps. The [contract-fix record](../docs/verification/search-fixes-2026-09-16.md) documents the subsequent 31/31 live integration pass on the same queries, the eight-query independent follow-up, and its separately preserved expectation correction/offline rescore. These are selected application-contract checks, not raw model accuracy. The CLI defaults to rules only and requires an explicit local `GDL_TEST_DATABASE_URL`; it creates and removes its own PostgreSQL schema.
 
 ```powershell
 # From backend; no AI request unless --live is provided.
@@ -137,7 +137,7 @@ python -m app.scripts.evaluate_search --live --model deepseek-flash --max-calls 
 The backend reads environment variables from the repository root `.env` file when it exists. The default local URL is:
 
 ```powershell
-$env:ARCADEIQ_DATABASE_URL="postgresql+psycopg://arcadeiq:arcadeiq_dev_password@localhost:5432/arcadeiq"
+$env:GDL_DATABASE_URL="postgresql+psycopg://gdl:gdl_dev_password@localhost:5432/gdl"
 ```
 
 Create a virtual environment and install dependencies:
@@ -154,8 +154,8 @@ If Python 3.12 is unavailable, use Python 3.10 or newer.
 Create the local database once in PostgreSQL:
 
 ```powershell
-psql -U postgres -d postgres -c "CREATE ROLE arcadeiq LOGIN PASSWORD 'arcadeiq_dev_password';"
-createdb -U postgres --owner arcadeiq arcadeiq
+psql -U postgres -d postgres -c "CREATE ROLE gdl LOGIN PASSWORD 'gdl_dev_password';"
+createdb -U postgres --owner gdl gdl
 ```
 
 Run migrations and seed demo data:
@@ -189,10 +189,10 @@ python -m unittest discover -s backend/tests -t backend
 This runs the unit and HTTP route tests without connecting to a database or calling an AI provider. PostgreSQL integration tests are skipped unless explicitly enabled:
 
 ```powershell
-$env:ARCADEIQ_TEST_DATABASE_URL="postgresql+psycopg://arcadeiq:arcadeiq_dev_password@localhost:5432/arcadeiq"
+$env:GDL_TEST_DATABASE_URL="postgresql+psycopg://gdl:gdl_dev_password@localhost:5432/gdl"
 python -m unittest discover -s backend/tests -t backend
 ```
 
-The integration suite accepts only a local PostgreSQL URL without query parameters. Collection tests create unique `arcadeiq_test_<uuid>` schemas; the search suite creates an `arcadeiq_search_test_<uuid>` schema. Tests use the real PostgreSQL models (including array fields), open a fresh database session per request, and drop only their own schemas during cleanup. The database user needs permission to create schemas. Existing application tables and data are not used.
+The integration suite accepts only a local PostgreSQL URL without query parameters. Collection tests create unique `gdl_test_<uuid>` schemas; the search suite creates an `gdl_search_test_<uuid>` schema. Tests use the real PostgreSQL models (including array fields), open a fresh database session per request, and drop only their own schemas during cleanup. The database user needs permission to create schemas. Existing application tables and data are not used.
 
 Coverage includes login/save/reload, repeated-save idempotence, account isolation across read/write/delete/insights routes, forged owner inputs, and rejection of missing/expired/inactive sessions without data changes. Search coverage checks the shared title/filter examples and literal wildcard characters through HTTP against PostgreSQL. AI search fallback, intent parsing, and game/collection insight tests remain part of the same suite; these tests do not require a provider key.

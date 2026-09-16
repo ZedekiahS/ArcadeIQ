@@ -2,7 +2,8 @@ import type { AuthSession, UserProfile, UserRole } from "../types";
 import { ApiError, requestApi } from "./http";
 import { API_BASE_URL, DATA_MODE } from "./runtime";
 
-const AUTH_TOKEN_STORAGE_KEY = `arcadeiq.api.${encodeURIComponent(API_BASE_URL)}.authToken`;
+const AUTH_TOKEN_STORAGE_KEY = `game-discovery-lens.api.${encodeURIComponent(API_BASE_URL)}.authToken`;
+const LEGACY_AUTH_TOKEN_STORAGE_KEY = `arcadeiq.api.${encodeURIComponent(API_BASE_URL)}.authToken`;
 
 export async function getUsers(): Promise<UserProfile[]> {
   if (DATA_MODE === "demo") return [];
@@ -42,7 +43,12 @@ export async function getAuthenticatedUser(token: string): Promise<UserProfile> 
 }
 
 export function getStoredAuthToken(): string | null {
-  return DATA_MODE === "api" ? window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) : null;
+  if (DATA_MODE !== "api") return null;
+  const currentToken = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+  if (currentToken !== null) return currentToken;
+  const legacyToken = window.localStorage.getItem(LEGACY_AUTH_TOKEN_STORAGE_KEY);
+  if (legacyToken !== null) window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, legacyToken);
+  return legacyToken;
 }
 
 export function setStoredAuthToken(token: string) {
@@ -53,6 +59,7 @@ export function setStoredAuthToken(token: string) {
 export function clearStoredAuthToken() {
   if (DATA_MODE !== "api") return;
   window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+  window.localStorage.removeItem(LEGACY_AUTH_TOKEN_STORAGE_KEY);
 }
 
 export function requireAuthHeaders(headers: Record<string, string> = {}): Record<string, string> {

@@ -1,6 +1,6 @@
 # Legacy SQL Server Migrations
 
-This directory contains the original SQL Server migration history for ArcadeIQ's legacy database application.
+This directory contains the original SQL Server migration history from the project now presented as Game Discovery Lens.
 
 These files are kept for continuity and documentation while the project is being refactored into a personally deployed game intelligence platform.
 
@@ -14,7 +14,7 @@ These files are kept for continuity and documentation while the project is being
 
 - The migrations are SQL Server/T-SQL specific.
 - They include stored procedures, table-valued parameters, grants, `GO` batch separators, and other SQL Server conventions.
-- The original app user name has been renamed to `ArcadeIQApp` for the personal deployment direction.
+- The migrations retain the legacy `ArcadeIQApp` principal so the recorded sequence remains replayable. It is a technical compatibility identifier, not the current product brand.
 - Some migration names and versions reflect the original course project history and may need cleanup before production-style Flyway usage.
 
 ## Refactor Direction

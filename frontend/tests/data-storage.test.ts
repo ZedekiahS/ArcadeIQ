@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { games } from "../src/data/games";
 
 const userId = "guest-storage-test";
-const collectionKey = `arcadeiq.demo.collections.${userId}`;
-const savedKey = `arcadeiq.demo.savedCollectionGameIds.${userId}`;
+const collectionKey = `game-discovery-lens.demo.collections.${userId}`;
+const savedKey = `game-discovery-lens.demo.savedCollectionGameIds.${userId}`;
 const collection = { id: 2, userId, name: "Keep", description: "", createdAt: "2026-01-01" };
 const failures = ["blocked", "malformed"] as const;
 

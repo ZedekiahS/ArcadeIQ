@@ -19,7 +19,7 @@ if (-not $python) {
     throw "Python was not found on PATH. Install Python or run a static file server against the demo directory."
 }
 
-Write-Host "Starting ArcadeIQ demo at http://localhost:$Port"
+Write-Host "Starting Game Discovery Lens demo at http://localhost:$Port"
 Write-Host "Press Ctrl+C to stop."
 
 if ($python.Name -eq "py.exe" -or $python.Name -eq "py") {

@@ -3,11 +3,13 @@ import { translateTag } from "./tags";
 import { translateError } from "./errors";
 
 export type Language = "en" | "zh";
-export const LANGUAGE_STORAGE_KEY = "arcadeiq.ui.language";
+export const LANGUAGE_STORAGE_KEY = "game-discovery-lens.ui.language";
+const LEGACY_LANGUAGE_STORAGE_KEY = "arcadeiq.ui.language";
 
 function initialLanguage(): Language {
   try {
-    const saved = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    const saved = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
+      ?? window.localStorage.getItem(LEGACY_LANGUAGE_STORAGE_KEY);
     if (saved === "en" || saved === "zh") return saved;
   } catch { /* Language switching still works when browser storage is unavailable. */ }
   return navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en";
@@ -32,7 +34,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, updateLanguage] = useState<Language>(initialLanguage);
   useEffect(() => {
     document.documentElement.lang = language === "zh" ? "zh-CN" : "en";
-    document.title = language === "zh" ? "ArcadeIQ · 游戏探索" : "ArcadeIQ · Game discovery";
+    document.title = language === "zh" ? "Game Discovery Lens · 游戏探索" : "Game Discovery Lens · Game discovery";
   }, [language]);
   const value = useMemo(() => ({
     ...messages(language),
